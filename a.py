@@ -11,6 +11,15 @@ class Layer(object):
         raise NotImplementedError
 
 
+class DataLayer(Layer):
+    def __init__(self, shape):
+        self.shape = shape
+
+    def forward(self, x):
+        assert tuple(x.size()[1:]) == self.shape
+        return x
+
+
 class DenseLayer(Layer):
     def __init__(self, kernel):
         self.kernel = Variable(torch.FloatTensor(kernel), requires_grad=True)
@@ -46,6 +55,14 @@ class SequenceLayer(Layer):
 class Spec(object):
     def build(self):
         raise NotImplementedError
+
+
+class DataSpec(Spec):
+    def __init__(self, shape):
+        self.shape = shape
+
+    def build(self):
+        return DataLayer(self.shape)
 
 
 class DenseSpec(Spec):
@@ -108,6 +125,7 @@ x = Variable(torch.randn(N, D_in).type(dtype), requires_grad=False)
 y = Variable(torch.randn(N, D_out).type(dtype), requires_grad=False)
 
 model = SequenceSpec([
+    DataSpec((D_in,)),
     DenseSpec(D_in, H),
     ReLUSpec(),
     DenseSpec(H, D_out),
