@@ -1,3 +1,4 @@
+import numpy as np
 import torch
 from torch.autograd import Variable
 
@@ -10,9 +11,9 @@ class Layer(object):
         raise NotImplementedError
 
 
-class Dense(Layer):
+class DenseLayer(Layer):
     def __init__(self, kernel):
-        self.kernel = kernel
+        self.kernel = Variable(torch.FloatTensor(kernel), requires_grad=True)
 
     def params(self):
         return [self.kernel]
@@ -21,12 +22,12 @@ class Dense(Layer):
         return x.mm(self.kernel)
 
 
-class ReLU(Layer):
+class ReLULayer(Layer):
     def forward(self, x):
         return x.clamp(min=0)
 
 
-class Sequence(Layer):
+class SequenceLayer(Layer):
     def __init__(self, layers):
         self.layers = layers
 
@@ -40,6 +41,38 @@ class Sequence(Layer):
         for layer in self.layers:
             x = layer.forward(x)
         return x
+
+
+class Spec(object):
+    def build(self):
+        raise NotImplementedError
+
+
+class DenseSpec(Spec):
+    def __init__(self, in_dim, out_dim):
+        self.in_dim = in_dim
+        self.out_dim = out_dim
+
+    def build(self):
+        kernel = np.random.normal(0, 1, (self.in_dim, self.out_dim))
+        return DenseLayer(kernel)
+
+
+class ReLUSpec(Spec):
+    def build(self):
+        return ReLULayer()
+
+
+class SequenceSpec(Spec):
+    def __init__(self, specs):
+        self.specs = specs
+
+    def build(self):
+        layers = []
+        for spec in self.specs:
+            layer = spec.build()
+            layers.append(layer)
+        return SequenceLayer(layers)
 
 
 class Optimizer(object):
@@ -74,17 +107,15 @@ N, D_in, H, D_out = 64, 1000, 100, 10
 x = Variable(torch.randn(N, D_in).type(dtype), requires_grad=False)
 y = Variable(torch.randn(N, D_out).type(dtype), requires_grad=False)
 
-w1 = Variable(torch.randn(D_in, H).type(dtype), requires_grad=True)
-w2 = Variable(torch.randn(H, D_out).type(dtype), requires_grad=True)
-
-model = Sequence([
-    Dense(w1),
-    ReLU(),
-    Dense(w2),
+model = SequenceSpec([
+    DenseSpec(D_in, H),
+    ReLUSpec(),
+    DenseSpec(H, D_out),
 ])
 
-learning_rate = 1e-6
+model = model.build()
 
+learning_rate = 1e-6
 opt = SGD(learning_rate)
 opt.set_params(model.params())
 
