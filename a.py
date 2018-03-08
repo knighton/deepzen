@@ -53,7 +53,7 @@ class SequenceLayer(Layer):
 
 
 class Spec(object):
-    def build(self):
+    def build(self, in_shape):
         raise NotImplementedError
 
 
@@ -61,35 +61,40 @@ class DataSpec(Spec):
     def __init__(self, shape):
         self.shape = shape
 
-    def build(self):
-        return DataLayer(self.shape)
+    def build(self, in_shape=None):
+        if in_shape is None:
+            in_shape = self.shape
+        else:
+            assert in_shape == self.shape
+        return DataLayer(self.shape), in_shape
 
 
 class DenseSpec(Spec):
-    def __init__(self, in_dim, out_dim):
-        self.in_dim = in_dim
+    def __init__(self, out_dim):
         self.out_dim = out_dim
 
-    def build(self):
-        kernel = np.random.normal(0, 1, (self.in_dim, self.out_dim))
-        return DenseLayer(kernel)
+    def build(self, in_shape):
+        in_dim, = in_shape
+        kernel = np.random.normal(0, 1, (in_dim, self.out_dim))
+        out_shape = (self.out_dim,)
+        return DenseLayer(kernel), out_shape
 
 
 class ReLUSpec(Spec):
-    def build(self):
-        return ReLULayer()
+    def build(self, in_shape):
+        return ReLULayer(), in_shape
 
 
 class SequenceSpec(Spec):
     def __init__(self, specs):
         self.specs = specs
 
-    def build(self):
+    def build(self, in_shape=None):
         layers = []
         for spec in self.specs:
-            layer = spec.build()
+            layer, in_shape = spec.build(in_shape)
             layers.append(layer)
-        return SequenceLayer(layers)
+        return SequenceLayer(layers), in_shape
 
 
 class Optimizer(object):
@@ -126,12 +131,12 @@ y = Variable(torch.randn(N, D_out).type(dtype), requires_grad=False)
 
 model = SequenceSpec([
     DataSpec((D_in,)),
-    DenseSpec(D_in, H),
+    DenseSpec(H),
     ReLUSpec(),
-    DenseSpec(H, D_out),
+    DenseSpec(D_out),
 ])
 
-model = model.build()
+model, out_shape = model.build()
 
 learning_rate = 1e-6
 opt = SGD(learning_rate)
