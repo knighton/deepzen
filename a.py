@@ -43,16 +43,24 @@ class Sequence(Layer):
 
 
 class Optimizer(object):
-    def __init__(self, lr):
-        self.lr = lr
-
     def set_params(self, params):
         self.params = params
 
+    def step_param(self, param):
+        raise NotImplementedError
+
     def step(self):
         for param in self.params:
-            param.data -= self.lr * param.grad.data
-            param.grad.data.zero_()
+            self.step_param(param)
+
+
+class SGD(Optimizer):
+    def __init__(self, lr):
+        self.lr = lr
+
+    def step_param(self, param):
+        param.data -= self.lr * param.grad.data
+        param.grad.data.zero_()
 
 
 def mean_squared_error(true, pred):
@@ -77,7 +85,7 @@ model = Sequence([
 
 learning_rate = 1e-6
 
-opt = Optimizer(learning_rate)
+opt = SGD(learning_rate)
 opt.set_params(model.params())
 
 for t in range(500):
