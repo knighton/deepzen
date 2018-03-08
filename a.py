@@ -3,6 +3,24 @@ import torch
 from torch.autograd import Variable
 
 
+def dtype_of(x):
+    assert isinstance(x.data, torch.FloatTensor)
+    return 'float32'
+
+
+class Form(object):
+    def __init__(self, shape, dtype):
+        self.shape = shape
+        self.dtype = dtype
+
+    def equals(self, other):
+        return self.shape == other.shape and self.dtype == other.dtype
+
+    def check(self, x):
+        assert tuple(x.size()[1:]) == self.shape
+        assert dtype_of(x) == self.dtype
+
+
 class Layer(object):
     def params(self):
         return []
@@ -12,11 +30,11 @@ class Layer(object):
 
 
 class DataLayer(Layer):
-    def __init__(self, shape):
-        self.shape = shape
+    def __init__(self, form):
+        self.form = form
 
     def forward(self, x):
-        assert tuple(x.size()[1:]) == self.shape
+        self.form.check(x)
         return x
 
 
@@ -54,49 +72,49 @@ class SequenceLayer(Layer):
 
 
 class Spec(object):
-    def build(self, in_shape):
+    def build(self, form=None):
         raise NotImplementedError
 
 
 class DataSpec(Spec):
-    def __init__(self, shape):
-        self.shape = shape
+    def __init__(self, shape, dtype):
+        self.form = Form(shape, dtype)
 
-    def build(self, in_shape=None):
-        if in_shape is None:
-            in_shape = self.shape
+    def build(self, form=None):
+        if form is None:
+            form = self.form
         else:
-            assert in_shape == self.shape
-        return DataLayer(self.shape), in_shape
+            assert self.form.equals(form)
+        return DataLayer(form), form
 
 
 class DenseSpec(Spec):
     def __init__(self, out_dim):
         self.out_dim = out_dim
 
-    def build(self, in_shape):
-        in_dim, = in_shape
+    def build(self, form=None):
+        in_dim, = form.shape
         kernel = np.random.normal(0, 1, (in_dim, self.out_dim))
         bias = np.random.normal(0, 1, (self.out_dim))
         out_shape = (self.out_dim,)
-        return DenseLayer(kernel, bias), out_shape
+        return DenseLayer(kernel, bias), Form(out_shape, form.dtype)
 
 
 class ReLUSpec(Spec):
-    def build(self, in_shape):
-        return ReLULayer(), in_shape
+    def build(self, form=None):
+        return ReLULayer(), form
 
 
 class SequenceSpec(Spec):
     def __init__(self, specs):
         self.specs = specs
 
-    def build(self, in_shape=None):
+    def build(self, form=None):
         layers = []
         for spec in self.specs:
-            layer, in_shape = spec.build(in_shape)
+            layer, form = spec.build(form)
             layers.append(layer)
-        return SequenceLayer(layers), in_shape
+        return SequenceLayer(layers), form
 
 
 class Optimizer(object):
@@ -132,7 +150,7 @@ x = Variable(torch.randn(N, D_in).type(dtype), requires_grad=False)
 y = Variable(torch.randn(N, D_out).type(dtype), requires_grad=False)
 
 model = SequenceSpec([
-    DataSpec((D_in,)),
+    DataSpec((D_in,), 'float32'),
     DenseSpec(H),
     ReLUSpec(),
     DenseSpec(D_out),
