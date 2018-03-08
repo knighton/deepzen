@@ -42,6 +42,19 @@ class Sequence(Layer):
         return x
 
 
+class Optimizer(object):
+    def __init__(self, lr):
+        self.lr = lr
+
+    def set_params(self, params):
+        self.params = params
+
+    def step(self):
+        for param in self.params:
+            param.data -= self.lr * param.grad.data
+            param.grad.data.zero_()
+
+
 def mean_squared_error(true, pred):
     return (true - pred).pow(2).sum()
 
@@ -62,9 +75,11 @@ model = Sequence([
     Dense(w2),
 ])
 
-params = model.params()
-
 learning_rate = 1e-6
+
+opt = Optimizer(learning_rate)
+opt.set_params(model.params())
+
 for t in range(500):
   y_pred = model.forward(x)
   
@@ -73,6 +88,4 @@ for t in range(500):
 
   loss.backward()
 
-  for param in params:
-    param.data -= learning_rate * param.grad.data
-    param.grad.data.zero_()
+  opt.step()
