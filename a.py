@@ -163,11 +163,8 @@ opt = SGD(learning_rate)
 opt.set_params(model.params())
 
 for t in range(500):
-  y_pred = model.forward(x)
-  
-  loss = mean_squared_error(y, y_pred)
-  print(t, loss.data[0])
-
-  loss.backward()
-
-  opt.step()
+    y_pred = model.forward(x)
+    loss = mean_squared_error(y, y_pred)
+    print(t, loss.data[0])
+    loss.backward()
+    opt.step()
