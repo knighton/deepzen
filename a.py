@@ -3,12 +3,19 @@ from torch.autograd import Variable
 
 
 class Layer(object):
-    pass
+    def params(self):
+        return []
+
+    def forward(self, x):
+        raise NotImplementedError
 
 
 class Dense(Layer):
     def __init__(self, kernel):
         self.kernel = kernel
+
+    def params(self):
+        return [self.kernel]
 
     def forward(self, x):
         return x.mm(self.kernel)
@@ -22,6 +29,12 @@ class ReLU(Layer):
 class Sequence(Layer):
     def __init__(self, layers):
         self.layers = layers
+
+    def params(self):
+        params = []
+        for layer in self.layers:
+            params += layer.params()
+        return params
 
     def forward(self, x):
         for layer in self.layers:
@@ -49,6 +62,8 @@ model = Sequence([
     Dense(w2),
 ])
 
+params = model.params()
+
 learning_rate = 1e-6
 for t in range(500):
   y_pred = model.forward(x)
@@ -58,8 +73,6 @@ for t in range(500):
 
   loss.backward()
 
-  w1.data -= learning_rate * w1.grad.data
-  w2.data -= learning_rate * w2.grad.data
-
-  w1.grad.data.zero_()
-  w2.grad.data.zero_()
+  for param in params:
+    param.data -= learning_rate * param.grad.data
+    param.grad.data.zero_()
