@@ -29,6 +29,10 @@ class Sequence(Layer):
         return x
 
 
+def mean_squared_error(true, pred):
+    return (true - pred).pow(2).sum()
+
+
 dtype = torch.FloatTensor
 
 N, D_in, H, D_out = 64, 1000, 100, 10
@@ -49,7 +53,7 @@ learning_rate = 1e-6
 for t in range(500):
   y_pred = model.forward(x)
   
-  loss = (y_pred - y).pow(2).sum()
+  loss = mean_squared_error(y, y_pred)
   print(t, loss.data[0])
 
   loss.backward()
