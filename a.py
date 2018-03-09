@@ -39,6 +39,11 @@ class DataLayer(Layer):
         return x
 
 
+class FlattenLayer(Layer):
+    def forward(self, x):
+        return x.view(x.size()[0], -1)
+
+
 class DenseLayer(Layer):
     def __init__(self, kernel, bias):
         self.kernel = Variable(torch.FloatTensor(kernel), requires_grad=True)
@@ -87,6 +92,12 @@ class DataSpec(Spec):
         else:
             assert self.form.equals(form)
         return DataLayer(form), form
+
+
+class FlattenSpec(Spec):
+    def build(self, form=None):
+        out_shape = int(np.prod(form.shape)),
+        return FlattenLayer(), Form(out_shape, form.dtype)
 
 
 class DenseSpec(Spec):
@@ -140,34 +151,84 @@ class SGD(Optimizer):
 
 
 def mean_squared_error(true, pred):
-    return (true - pred).pow(2).sum()
+    return (true - pred).pow(2).mean()
 
 
-dataset = load_mnist()
+def each_split_batch(split, batch_size):
+    x, y = split
+    num_samples = len(x)
+    indices = np.arange(num_samples)
+    np.random.shuffle(indices)
+    num_batches = num_samples // batch_size
+    for batch in range(num_batches):
+        a = batch * batch_size
+        z = (batch + 1) * batch_size
+        yield x[a:z], y[a:z]
+
+
+def each_dataset_batch(dataset, batch_size):
+    (x_train, y_train), (x_test, y_test) = train, test = dataset
+    num_train = len(x_train)
+    num_test = len(x_test)
+    splits = np.concatenate([np.ones(num_train), np.zeros(num_test)])
+    np.random.shuffle(splits)
+    each_train_batch = each_split_batch(train, batch_size)
+    each_test_batch = each_split_batch(test, batch_size)
+    for split in splits:
+        if split:
+            yield next(each_train_batch), (True,)
+        else:
+            yield next(each_test_batch), (False,)
+
+
+class Model(object):
+    def __init__(self, layer):
+        self.layer = layer
+
+    def fit_on_batch(self, optim, x, y_true):
+        y_pred = self.layer.forward(x)
+        loss = mean_squared_error(y_true, y_pred)
+        loss_value = loss.data[0]
+        loss.backward()
+        optim.step()
+        return loss_value
+
+    def fit_on_epoch(self, optim, dataset, batch_size):
+        losses = []
+        for (x, y), is_training in each_dataset_batch(dataset, batch_size):
+            x = Variable(torch.from_numpy(x), requires_grad=False)
+            y = Variable(torch.from_numpy(y), requires_grad=False)
+            loss = self.fit_on_batch(optim, x, y)
+            losses.append(loss)
+        return np.mean(np.array(losses))
+
+    def fit(self, optim, dataset, epochs, batch_size):
+        optim.set_params(self.layer.params())
+        for epoch in range(epochs):
+            loss = self.fit_on_epoch(optim, dataset, batch_size)
+            print('Epoch %d: %.3f' % (epoch, loss))
+
 
 dtype = torch.FloatTensor
+batch_size = 64
+hidden_dim = 100
+lr = 1e-6
+epochs = 10
 
-N, D_in, H, D_out = 64, 1000, 100, 10
+dataset = load_mnist()
+x_sample = dataset[0][0][0]
+y_sample = dataset[0][1][0]
+y_dim, = y_sample.shape
 
-x = Variable(torch.randn(N, D_in).type(dtype), requires_grad=False)
-y = Variable(torch.randn(N, D_out).type(dtype), requires_grad=False)
-
-model = SequenceSpec([
-    DataSpec((D_in,), 'float32'),
-    DenseSpec(H),
+spec = SequenceSpec([
+    DataSpec(x_sample.shape, x_sample.dtype),
+    FlattenSpec(),
+    DenseSpec(hidden_dim),
     ReLUSpec(),
-    DenseSpec(D_out),
+    DenseSpec(y_dim),
 ])
+layer, out_shape = spec.build()
+model = Model(layer)
 
-model, out_shape = model.build()
-
-learning_rate = 1e-6
-opt = SGD(learning_rate)
-opt.set_params(model.params())
-
-for t in range(500):
-    y_pred = model.forward(x)
-    loss = mean_squared_error(y, y_pred)
-    print(t, loss.data[0])
-    loss.backward()
-    opt.step()
+optim = SGD(lr)
+model.fit(optim, dataset, epochs, batch_size)
