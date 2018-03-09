@@ -2,6 +2,7 @@ import numpy as np
 import torch
 from torch.autograd import Variable
 
+from sunyata.dataset.mnist import load_mnist
 
 def dtype_of(x):
     assert isinstance(x.data, torch.FloatTensor)
@@ -141,6 +142,8 @@ class SGD(Optimizer):
 def mean_squared_error(true, pred):
     return (true - pred).pow(2).sum()
 
+
+dataset = load_mnist()
 
 dtype = torch.FloatTensor
 
