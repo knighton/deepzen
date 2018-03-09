@@ -253,7 +253,6 @@ class Model(object):
 
 dtype = torch.FloatTensor
 batch_size = 64
-hidden_dim = 100
 lr = 1e-3
 epochs = 10
 
@@ -265,7 +264,9 @@ y_dim, = y_sample.shape
 spec = SequenceSpec([
     DataSpec(x_sample.shape, x_sample.dtype),
     FlattenSpec(),
-    DenseSpec(hidden_dim),
+    DenseSpec(256),
+    ReLUSpec(),
+    DenseSpec(64),
     ReLUSpec(),
     DenseSpec(y_dim),
     SoftmaxSpec(),
