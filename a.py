@@ -5,13 +5,68 @@ from torch.nn import functional as F
 
 from sunyata.dataset.mnist import load_mnist
 
-def dtype_of(x):
-    assert isinstance(x.data, torch.FloatTensor)
-    return 'float32'
+
+class Backend(object):
+    def shape(self, x):
+        return tuple(x.size())
+
+    def dtype_of(self, x):
+        assert isinstance(x.data, torch.FloatTensor)
+        return 'float32'
+
+    def flatten(self, x):
+        return x.view(x.size()[0], -1)
+
+    def tensor(self, x):
+        assert isinstance(x, np.ndarray)
+        return torch.from_numpy(x)
+
+    def constant(self, x):
+        assert isinstance(x, torch.FloatTensor)
+        return Variable(x, requires_grad=False)
+
+    def variable(self, x):
+        assert isinstance(x, torch.FloatTensor)
+        return Variable(x, requires_grad=True)
+
+    def matmul(self, a, b):
+        return a.mm(b)
+
+    def clip(self, x, min=-np.inf, max=np.inf):
+        return x.clamp(min, max)
+
+    def softmax(self, x):
+        return F.softmax(x, -1)
+
+    def sub(self, x, decr):
+        x.data -= decr
+
+    def grad(self, x):
+        return x.grad.data
+
+    def zero_grad(self, x):
+        x.grad.data.zero_()
+
+    def pow(self, x, power):
+        return x.pow(power)
+
+    def sum(self, x):
+        return x.sum()
+
+    def log(self, x):
+        return x.log()
+
+    def mean(self, x):
+        return x.mean()
+
+    def equal(self, a, b):
+        return a == b
+
+    def argmax(self, x, axis=-1):
+        return x.max(axis)[1]
 
 
-def softmax(x):
-    return F.softmax(x, -1)
+Z = Backend()
 
 
 class Form(object):
@@ -23,8 +78,8 @@ class Form(object):
         return self.shape == other.shape and self.dtype == other.dtype
 
     def check(self, x):
-        assert tuple(x.size()[1:]) == self.shape
-        assert dtype_of(x) == self.dtype
+        assert Z.shape(x)[1:] == self.shape
+        assert Z.dtype_of(x) == self.dtype
 
 
 class Layer(object):
@@ -46,29 +101,29 @@ class DataLayer(Layer):
 
 class FlattenLayer(Layer):
     def forward(self, x):
-        return x.view(x.size()[0], -1)
+        return Z.flatten(x)
 
 
 class DenseLayer(Layer):
     def __init__(self, kernel, bias):
-        self.kernel = Variable(torch.FloatTensor(kernel), requires_grad=True)
-        self.bias = Variable(torch.FloatTensor(bias), requires_grad=True)
+        self.kernel = Z.variable(Z.tensor(kernel))
+        self.bias = Z.variable(Z.tensor(bias))
 
     def params(self):
         return [self.kernel, self.bias]
 
     def forward(self, x):
-        return x.mm(self.kernel) + self.bias
+        return Z.matmul(x, self.kernel) + self.bias
 
 
 class ReLULayer(Layer):
     def forward(self, x):
-        return x.clamp(min=0)
+        return Z.clip(x, min=0)
 
 
 class SoftmaxLayer(Layer):
     def forward(self, x):
-        return softmax(x)
+        return Z.softmax(x)
 
 
 class SequenceLayer(Layer):
@@ -116,8 +171,9 @@ class DenseSpec(Spec):
 
     def build(self, form=None):
         in_dim, = form.shape
-        kernel = np.random.normal(0, 0.1, (in_dim, self.out_dim))
-        bias = np.zeros(self.out_dim)
+        kernel = np.random.normal(
+            0, 0.1, (in_dim, self.out_dim)).astype('float32')
+        bias = np.zeros(self.out_dim, 'float32')
         out_shape = (self.out_dim,)
         return DenseLayer(kernel, bias), Form(out_shape, form.dtype)
 
@@ -161,28 +217,24 @@ class SGD(Optimizer):
         self.lr = lr
 
     def step_param(self, param):
-        param.data -= self.lr * param.grad.data
-        param.grad.data.zero_()
+        Z.sub(param, self.lr * Z.grad(param))
+        Z.zero_grad(param)
 
 
 def mean_squared_error(true, pred):
-    return (true - pred).pow(2).sum()
+    return Z.sum(Z.pow(true - pred, 2))
 
 
 def categorical_cross_entropy(true, pred):
-    pred = pred.clamp(1e-6, 1 - 1e-6)
-    x = -true * pred.log()
-    return x.mean()
-
-
-def argmax(x, axis=-1):
-    return x.max(axis)[1]
+    pred = Z.clip(pred, 1e-6, 1 - 1e-6)
+    x = -true * Z.log(pred)
+    return Z.mean(x)
 
 
 def categorical_accuracy(true, pred):
-    true_indices = argmax(true, -1)
-    pred_indices = argmax(pred, -1)
-    hits = true_indices == pred_indices
+    true_indices = Z.argmax(true, -1)
+    pred_indices = Z.argmax(pred, -1)
+    hits = Z.equal(true_indices, pred_indices)
     hits = hits.type(torch.FloatTensor)
     return hits.mean()
 
