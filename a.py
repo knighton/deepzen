@@ -1,12 +1,23 @@
 import numpy as np
 import torch
 from torch.autograd import Variable
+from torch.nn import functional as F
 
 from sunyata.dataset.mnist import load_mnist
 
 def dtype_of(x):
     assert isinstance(x.data, torch.FloatTensor)
     return 'float32'
+
+
+def softmax(x):
+    x_shape = x.size()
+    tp = x.transpose(1, len(x_shape) - 1)
+    tp_shape = tp.size()
+    input_2d = tp.contiguous().view(-1, tp_shape[-1])
+    _2d = F.softmax(input_2d)
+    nd = _2d.view(*tp_shape)
+    return nd.transpose(1, len(x_shape) - 1)
 
 
 class Form(object):
@@ -61,6 +72,11 @@ class ReLULayer(Layer):
         return x.clamp(min=0)
 
 
+class SoftmaxLayer(Layer):
+    def forward(self, x):
+        return softmax(x)
+
+
 class SequenceLayer(Layer):
     def __init__(self, layers):
         self.layers = layers
@@ -106,8 +122,8 @@ class DenseSpec(Spec):
 
     def build(self, form=None):
         in_dim, = form.shape
-        kernel = np.random.normal(0, 1, (in_dim, self.out_dim))
-        bias = np.random.normal(0, 1, (self.out_dim))
+        kernel = np.random.normal(0, 0.1, (in_dim, self.out_dim))
+        bias = np.zeros(self.out_dim)
         out_shape = (self.out_dim,)
         return DenseLayer(kernel, bias), Form(out_shape, form.dtype)
 
@@ -127,6 +143,11 @@ class SequenceSpec(Spec):
             layer, form = spec.build(form)
             layers.append(layer)
         return SequenceLayer(layers), form
+
+
+class SoftmaxSpec(Spec):
+    def build(self, form=None):
+        return SoftmaxLayer(), form
 
 
 class Optimizer(object):
@@ -151,7 +172,13 @@ class SGD(Optimizer):
 
 
 def mean_squared_error(true, pred):
-    return (true - pred).pow(2).mean()
+    return (true - pred).pow(2).sum()
+
+
+def categorical_cross_entropy(true, pred):
+    pred = pred.clamp(1e-6, 1 - 1e-6)
+    x = -true * pred.log()
+    return x.mean()
 
 
 def each_split_batch(split, batch_size):
@@ -187,7 +214,7 @@ class Model(object):
 
     def fit_on_batch(self, optim, x, y_true):
         y_pred = self.layer.forward(x)
-        loss = mean_squared_error(y_true, y_pred)
+        loss = categorical_cross_entropy(y_true, y_pred)
         loss_value = loss.data[0]
         loss.backward()
         optim.step()
@@ -212,7 +239,7 @@ class Model(object):
 dtype = torch.FloatTensor
 batch_size = 64
 hidden_dim = 100
-lr = 1e-6
+lr = 1e-3
 epochs = 10
 
 dataset = load_mnist()
@@ -226,6 +253,7 @@ spec = SequenceSpec([
     DenseSpec(hidden_dim),
     ReLUSpec(),
     DenseSpec(y_dim),
+    SoftmaxSpec(),
 ])
 layer, out_shape = spec.build()
 model = Model(layer)
