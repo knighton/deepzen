@@ -181,6 +181,18 @@ def categorical_cross_entropy(true, pred):
     return x.mean()
 
 
+def argmax(x, axis=-1):
+    return x.max(axis)[1]
+
+
+def categorical_accuracy(true, pred):
+    true_indices = argmax(true, -1)
+    pred_indices = argmax(pred, -1)
+    hits = true_indices == pred_indices
+    hits = hits.type(torch.FloatTensor)
+    return hits.mean()
+
+
 def each_split_batch(split, batch_size):
     x, y = split
     num_samples = len(x)
@@ -216,24 +228,27 @@ class Model(object):
         y_pred = self.layer.forward(x)
         loss = categorical_cross_entropy(y_true, y_pred)
         loss_value = loss.data[0]
+        acc_value = categorical_accuracy(y_true, y_pred).data[0]
         loss.backward()
         optim.step()
-        return loss_value
+        return loss_value, acc_value
 
     def fit_on_epoch(self, optim, dataset, batch_size):
         losses = []
+        accs = []
         for (x, y), is_training in each_dataset_batch(dataset, batch_size):
             x = Variable(torch.from_numpy(x), requires_grad=False)
             y = Variable(torch.from_numpy(y), requires_grad=False)
-            loss = self.fit_on_batch(optim, x, y)
+            loss, acc = self.fit_on_batch(optim, x, y)
             losses.append(loss)
-        return np.mean(np.array(losses))
+            accs.append(acc)
+        return np.mean(np.array(losses)), np.mean(np.array(accs))
 
     def fit(self, optim, dataset, epochs, batch_size):
         optim.set_params(self.layer.params())
         for epoch in range(epochs):
-            loss = self.fit_on_epoch(optim, dataset, batch_size)
-            print('Epoch %d: %.3f' % (epoch, loss))
+            loss, acc = self.fit_on_epoch(optim, dataset, batch_size)
+            print('Epoch %d: loss %.3f acc %.3f%%' % (epoch, loss, acc * 100))
 
 
 dtype = torch.FloatTensor
