@@ -1,3 +1,4 @@
+from contextlib import contextmanager
 import numpy as np
 import mxnet as mx
 import torch
@@ -37,6 +38,11 @@ class MXNetBackend(object):
         x = x.copy()
         x.attach_grad()
         return x
+
+    @contextmanager
+    def autograd_record(self):
+        with mx.autograd.record():
+            yield
 
     def tensor_to_numpy(self, x):
         return x.asnumpy()
@@ -115,6 +121,10 @@ class PyTorchBackend(object):
         assert isinstance(x, self.FLOAT32)
         return Variable(x, requires_grad=True)
 
+    @contextmanager
+    def autograd_record(self):
+        yield
+
     def tensor_to_numpy(self, x):
         if x.is_cuda:
             return x.cpu().numpy()
@@ -168,8 +178,8 @@ class PyTorchBackend(object):
         return x.max(axis)[1]
 
 
-Z = MXNetBackend()
-#Z = PyTorchBackend()
+# Z = MXNetBackend()
+Z = PyTorchBackend()
 
 
 class Form(object):
@@ -373,7 +383,7 @@ class Model(object):
         self.layer = layer
 
     def train_on_batch(self, optim, x, y_true):
-        with mx.autograd.record():
+        with Z.autograd_record():
             y_pred = self.layer.forward(x)
             loss = categorical_cross_entropy(y_true, y_pred)
         acc = categorical_accuracy(y_true, y_pred)
