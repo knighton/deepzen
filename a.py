@@ -39,6 +39,12 @@ class MXNetBackend(object):
         x.attach_grad()
         return x
 
+    def zeros_like(self, x):
+        return mx.nd.zeros_like(x)
+
+    def ones_like(self, x):
+        return mx.nd.ones_like(x)
+
     @contextmanager
     def autograd_record(self):
         with mx.autograd.record():
@@ -120,6 +126,24 @@ class PyTorchBackend(object):
     def variable(self, x):
         assert isinstance(x, self.FLOAT32)
         return Variable(x, requires_grad=True)
+
+    def zeros_like(self, x):
+        if isinstance(x, Variable):
+            x = x.data
+        assert isinstance(x, self.FLOAT32)
+        if x.is_cuda:
+            return torch.zeros_like(x).cuda()
+        else:
+            return torch.zeros_like(x)
+
+    def ones_like(self, x):
+        if isinstance(x, Variable):
+            x = x.data
+        assert isinstance(x, self.FLOAT32)
+        if x.is_cuda:
+            return torch.ones_like(x).cuda()
+        else:
+            return torch.ones_like(x)
 
     @contextmanager
     def autograd_record(self):
@@ -317,6 +341,9 @@ class Optimizee(object):
     def __init__(self, **kwargs):
         self.__dict__.update(kwargs)
 
+    def grad(self):
+        return Z.grad(self.data)
+
 
 class Optimizer(object):
     def set_params(self, xx):
@@ -334,19 +361,45 @@ class Optimizer(object):
 
 
 class SGD(Optimizer):
-    def __init__(self, lr=1e-2):
+    def __init__(self, lr=0.05):
         super().__init__()
         assert 0 < lr
         self.lr = lr
 
     def make_env(self, param):
         return {
-            'param': param,
+            'data': param,
             'lr': self.lr,
         }
 
     def step_one(self, env):
-        Z.assign_sub(env.param, env.lr * Z.grad(env.param))
+        Z.assign_sub(env.data, env.lr * env.grad())
+
+
+def momentum(momentum, old_value, new_value):
+    return momentum * old_value + (1 - momentum) * new_value
+
+
+class SGDM(Optimizer):
+    def __init__(self, lr=0.05, momentum=0.9):
+        super().__init__()
+        assert 0 < lr
+        assert 0 <= momentum <= 1
+        self.lr = lr
+        self.momentum = momentum
+
+    def make_env(self, param):
+        return {
+            'data': param,
+            'lr': self.lr,
+            'momentum': self.momentum,
+            'velocity': Z.zeros_like(param),
+        }
+
+    def step_one(self, env):
+        self.velocity = momentum(
+            env.momentum, env.velocity, env.lr * env.grad())
+        Z.assign_sub(env.data, self.velocity)
 
 
 def mean_squared_error(true, pred):
@@ -439,7 +492,6 @@ class Model(object):
 
 
 batch_size = 64
-lr = 1e-3
 epochs = 10
 
 dataset = load_mnist()
@@ -460,5 +512,5 @@ spec = SequenceSpec([
 layer, out_shape = spec.build()
 model = Model(layer)
 
-optim = SGD(lr)
+optim = SGDM(lr=0.05, momentum=0.9)
 model.fit(optim, dataset, epochs, batch_size)
