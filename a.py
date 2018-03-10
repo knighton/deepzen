@@ -363,16 +363,16 @@ def each_dataset_batch(dataset, batch_size):
     each_test_batch = each_split_batch(test, batch_size)
     for split in splits:
         if split:
-            yield next(each_train_batch), (True,)
+            yield next(each_train_batch), True
         else:
-            yield next(each_test_batch), (False,)
+            yield next(each_test_batch), False
 
 
 class Model(object):
     def __init__(self, layer):
         self.layer = layer
 
-    def fit_on_batch(self, optim, x, y_true):
+    def train_on_batch(self, optim, x, y_true):
         with mx.autograd.record():
             y_pred = self.layer.forward(x)
             loss = categorical_cross_entropy(y_true, y_pred)
@@ -383,15 +383,26 @@ class Model(object):
         optim.step()
         return loss_value, acc_value
 
+    def test_on_batch(self, x, y_true):
+        y_pred = self.layer.forward(x)
+        loss = categorical_cross_entropy(y_true, y_pred)
+        acc = categorical_accuracy(y_true, y_pred)
+        loss_value = Z.variable_to_numpy(loss)[0]
+        acc_value = Z.variable_to_numpy(acc)[0]
+        return loss_value, acc_value
+
     def fit_on_epoch(self, optim, dataset, batch_size):
         losses = []
         accs = []
         for (x, y), is_training in each_dataset_batch(dataset, batch_size):
             x = Z.constant(Z.tensor(x))
             y = Z.constant(Z.tensor(y))
-            loss, acc = self.fit_on_batch(optim, x, y)
-            losses.append(loss)
-            accs.append(acc)
+            if is_training:
+                loss, acc = self.train_on_batch(optim, x, y)
+            else:
+                loss, acc = self.test_on_batch(x, y)
+                losses.append(loss)
+                accs.append(acc)
         return np.mean(np.array(losses)), np.mean(np.array(accs))
 
     def fit(self, optim, dataset, epochs, batch_size):
