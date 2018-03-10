@@ -62,7 +62,7 @@ class MXNetBackend(object):
     def softmax(self, x):
         return mx.nd.softmax(x)
 
-    def update_sub(self, x, decr):
+    def assign_sub(self, x, decr):
         x -= decr
         if x.grad is not None:
             x.grad[:] = 0
@@ -93,7 +93,7 @@ class MXNetBackend(object):
 
 
 class PyTorchBackend(object):
-    FLOAT32 = torch.cuda.FloatTensor
+    FLOAT32 = torch.FloatTensor
 
     def shape(self, x):
         return tuple(x.size())
@@ -152,7 +152,7 @@ class PyTorchBackend(object):
     def softmax(self, x):
         return F.softmax(x, -1)
 
-    def update_sub(self, x, decr):
+    def assign_sub(self, x, decr):
         x.data -= decr
         x.grad.data.zero_()
 
@@ -313,24 +313,40 @@ class SoftmaxSpec(Spec):
         return SoftmaxLayer(), form
 
 
-class Optimizer(object):
-    def set_params(self, params):
-        self.params = params
+class Optimizee(object):
+    def __init__(self, **kwargs):
+        self.__dict__.update(kwargs)
 
-    def step_param(self, param):
+
+class Optimizer(object):
+    def set_params(self, xx):
+        self.envs = [Optimizee(**self.make_env(x)) for x in xx]
+
+    def make_env(self, x):
+        raise NotImplementedError
+
+    def step_one(self, env):
         raise NotImplementedError
 
     def step(self):
-        for param in self.params:
-            self.step_param(param)
+        for env in self.envs:
+            self.step_one(env)
 
 
 class SGD(Optimizer):
-    def __init__(self, lr):
+    def __init__(self, lr=1e-2):
+        super().__init__()
+        assert 0 < lr
         self.lr = lr
 
-    def step_param(self, param):
-        Z.update_sub(param, self.lr * Z.grad(param))
+    def make_env(self, param):
+        return {
+            'param': param,
+            'lr': self.lr,
+        }
+
+    def step_one(self, env):
+        Z.assign_sub(env.param, env.lr * Z.grad(env.param))
 
 
 def mean_squared_error(true, pred):
