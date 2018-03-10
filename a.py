@@ -6,30 +6,33 @@ from torch.nn import functional as F
 from sunyata.dataset.mnist import load_mnist
 
 
-DTYPE = torch.cuda.FloatTensor
-
-
 class Backend(object):
+    FLOAT32 = torch.cuda.FloatTensor
+
     def shape(self, x):
         return tuple(x.size())
 
     def dtype_of(self, x):
-        assert isinstance(x.data, DTYPE)
+        assert isinstance(x.data, self.FLOAT32)
         return 'float32'
+
+    def cast(self, x, dtype):
+        assert dtype == 'float32'
+        return x.type(self.FLOAT32)
 
     def flatten(self, x):
         return x.view(x.size()[0], -1)
 
     def tensor(self, x):
         assert isinstance(x, np.ndarray)
-        return torch.from_numpy(x).type(DTYPE)
+        return torch.from_numpy(x).type(self.FLOAT32)
 
     def constant(self, x):
-        assert isinstance(x, DTYPE)
+        assert isinstance(x, self.FLOAT32)
         return Variable(x, requires_grad=False)
 
     def variable(self, x):
-        assert isinstance(x, DTYPE)
+        assert isinstance(x, self.FLOAT32)
         return Variable(x, requires_grad=True)
 
     def matmul(self, a, b):
@@ -238,7 +241,7 @@ def categorical_accuracy(true, pred):
     true_indices = Z.argmax(true, -1)
     pred_indices = Z.argmax(pred, -1)
     hits = Z.equal(true_indices, pred_indices)
-    hits = hits.type(DTYPE)
+    hits = Z.cast(hits, 'float32')
     return hits.mean()
 
 
