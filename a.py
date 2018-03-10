@@ -1,4 +1,5 @@
 import numpy as np
+import mxnet as mx
 import torch
 from torch.autograd import Variable
 from torch.nn import functional as F
@@ -7,6 +8,85 @@ from sunyata.dataset.mnist import load_mnist
 
 
 class Backend(object):
+    pass
+
+
+class MXNetBackend(object):
+    def shape(self, x):
+        return x.shape
+
+    def dtype_of(self, x):
+        return x.dtype.__name__
+
+    def cast(self, x, dtype):
+        return x.astype(dtype)
+
+    def flatten(self, x):
+        return mx.nd.flatten(x)
+
+    def tensor(self, x):
+        assert isinstance(x, np.ndarray)
+        return mx.nd.array(x)
+
+    def constant(self, x):
+        assert isinstance(x, mx.nd.NDArray)
+        return x.copy()
+
+    def variable(self, x):
+        assert isinstance(x, mx.nd.NDArray)
+        x = x.copy()
+        x.attach_grad()
+        return x
+
+    def tensor_to_numpy(self, x):
+        return x.asnumpy()
+
+    def constant_to_numpy(self, x):
+        return x.asnumpy()
+
+    def variable_to_numpy(self, x):
+        return x.asnumpy()
+
+    def matmul(self, a, b):
+        return mx.nd.dot(a, b)
+
+    def clip(self, x, min=-np.inf, max=np.inf):
+        return mx.nd.clip(x, min, max)
+
+    def softmax(self, x):
+        return mx.nd.softmax(x)
+
+    def update_sub(self, x, decr):
+        x -= decr
+        if x.grad is not None:
+            x.grad[:] = 0
+
+    def data(self, x):
+        return x[:]
+
+    def grad(self, x):
+        return x.grad
+
+    def pow(self, x, power):
+        return x ** power
+
+    def sum(self, x):
+        return mx.nd.sum(x)
+
+    def log(self, x):
+        return mx.nd.log(x)
+
+    def mean(self, x):
+        return mx.nd.mean(x)
+
+    def equal(self, a, b):
+        return mx.nd.equal(a, b)
+
+    def argmax(self, x, axis=-1):
+        return mx.nd.argmax(x, axis)
+
+
+class PyTorchBackend(object):
     FLOAT32 = torch.cuda.FloatTensor
 
     def shape(self, x):
@@ -35,6 +115,24 @@ class Backend(object):
         assert isinstance(x, self.FLOAT32)
         return Variable(x, requires_grad=True)
 
+    def tensor_to_numpy(self, x):
+        if x.is_cuda:
+            return x.cpu().numpy()
+        else:
+            return x.numpy()
+
+    def constant_to_numpy(self, x):
+        if x.data.is_cuda:
+            return x.data.cpu().numpy()
+        else:
+            return x.data.numpy()
+
+    def variable_to_numpy(self, x):
+        if x.data.is_cuda:
+            return x.data.cpu().numpy()
+        else:
+            return x.data.numpy()
+
     def matmul(self, a, b):
         return a.mm(b)
 
@@ -44,14 +142,12 @@ class Backend(object):
     def softmax(self, x):
         return F.softmax(x, -1)
 
-    def sub(self, x, decr):
+    def update_sub(self, x, decr):
         x.data -= decr
+        x.grad.data.zero_()
 
     def grad(self, x):
         return x.grad.data
-
-    def zero_grad(self, x):
-        x.grad.data.zero_()
 
     def pow(self, x, power):
         return x.pow(power)
@@ -72,7 +168,8 @@ class Backend(object):
         return x.max(axis)[1]
 
 
-Z = Backend()
+Z = MXNetBackend()
+#Z = PyTorchBackend()
 
 
 class Form(object):
@@ -223,8 +320,7 @@ class SGD(Optimizer):
         self.lr = lr
 
     def step_param(self, param):
-        Z.sub(param, self.lr * Z.grad(param))
-        Z.zero_grad(param)
+        Z.update_sub(param, self.lr * Z.grad(param))
 
 
 def mean_squared_error(true, pred):
@@ -277,10 +373,12 @@ class Model(object):
         self.layer = layer
 
     def fit_on_batch(self, optim, x, y_true):
-        y_pred = self.layer.forward(x)
-        loss = categorical_cross_entropy(y_true, y_pred)
-        loss_value = loss.data[0]
-        acc_value = categorical_accuracy(y_true, y_pred).data[0]
+        with mx.autograd.record():
+            y_pred = self.layer.forward(x)
+            loss = categorical_cross_entropy(y_true, y_pred)
+        acc = categorical_accuracy(y_true, y_pred)
+        loss_value = Z.variable_to_numpy(loss)[0]
+        acc_value = Z.variable_to_numpy(acc)[0]
         loss.backward()
         optim.step()
         return loss_value, acc_value
