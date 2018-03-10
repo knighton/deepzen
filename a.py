@@ -6,12 +6,15 @@ from torch.nn import functional as F
 from sunyata.dataset.mnist import load_mnist
 
 
+DTYPE = torch.cuda.FloatTensor
+
+
 class Backend(object):
     def shape(self, x):
         return tuple(x.size())
 
     def dtype_of(self, x):
-        assert isinstance(x.data, torch.FloatTensor)
+        assert isinstance(x.data, DTYPE)
         return 'float32'
 
     def flatten(self, x):
@@ -19,14 +22,14 @@ class Backend(object):
 
     def tensor(self, x):
         assert isinstance(x, np.ndarray)
-        return torch.from_numpy(x)
+        return torch.from_numpy(x).type(DTYPE)
 
     def constant(self, x):
-        assert isinstance(x, torch.FloatTensor)
+        assert isinstance(x, DTYPE)
         return Variable(x, requires_grad=False)
 
     def variable(self, x):
-        assert isinstance(x, torch.FloatTensor)
+        assert isinstance(x, DTYPE)
         return Variable(x, requires_grad=True)
 
     def matmul(self, a, b):
@@ -235,7 +238,7 @@ def categorical_accuracy(true, pred):
     true_indices = Z.argmax(true, -1)
     pred_indices = Z.argmax(pred, -1)
     hits = Z.equal(true_indices, pred_indices)
-    hits = hits.type(torch.FloatTensor)
+    hits = hits.type(DTYPE)
     return hits.mean()
 
 
@@ -283,8 +286,8 @@ class Model(object):
         losses = []
         accs = []
         for (x, y), is_training in each_dataset_batch(dataset, batch_size):
-            x = Variable(torch.from_numpy(x), requires_grad=False)
-            y = Variable(torch.from_numpy(y), requires_grad=False)
+            x = Z.constant(Z.tensor(x))
+            y = Z.constant(Z.tensor(y))
             loss, acc = self.fit_on_batch(optim, x, y)
             losses.append(loss)
             accs.append(acc)
@@ -297,7 +300,6 @@ class Model(object):
             print('Epoch %d: loss %.3f acc %.3f%%' % (epoch, loss, acc * 100))
 
 
-dtype = torch.FloatTensor
 batch_size = 64
 lr = 1e-3
 epochs = 10
