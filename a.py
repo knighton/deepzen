@@ -1,4 +1,5 @@
 from contextlib import contextmanager
+import json
 import numpy as np
 import mxnet as mx
 import torch
@@ -471,24 +472,38 @@ class Model(object):
         return loss_value, acc_value
 
     def fit_on_epoch(self, optim, dataset, batch_size):
-        losses = []
-        accs = []
+        train_losses = []
+        train_accs = []
+        test_losses = []
+        test_accs = []
         for (x, y), is_training in each_dataset_batch(dataset, batch_size):
             x = Z.constant(Z.tensor(x))
             y = Z.constant(Z.tensor(y))
             if is_training:
                 loss, acc = self.train_on_batch(optim, x, y)
+                train_losses.append(loss)
+                train_accs.append(acc)
             else:
                 loss, acc = self.test_on_batch(x, y)
-                losses.append(loss)
-                accs.append(acc)
-        return np.mean(np.array(losses)), np.mean(np.array(accs))
+                test_losses.append(loss)
+                test_accs.append(acc)
+        train_loss = float(np.mean(train_losses))
+        train_acc = float(np.mean(train_accs))
+        test_loss = float(np.mean(test_losses))
+        test_acc = float(np.mean(test_accs))
+        return {
+            'train_loss': train_loss,
+            'train_acc': train_acc,
+            'test_loss': test_loss,
+            'test_acc': test_acc,
+        }
 
     def fit(self, optim, dataset, epochs, batch_size):
         optim.set_params(self.layer.params())
         for epoch in range(epochs):
-            loss, acc = self.fit_on_epoch(optim, dataset, batch_size)
-            print('Epoch %d: loss %.3f acc %.3f%%' % (epoch, loss, acc * 100))
+            ret = self.fit_on_epoch(optim, dataset, batch_size)
+            ret['epoch'] = epoch
+            print(json.dumps(ret, indent=4, sort_keys=True))
 
 
 batch_size = 64
