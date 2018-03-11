@@ -18,8 +18,8 @@ class Dataset(object):
             num_batches += self.test.num_batches(batch_size)
         return num_batches
 
-    def shapes(self):
-        return self.train.shapes()
+    def shapes(self, batch_size=None):
+        return self.train.shapes(batch_size)
 
     def dtypes(self):
         return self.train.dtypes()
