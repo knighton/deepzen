@@ -1,13 +1,8 @@
 import json
 import numpy as np
 
-# from sunyata.backend.mxnet import MXNetBackend
-from sunyata.backend.pytorch import PyTorchBackend
+from sunyata import backend as Z
 from sunyata.dataset.mnist import load_mnist
-
-
-# Z = MXNetBackend()
-Z = PyTorchBackend()
 
 
 class Form(object):
