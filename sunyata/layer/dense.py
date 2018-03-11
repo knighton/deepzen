@@ -8,8 +8,8 @@ from .base.spec import Spec
 
 class DenseLayer(Layer):
     def __init__(self, kernel, bias):
-        self.kernel = Z.variable(Z.tensor(kernel))
-        self.bias = Z.variable(Z.tensor(bias))
+        self.kernel = Z.numpy_to_variable(kernel)
+        self.bias = Z.numpy_to_variable(bias)
 
     def params(self):
         return [self.kernel, self.bias]

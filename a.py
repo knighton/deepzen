@@ -2,6 +2,8 @@ import json
 import numpy as np
 
 from sunyata import backend as Z
+from sunyata.crit.loss import CategoricalCrossEntropy
+from sunyata.crit.metric import CategoricalAccuracy
 from sunyata.dataset.mnist import load_mnist
 from sunyata.layer import *  # noqa
 from sunyata.model import Model
@@ -29,4 +31,5 @@ spec = SequenceSpec([
 model = Model(spec)
 
 optim = SGDM(lr=0.05, momentum=0.9)
-model.fit(optim, dataset, epochs, batch_size)
+loss_and_metrics = [CategoricalCrossEntropy(), CategoricalAccuracy()]
+model.fit(optim, loss_and_metrics, dataset, epochs, batch_size)

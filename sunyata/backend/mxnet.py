@@ -18,22 +18,44 @@ class MXNetBackend(object):
     def flatten(self, x):
         return mx.nd.flatten(x)
 
-    def tensor(self, x):
+    def numpy_to_tensor(self, x):
         assert isinstance(x, np.ndarray)
         return mx.nd.array(x)
 
-    def constant(self, x):
+    def numpy_to_constant(self, x):
+        assert isinstance(x, np.ndarray)
+        return mx.nd.array(x)
+
+    def numpy_to_variable(self, x):
+        assert isinstance(x, np.ndarray)
+        x = mx.nd.array(x)
+        x.attach_grad()
+        return x
+
+    def tensor_to_numpy(self, x):
+        assert isinstance(x, mx.nd.NDArray)
+        return x.asnumpy()
+
+    def tensor_to_constant(self, x):
         assert isinstance(x, mx.nd.NDArray)
         return x.copy()
 
-    def variable(self, x):
+    def tensor_to_variable(self, x):
         assert isinstance(x, mx.nd.NDArray)
         x = x.copy()
         x.attach_grad()
         return x
 
+    def zeros(self, shape, dtype):
+        assert dtype == 'float32'
+        return mx.nd.zeros(shape)
+
     def zeros_like(self, x):
         return mx.nd.zeros_like(x)
+
+    def ones(self, shape, dtype):
+        assert dtype == 'float32'
+        return mx.nd.ones(shape)
 
     def ones_like(self, x):
         return mx.nd.ones_like(x)
@@ -43,8 +65,8 @@ class MXNetBackend(object):
         with mx.autograd.record():
             yield
 
-    def tensor_to_numpy(self, x):
-        return x.asnumpy()
+    def backward(self, loss_variables, grad_tensors):
+        mx.autograd.backward(loss_variables, grad_tensors)
 
     def constant_to_numpy(self, x):
         return x.asnumpy()
