@@ -1,24 +1,23 @@
 from ... import backend as Z
 
 
-class Optimizee(object):
+class OptimizerContext(object):
     def __init__(self, **kwargs):
         self.__dict__.update(kwargs)
 
-    def grad(self):
-        return Z.grad(self.data)
-
 
 class Optimizer(object):
-    def set_params(self, xx):
-        self.envs = [Optimizee(**self.make_env(x)) for x in xx]
+    def set_params(self, params):
+        self.params = params
+        self.contexts = \
+            [OptimizerContext(**self.make_optim_context(x)) for x in params]
 
-    def make_env(self, x):
+    def make_optim_context(self, param):
         raise NotImplementedError
 
-    def step_one(self, env):
+    def step_one(self, data, grad, ctx):
         raise NotImplementedError
 
     def step(self):
-        for env in self.envs:
-            self.step_one(env)
+        for param, context in zip(self.params, self.contexts):
+            self.step_one(param, Z.grad(param), context)

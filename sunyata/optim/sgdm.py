@@ -14,15 +14,14 @@ class SGDM(Optimizer):
         self.lr = lr
         self.momentum = momentum
 
-    def make_env(self, param):
+    def make_optim_context(self, param):
         return {
-            'data': param,
             'lr': self.lr,
             'momentum': self.momentum,
             'velocity': Z.zeros_like(param),
         }
 
-    def step_one(self, env):
+    def step_one(self, data, grad, ctx):
         self.velocity = set_with_momentum(
-            env.momentum, env.velocity, env.lr * env.grad())
-        Z.assign_sub(env.data, self.velocity)
+            ctx.momentum, ctx.velocity, ctx.lr * grad)
+        Z.assign_sub(data, self.velocity)

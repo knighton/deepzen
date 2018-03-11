@@ -8,11 +8,10 @@ class SGD(Optimizer):
         assert 0 < lr
         self.lr = lr
 
-    def make_env(self, param):
+    def make_optim_context(self, param):
         return {
-            'data': param,
             'lr': self.lr,
         }
 
-    def step_one(self, env):
-        Z.assign_sub(env.data, env.lr * env.grad())
+    def step_one(self, data, grad, ctx):
+        Z.assign_sub(data, ctx.lr * grad)
