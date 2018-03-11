@@ -1,4 +1,5 @@
 from .. import backend as Z
+from ..util.dataset import is_sample_one_scalar
 
 
 class Metric(object):
@@ -15,13 +16,17 @@ class CategoricalAccuracy(object):
         return Z.mean(hits)
 
 
-def unpack_metric(x, y_shapes):
-    if isinstance(x, Metric):
-        return x
+def unpack_metric(metric, y_sample_shape):
+    if isinstance(metric, Metric):
+        return metric
 
-    # TODO: bin/cat.
+    if metric in {'acc', 'accuracy'}:
+        if is_sample_one_scalar(y_sample_shape):
+            metric = 'binary_accuracy'
+        else:
+            metric = 'categorical_accuracy'
 
     klass = {
         'categorical_accuracy': CategoricalAccuracy,
-    }[x]
+    }[metric]
     return klass()

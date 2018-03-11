@@ -1,3 +1,6 @@
+import numpy as np
+
+
 def train_test_split(x, y, val):
     """
     Perform a training/test split.
@@ -19,3 +22,7 @@ def train_test_split(x, y, val):
     x_test = x[:split]
     y_test = y[:split]
     return (x_train, y_train), (x_test, y_test)
+
+
+def is_sample_one_scalar(shape):
+    return np.prod((1,) + shape) == 1

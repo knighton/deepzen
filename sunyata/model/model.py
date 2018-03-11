@@ -35,33 +35,34 @@ class Model(object):
         return Dataset(train, test)
 
     @classmethod
-    def _parse_crit_str(cls, s):
+    def _parse_crit_lists_str(cls, s):
         ss = s.split(' ')
         return [s.split(',') for s in ss]
 
     @classmethod
-    def _unpack_loss_and_metrics(cls, x, y_shapes):
-        if not isinstance(x, (list, tuple)):
-            x = [x]
+    def _unpack_loss_and_metrics(cls, arg, y_sample_shape):
+        if not isinstance(arg, (list, tuple)):
+            arg = [arg]
         crits = []
-        crits.append(unpack_loss(x[0], y_shapes))
-        for item in x[1:]:
-            crits.append(unpack_metric(item, y_shapes))
+        crits.append(unpack_loss(arg[0], y_sample_shape))
+        for item in arg[1:]:
+            crits.append(unpack_metric(item, y_sample_shape))
         return crits
 
     @classmethod
-    def _unpack_crit(cls, x, y_shapes):
-        if isinstance(x, str):
-            if ' ' in x or ',' in x:
-                x = cls._parse_crit_str(x)
+    def _unpack_crit_lists(cls, arg, y_sample_shapes):
+        if isinstance(arg, str):
+            if ' ' in arg or ',' in arg:
+                arg = cls._parse_crit_lists_str(arg)
             else:
-                x = [x]
-        crit = []
-        for each in x:
+                arg = [arg]
+        crit_lists = []
+        assert len(arg) == len(y_sample_shapes)
+        for item, y_sample_shape in zip(arg, y_sample_shapes):
             loss_and_metrics = \
-                cls._unpack_loss_and_metrics(each, y_shapes)
-            crit.append(loss_and_metrics)
-        return crit
+                cls._unpack_loss_and_metrics(item, y_sample_shape)
+            crit_lists.append(loss_and_metrics)
+        return crit_lists
 
     def __init__(self, spec):
         self.spec = spec
@@ -137,8 +138,8 @@ class Model(object):
     def fit(self, crit, data, test_frac=None, optim='sgd', batch=64,
             epoch_offset=0, epochs=10):
         data = self._unpack_dataset(data, test_frac)
-        y_shapes = data.shapes(batch)[0]
-        crit = self._unpack_crit(crit, y_shapes)
+        y_sample_shapes = data.shapes()[0]
+        crit_lists = self._unpack_crit_lists(crit, y_sample_shapes)
         optim = unpack_optim(optim)
         assert isinstance(batch, int)
         assert 0 < batch
@@ -148,7 +149,7 @@ class Model(object):
         assert 0 <= epochs
         optim.set_params(self.layer.params())
         for epoch in range(epoch_offset, epoch_offset + epochs):
-            train, test = self._fit_epoch(crit, data, optim, batch)
+            train, test = self._fit_epoch(crit_lists, data, optim, batch)
             d = {
                 'epoch': epoch,
                 'train': train,
@@ -166,6 +167,6 @@ class Model(object):
     @require_kwargs_after(2)
     def fit_clf(self, data, test_frac=None, optim='sgd', batch=64,
                 epoch_offset=0, epochs=10):
-        crit = [['categorical_cross_entropy', 'categorical_accuracy']]  # TODO
+        crit = [['cross_entropy', 'accuracy']]
         return self.fit(crit, data, test_frac=test_frac, optim=optim,
                         batch=batch, epoch_offset=epoch_offset, epochs=epochs)

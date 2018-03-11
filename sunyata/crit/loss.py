@@ -1,4 +1,5 @@
 from .. import backend as Z
+from ..util.dataset import is_sample_one_scalar
 from .metric import Metric
 
 
@@ -19,14 +20,23 @@ class CategoricalCrossEntropy(Metric):
         return Z.mean(x)
 
 
-def unpack_loss(x, y_shapes):
-    if isinstance(x, Loss):
-        return x
+def unpack_loss(loss, y_sample_shape):
+    if isinstance(loss, Loss):
+        return loss
 
-    # TODO: bin/cat.
+    if loss in {'xe', 'cross_entropy'}:
+        if is_sample_one_scalar(y_sample_shape):
+            loss = 'binary_cross_entropy'
+        else:
+            loss = 'categorical_cross_entropy'
+    elif loss in {'acc', 'accuracy'}:
+        if is_sample_one_scalar(y_sample_shape):
+            loss = 'binary_accuracy'
+        else:
+            loss = 'categorical_accuracy'
 
     klass = {
         'mean_squared_error': MeanSquaredError,
         'categorical_cross_entropy': CategoricalCrossEntropy,
-    }[x]
+    }[loss]
     return klass()
