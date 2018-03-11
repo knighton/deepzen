@@ -29,11 +29,6 @@ def unpack_loss(loss, y_sample_shape):
             loss = 'binary_cross_entropy'
         else:
             loss = 'categorical_cross_entropy'
-    elif loss in {'acc', 'accuracy'}:
-        if is_sample_one_scalar(y_sample_shape):
-            loss = 'binary_accuracy'
-        else:
-            loss = 'categorical_accuracy'
 
     klass = {
         'mean_squared_error': MeanSquaredError,
