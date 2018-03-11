@@ -7,24 +7,8 @@ from sunyata.iter.dataset import Dataset
 from sunyata.iter.ram_split import RamSplit
 from sunyata.layer import *  # noqa
 from sunyata.optim import *  # noqa
-
-
-def mean_squared_error(true, pred):
-    return Z.sum(Z.pow(true - pred, 2))
-
-
-def categorical_cross_entropy(true, pred):
-    pred = Z.clip(pred, 1e-6, 1 - 1e-6)
-    x = -true * Z.log(pred)
-    return Z.mean(x)
-
-
-def categorical_accuracy(true, pred):
-    true_indices = Z.argmax(true, -1)
-    pred_indices = Z.argmax(pred, -1)
-    hits = Z.equal(true_indices, pred_indices)
-    hits = Z.cast(hits, 'float32')
-    return hits.mean()
+from sunyata.crit.loss import categorical_cross_entropy
+from sunyata.crit.metric import categorical_accuracy
 
 
 class Model(object):
