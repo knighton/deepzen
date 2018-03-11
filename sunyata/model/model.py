@@ -2,11 +2,67 @@ import json
 import numpy as np
 
 from .. import backend as Z
+from ..crit.loss import unpack_loss
+from ..crit.metric import unpack_metric
 from ..iter.dataset import Dataset
 from ..iter.ram_split import RamSplit
+from ..iter.split import Split
+from ..optim import unpack_optim
+from ..util.py import require_kwargs_after
 
 
 class Model(object):
+    @classmethod
+    def _unpack_split(cls, split):
+        if isinstance(split, Split):
+            return split
+
+        xx, yy = split
+        return RamSplit(xx, yy)
+
+    @classmethod
+    def _unpack_dataset(cls, dataset, test_frac=None):
+        if isinstance(dataset, Dataset):
+            assert test_frac is None
+            return dataset
+
+        if test_frac is not None:
+            assert False, 'TODO: Perform train/test split.'
+
+        train, test = dataset
+        train = cls._unpack_split(train)
+        test = cls._unpack_split(test)
+        return Dataset(train, test)
+
+    @classmethod
+    def _parse_crit_str(cls, s):
+        ss = s.split(' ')
+        return [s.split(',') for s in ss]
+
+    @classmethod
+    def _unpack_loss_and_metrics(cls, x, y_shapes):
+        if not isinstance(x, (list, tuple)):
+            x = [x]
+        crits = []
+        crits.append(unpack_loss(x[0], y_shapes))
+        for item in x[1:]:
+            crits.append(unpack_metric(item, y_shapes))
+        return crits
+
+    @classmethod
+    def _unpack_crit(cls, x, y_shapes):
+        if isinstance(x, str):
+            if ' ' in x or ',' in x:
+                x = cls._parse_crit_str(x)
+            else:
+                x = [x]
+        crit = []
+        for each in x:
+            loss_and_metrics = \
+                cls._unpack_loss_and_metrics(each, y_shapes)
+            crit.append(loss_and_metrics)
+        return crit
+
     def __init__(self, spec):
         self.spec = spec
         self.layer, self.out_form = spec.build()
@@ -77,19 +133,39 @@ class Model(object):
 
         return train_results, test_results
 
-    def fit(self, optim, loss_and_metrics, dataset, epochs, batch_size):
-        (x_train, y_train), (x_test, y_test) = dataset
-        train = RamSplit(x_train, y_train)
-        test = RamSplit(x_test, y_test)
-        dataset = Dataset(train, test)
+    @require_kwargs_after(3)
+    def fit(self, crit, data, test_frac=None, optim='sgd', batch=64,
+            epoch_offset=0, epochs=10):
+        data = self._unpack_dataset(data, test_frac)
+        y_shapes = data.shapes(batch)[0]
+        crit = self._unpack_crit(crit, y_shapes)
+        optim = unpack_optim(optim)
+        assert isinstance(batch, int)
+        assert 0 < batch
+        assert isinstance(epoch_offset, int)
+        assert 0 <= epoch_offset
+        assert isinstance(epochs, int)
+        assert 0 <= epochs
         optim.set_params(self.layer.params())
-        crit_lists = [loss_and_metrics]
-        for epoch in range(epochs):
-            train, test = self._fit_epoch(
-                crit_lists, dataset, optim, batch_size)
-            x = {
+        for epoch in range(epoch_offset, epoch_offset + epochs):
+            train, test = self._fit_epoch(crit, data, optim, batch)
+            d = {
                 'epoch': epoch,
                 'train': train,
                 'test': test,
             }
-            print(json.dumps(x, indent=4, sort_keys=True))
+            print(json.dumps(d, indent=4, sort_keys=True))
+
+    @require_kwargs_after(2)
+    def fit_reg(self, data, test_frac=None, optim='sgd', batch=64,
+                epoch_offset=0, epochs=10):
+        crit = [['mean_squared_error']]
+        return self.fit(crit, data, test_frac=test_frac, optim=optim,
+                        batch=batch, epoch_offset=epoch_offset, epochs=epochs)
+
+    @require_kwargs_after(2)
+    def fit_clf(self, data, test_frac=None, optim='sgd', batch=64,
+                epoch_offset=0, epochs=10):
+        crit = [['categorical_cross_entropy', 'categorical_accuracy']]  # TODO
+        return self.fit(crit, data, test_frac=test_frac, optim=optim,
+                        batch=batch, epoch_offset=epoch_offset, epochs=epochs)
