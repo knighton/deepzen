@@ -4,71 +4,7 @@ import numpy as np
 from sunyata import backend as Z
 from sunyata.dataset.mnist import load_mnist
 from sunyata.layer import *  # noqa
-
-
-class Optimizee(object):
-    def __init__(self, **kwargs):
-        self.__dict__.update(kwargs)
-
-    def grad(self):
-        return Z.grad(self.data)
-
-
-class Optimizer(object):
-    def set_params(self, xx):
-        self.envs = [Optimizee(**self.make_env(x)) for x in xx]
-
-    def make_env(self, x):
-        raise NotImplementedError
-
-    def step_one(self, env):
-        raise NotImplementedError
-
-    def step(self):
-        for env in self.envs:
-            self.step_one(env)
-
-
-class SGD(Optimizer):
-    def __init__(self, lr=0.05):
-        super().__init__()
-        assert 0 < lr
-        self.lr = lr
-
-    def make_env(self, param):
-        return {
-            'data': param,
-            'lr': self.lr,
-        }
-
-    def step_one(self, env):
-        Z.assign_sub(env.data, env.lr * env.grad())
-
-
-def momentum(momentum, old_value, new_value):
-    return momentum * old_value + (1 - momentum) * new_value
-
-
-class SGDM(Optimizer):
-    def __init__(self, lr=0.05, momentum=0.9):
-        super().__init__()
-        assert 0 < lr
-        assert 0 <= momentum <= 1
-        self.lr = lr
-        self.momentum = momentum
-
-    def make_env(self, param):
-        return {
-            'data': param,
-            'lr': self.lr,
-            'momentum': self.momentum,
-            'velocity': Z.zeros_like(param),
-        }
-
-    def step_one(self, env):
-        self.velocity = momentum(
-            env.momentum, env.velocity, env.lr * env.grad())
-        Z.assign_sub(env.data, self.velocity)
+from sunyata.optim import *  # noqa
 
 
 def mean_squared_error(true, pred):
