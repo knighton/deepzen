@@ -9,8 +9,9 @@ from ..iter.ram_split import RamSplit
 
 
 class Model(object):
-    def __init__(self, layer):
-        self.layer = layer
+    def __init__(self, spec):
+        self.spec = spec
+        self.layer, self.out_form = spec.build()
 
     def train_on_batch(self, optim, x, y_true):
         with Z.autograd_record():

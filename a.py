@@ -26,8 +26,7 @@ spec = SequenceSpec([
     DenseSpec(y_dim),
     SoftmaxSpec(),
 ])
-layer, out_shape = spec.build()
-model = Model(layer)
+model = Model(spec)
 
 optim = SGDM(lr=0.05, momentum=0.9)
 model.fit(optim, dataset, epochs, batch_size)
