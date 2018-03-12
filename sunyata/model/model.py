@@ -1,5 +1,6 @@
 import json
 import numpy as np
+from time import time
 
 from .. import backend as Z
 from ..crit.loss import unpack_loss
@@ -73,39 +74,50 @@ class Model(object):
         y_pred = self.layer.forward(x)
         return [y_pred]
 
-    def train_on_batch(self, xx, yy_true, crit_lists, optim):
+    def train_on_batch(self, xx, yy_true, compute_crit_lists, optim):
         losses = []
         with Z.autograd_record():
+            t0 = time()
             yy_pred = self.forward(xx, True)
-            for crits, y_true, y_pred in zip(crit_lists, yy_true, yy_pred):
-                compute_loss = crits[0]
+            t_forward = time() - t0
+            for compute_crits, y_true, y_pred in \
+                    zip(compute_crit_lists, yy_true, yy_pred):
+                compute_loss = compute_crits[0]
                 loss = compute_loss(y_true, y_pred)
                 losses.append(loss)
         grads = [Z.ones((1,), 'float32') for x in losses]
+        t0 = time()
         Z.backward(losses, grads)
+        t_backward = time() - t0
+        t0 = time()
         optim.step()
-        result_lists = []
-        for i, (crits, y_true, y_pred) in \
-                enumerate(zip(crit_lists, yy_true, yy_pred)):
+        t_optim = time() - t0
+        crit_lists = []
+        for i, (compute_crits, y_true, y_pred) in \
+                enumerate(zip(compute_crit_lists, yy_true, yy_pred)):
             loss = Z.variable_to_numpy(losses[i])[0]
-            results = [loss]
-            for compute_metric in crits[1:]:
+            crits = [loss]
+            for compute_metric in compute_crits[1:]:
                 metric = Z.variable_to_numpy(compute_metric(y_true, y_pred))[0]
-                results.append(metric)
-            result_lists.append(results)
-        return result_lists
+                crits.append(metric)
+            crit_lists.append(crits)
+        times = t_forward, t_backward, t_optim
+        return crit_lists, times
 
-    def test_on_batch(self, xx, yy_true, crit_lists):
+    def test_on_batch(self, xx, yy_true, compute_crit_lists):
+        t0 = time()
         yy_pred = self.forward(xx, False)
-        result_lists = []
-        for i, (crits, y_true, y_pred) in \
-                enumerate(zip(crit_lists, yy_true, yy_pred)):
-            results = []
-            for compute_crit in crits:
-                result = Z.variable_to_numpy(compute_crit(y_true, y_pred))[0]
-                results.append(result)
-            result_lists.append(results)
-        return result_lists
+        t_forward = time() - t0
+        crit_lists = []
+        for i, (compute_crits, y_true, y_pred) in \
+                enumerate(zip(compute_crit_lists, yy_true, yy_pred)):
+            crits = []
+            for compute_crit in compute_crits:
+                crit = Z.variable_to_numpy(compute_crit(y_true, y_pred))[0]
+                crits.append(crit)
+            crit_lists.append(crits)
+        times = t_forward,
+        return crit_lists, times
 
     def _fit_epoch(self, crit_lists, dataset, optim, batch_size):
         train_results = []
@@ -113,16 +125,28 @@ class Model(object):
         for crits in crit_lists:
             train_results.append([[] for x in crits])
             test_results.append([[] for x in crits])
+        t_train_forward = []
+        t_train_backward = []
+        t_train_optim = []
+        t_test_forward = []
 
         for (xx, yy), is_training in dataset.each_batch(batch_size):
             xx = [Z.numpy_to_constant(x) for x in xx]
             yy = [Z.numpy_to_constant(y) for y in yy]
             if is_training:
-                ret = self.train_on_batch(xx, yy, crit_lists, optim)
+                t0 = time()
+                ret, times = self.train_on_batch(xx, yy, crit_lists, optim)
+                t = time() - t0
+                t_forward, t_backward, t_optim = times
                 split_results = train_results
+                t_train_forward.append(t_forward)
+                t_train_backward.append(t_backward)
+                t_train_optim.append(t_optim)
             else:
-                ret = self.test_on_batch(xx, yy, crit_lists)
+                ret, times = self.test_on_batch(xx, yy, crit_lists)
                 split_results = test_results
+                t_forward, = times
+                t_test_forward.append(t_forward)
             for i, values in enumerate(ret):
                 for j, value in enumerate(values):
                     split_results[i][j].append(value)
@@ -132,7 +156,18 @@ class Model(object):
                 for j, values in enumerate(column):
                     split_results[i][j] = float(np.mean(values))
 
-        return train_results, test_results
+        t_train_forward = float(np.mean(t_train_forward))
+        t_train_backward = float(np.mean(t_train_backward))
+        t_train_optim = float(np.mean(t_train_optim))
+        t_test_forward = float(np.mean(t_test_forward))
+        times = {
+            'train_forward': t_train_forward,
+            'train_backward': t_train_backward,
+            'train_optim': t_train_optim,
+            'test_forward': t_test_forward,
+        }
+
+        return (train_results, test_results), times
 
     @require_kwargs_after(3)
     def fit(self, crit, data, test_frac=None, optim='sgd', batch=64,
@@ -149,11 +184,13 @@ class Model(object):
         assert 0 <= epochs
         optim.set_params(self.layer.params())
         for epoch in range(epoch_offset, epoch_offset + epochs):
-            train, test = self._fit_epoch(crit_lists, data, optim, batch)
+            (train, test), times = \
+                self._fit_epoch(crit_lists, data, optim, batch)
             d = {
                 'epoch': epoch,
                 'train': train,
                 'test': test,
+                'time': times,
             }
             print(json.dumps(d, indent=4, sort_keys=True))
 
