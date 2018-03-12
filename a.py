@@ -25,4 +25,4 @@ spec = SequenceSpec([
     SoftmaxSpec(),
 ])
 model = Model(spec)
-model.fit_clf(dataset)
+model.fit_clf(dataset, callback='progress_bar')

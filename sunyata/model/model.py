@@ -3,6 +3,7 @@ import numpy as np
 from time import time
 
 from .. import backend as Z
+from ..callback import unpack_callbacks
 from ..crit.loss import unpack_loss
 from ..crit.metric import unpack_metric
 from ..iter.dataset import Dataset
@@ -74,7 +75,9 @@ class Model(object):
         y_pred = self.layer.forward(x)
         return [y_pred]
 
-    def train_on_batch(self, xx, yy_true, compute_crit_lists, optim):
+    def train_on_batch(self, xx, yy_true, compute_crit_lists, optim, callbacks):
+        for callback in callbacks:
+            callback.on_train_on_batch_begin()
         losses = []
         with Z.autograd_record():
             t0 = time()
@@ -102,9 +105,13 @@ class Model(object):
                 crits.append(metric)
             crit_lists.append(crits)
         times = t_forward, t_backward, t_optim
+        for callback in callbacks:
+            callback.on_train_on_batch_end()
         return crit_lists, times
 
-    def test_on_batch(self, xx, yy_true, compute_crit_lists):
+    def test_on_batch(self, xx, yy_true, compute_crit_lists, callbacks):
+        for callback in callbacks:
+            callback.on_test_on_batch_begin()
         t0 = time()
         yy_pred = self.forward(xx, False)
         t_forward = time() - t0
@@ -117,9 +124,14 @@ class Model(object):
                 crits.append(crit)
             crit_lists.append(crits)
         times = t_forward,
+        for callback in callbacks:
+            callback.on_test_on_batch_end()
         return crit_lists, times
 
-    def _fit_epoch(self, crit_lists, dataset, optim, batch_size):
+    def _fit_epoch(self, crit_lists, dataset, optim, batch_size, callbacks):
+        for callback in callbacks:
+            callback.on_epoch_begin(dataset.num_batches(batch_size))
+
         train_results = []
         test_results = []
         for crits in crit_lists:
@@ -135,7 +147,8 @@ class Model(object):
             yy = [Z.numpy_to_constant(y) for y in yy]
             if is_training:
                 t0 = time()
-                ret, times = self.train_on_batch(xx, yy, crit_lists, optim)
+                ret, times = self.train_on_batch(
+                    xx, yy, crit_lists, optim, callbacks)
                 t = time() - t0
                 t_forward, t_backward, t_optim = times
                 split_results = train_results
@@ -143,7 +156,7 @@ class Model(object):
                 t_train_backward.append(t_backward)
                 t_train_optim.append(t_optim)
             else:
-                ret, times = self.test_on_batch(xx, yy, crit_lists)
+                ret, times = self.test_on_batch(xx, yy, crit_lists, callbacks)
                 split_results = test_results
                 t_forward, = times
                 t_test_forward.append(t_forward)
@@ -167,15 +180,19 @@ class Model(object):
             'test_forward': t_test_forward,
         }
 
+        for callback in callbacks:
+            callback.on_epoch_end()
+
         return (train_results, test_results), times
 
     @require_kwargs_after(3)
     def fit(self, crit, data, test_frac=None, optim='sgd', batch=64,
-            epoch_offset=0, epochs=10):
+            epoch_offset=0, epochs=10, callback=None):
         data = self._unpack_dataset(data, test_frac)
         y_sample_shapes = data.shapes()[0]
         crit_lists = self._unpack_crit_lists(crit, y_sample_shapes)
         optim = unpack_optim(optim)
+        callbacks = unpack_callbacks(callback)
         assert isinstance(batch, int)
         assert 0 < batch
         assert isinstance(epoch_offset, int)
@@ -183,9 +200,11 @@ class Model(object):
         assert isinstance(epochs, int)
         assert 0 <= epochs
         optim.set_params(self.layer.params())
+        for callback in callbacks:
+            callback.on_fit_begin(epoch_offset, epochs)
         for epoch in range(epoch_offset, epoch_offset + epochs):
             (train, test), times = \
-                self._fit_epoch(crit_lists, data, optim, batch)
+                self._fit_epoch(crit_lists, data, optim, batch, callbacks)
             d = {
                 'epoch': epoch,
                 'train': train,
@@ -193,17 +212,21 @@ class Model(object):
                 'time': times,
             }
             print(json.dumps(d, indent=4, sort_keys=True))
+        for callback in callbacks:
+            callback.on_fit_end()
 
     @require_kwargs_after(2)
     def fit_reg(self, data, test_frac=None, optim='sgd', batch=64,
-                epoch_offset=0, epochs=10):
+                epoch_offset=0, epochs=10, callback=None):
         crit = [['mean_squared_error']]
         return self.fit(crit, data, test_frac=test_frac, optim=optim,
-                        batch=batch, epoch_offset=epoch_offset, epochs=epochs)
+                        batch=batch, epoch_offset=epoch_offset, epochs=epochs,
+                        callback=callback)
 
     @require_kwargs_after(2)
     def fit_clf(self, data, test_frac=None, optim='sgd', batch=64,
-                epoch_offset=0, epochs=10):
+                epoch_offset=0, epochs=10, callback=None):
         crit = [['cross_entropy', 'accuracy']]
         return self.fit(crit, data, test_frac=test_frac, optim=optim,
-                        batch=batch, epoch_offset=epoch_offset, epochs=epochs)
+                        batch=batch, epoch_offset=epoch_offset, epochs=epochs,
+                        callback=callback)
