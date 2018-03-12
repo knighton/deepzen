@@ -1,4 +1,4 @@
-from .. import backend as Z
+from .. import api as Z
 from ..util.dataset import is_sample_one_scalar
 
 

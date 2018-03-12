@@ -1,7 +1,7 @@
 import json
 import numpy as np
 
-from sunyata import backend as Z
+from sunyata import api as Z
 from sunyata.crit.loss import CategoricalCrossEntropy
 from sunyata.crit.metric import CategoricalAccuracy
 from sunyata.dataset.mnist import load_mnist

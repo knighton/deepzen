@@ -1,4 +1,4 @@
-from .. import backend as Z
+from .. import api as Z
 from .base.optimizer import Optimizer
 
 

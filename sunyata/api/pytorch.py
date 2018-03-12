@@ -4,10 +4,10 @@ import torch
 from torch.autograd import Variable
 from torch.nn import functional as F
 
-from .backend import Backend
+from .api import API
 
 
-class PyTorchBackend(Backend):
+class PyTorchAPI(API):
     FLOAT32 = torch.FloatTensor
 
     def shape(self, x):

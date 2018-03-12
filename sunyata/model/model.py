@@ -2,7 +2,7 @@ import json
 import numpy as np
 from time import time
 
-from .. import backend as Z
+from .. import api as Z
 from ..callback import unpack_callbacks
 from ..crit.loss import unpack_loss
 from ..crit.metric import unpack_metric

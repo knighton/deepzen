@@ -1,2 +1,0 @@
-class Backend(object):
-    pass
