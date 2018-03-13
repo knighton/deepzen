@@ -137,10 +137,13 @@ class Model(object):
         for crits in crit_lists:
             train_results.append([[] for x in crits])
             test_results.append([[] for x in crits])
+
         t_train_forward = []
         t_train_backward = []
         t_train_optim = []
+        t_train_all = []
         t_test_forward = []
+        t_test_all = []
 
         for (xx, yy), is_training in dataset.each_batch(batch_size):
             xx = [Z.numpy_to_constant(x) for x in xx]
@@ -149,17 +152,21 @@ class Model(object):
                 t0 = time()
                 ret, times = self.train_on_batch(
                     xx, yy, crit_lists, optim, callbacks)
-                t = time() - t0
+                t_all = time() - t0
                 t_forward, t_backward, t_optim = times
                 split_results = train_results
                 t_train_forward.append(t_forward)
                 t_train_backward.append(t_backward)
                 t_train_optim.append(t_optim)
+                t_train_all.append(t_all)
             else:
+                t0 = time()
                 ret, times = self.test_on_batch(xx, yy, crit_lists, callbacks)
+                t_all = time() - t0
                 split_results = test_results
                 t_forward, = times
                 t_test_forward.append(t_forward)
+                t_test_all.append(t_all)
             for i, values in enumerate(ret):
                 for j, value in enumerate(values):
                     split_results[i][j].append(value)
@@ -172,12 +179,16 @@ class Model(object):
         t_train_forward = float(np.mean(t_train_forward))
         t_train_backward = float(np.mean(t_train_backward))
         t_train_optim = float(np.mean(t_train_optim))
+        t_train_all = float(np.mean(t_train_all))
         t_test_forward = float(np.mean(t_test_forward))
+        t_test_all = float(np.mean(t_test_all))
         times = {
             'train_forward': t_train_forward,
             'train_backward': t_train_backward,
             'train_optim': t_train_optim,
+            'train_all': t_train_all,
             'test_forward': t_test_forward,
+            'test_all': t_test_all,
         }
 
         for callback in callbacks:
@@ -207,8 +218,10 @@ class Model(object):
                 self._fit_epoch(crit_lists, data, optim, batch, callbacks)
             d = {
                 'epoch': epoch,
-                'train': train,
-                'test': test,
+                'crit': {
+                    'train': train,
+                    'test': test,
+                },
                 'time': times,
             }
             print(json.dumps(d, indent=4, sort_keys=True))
