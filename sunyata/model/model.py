@@ -11,6 +11,7 @@ from ..iter.ram_split import RamSplit
 from ..iter.split import Split
 from ..optim import unpack_optim
 from ..util.py import require_kwargs_after
+from .train_batch_timer import TrainBatchTimer
 
 
 class Model(object):
@@ -75,26 +76,92 @@ class Model(object):
         y_pred = self.layer.forward(x)
         return [y_pred]
 
-    def train_on_batch(self, xx, yy_true, compute_crit_lists, optim, callbacks):
+    def train_on_batch(self, xx, yy_true, compute_crit_lists, optim, callbacks,
+                       t):
+        # Start timing the whole method.
+        t.begin()
+
+        # 1. Execute "before" callbacks.
         for callback in callbacks:
+            t.mark()
             callback.on_train_on_batch_begin()
+            t.mark()
+
         losses = []
         with Z.autograd_record():
-            t0 = time()
+            # 2. Forward propagate.
+            t.mark()
             yy_pred = self.forward(xx, True)
-            t_forward = time() - t0
+            t.mark()
+
+            # 3. Compute the loss of each output.
+            t.mark()
             for compute_crits, y_true, y_pred in \
                     zip(compute_crit_lists, yy_true, yy_pred):
                 compute_loss = compute_crits[0]
+                t.mark()
                 loss = compute_loss(y_true, y_pred)
+                t.mark()
                 losses.append(loss)
+            t.mark()
+
+        # 3. Compute any additional metrics of each output.
+        crit_lists = []
+        t.mark()
+        for i, (compute_crits, y_true, y_pred) in \
+                enumerate(zip(compute_crit_lists, yy_true, yy_pred)):
+            loss = Z.variable_to_numpy(losses[i])[0]
+            crits = [loss]
+            for compute_metric in compute_crits[1:]:
+                t.mark()
+                metric = compute_metric(y_true, y_pred)
+                t.mark()
+                metric = Z.variable_to_numpy(metric)[0]
+                crits.append(metric)
+            crit_lists.append(crits)
+        t.mark()
+
+        # 4. Backpropagate gradients.
         grads = [Z.ones((1,), 'float32') for x in losses]
-        t0 = time()
+        t.mark()
         Z.backward(losses, grads)
-        t_backward = time() - t0
-        t0 = time()
+        t.mark()
+
+        # 5. Perform one step of the optimizer.
+        t.mark()
         optim.step()
-        t_optim = time() - t0
+        t.mark()
+
+        # 6. Execute "after" callbacks.
+        for callback in callbacks:
+            t.mark()
+            callback.on_train_on_batch_end()
+            t.mark()
+
+        # Stop timing the whole method.
+        t.end()
+
+        return crit_lists
+
+    def test_on_batch(self, xx, yy_true, compute_crit_lists, callbacks):
+        # 1. Execute "before" callbacks.
+        for callback in callbacks:
+            callback.on_test_on_batch_begin()
+
+        # 2. Forward propagate.
+        yy_pred = self.forward(xx, False)
+
+        # 3. Compute the loss of each output.
+        losses = []
+        for i, (compute_crits, y_true, y_pred) in \
+                enumerate(zip(compute_crit_lists, yy_true, yy_pred)):
+            compute_loss = compute_crits[0]
+            loss = compute_loss(y_true, y_pred)
+            losses.append(loss)
+
+        # 3. Compute any additional metrics of each output.  (This could be
+        #    done in the same loop as computing losses, but is done separately
+        #    so timings can be compared directly.)
         crit_lists = []
         for i, (compute_crits, y_true, y_pred) in \
                 enumerate(zip(compute_crit_lists, yy_true, yy_pred)):
@@ -104,29 +171,12 @@ class Model(object):
                 metric = Z.variable_to_numpy(compute_metric(y_true, y_pred))[0]
                 crits.append(metric)
             crit_lists.append(crits)
-        times = t_forward, t_backward, t_optim
-        for callback in callbacks:
-            callback.on_train_on_batch_end()
-        return crit_lists, times
 
-    def test_on_batch(self, xx, yy_true, compute_crit_lists, callbacks):
-        for callback in callbacks:
-            callback.on_test_on_batch_begin()
-        t0 = time()
-        yy_pred = self.forward(xx, False)
-        t_forward = time() - t0
-        crit_lists = []
-        for i, (compute_crits, y_true, y_pred) in \
-                enumerate(zip(compute_crit_lists, yy_true, yy_pred)):
-            crits = []
-            for compute_crit in compute_crits:
-                crit = Z.variable_to_numpy(compute_crit(y_true, y_pred))[0]
-                crits.append(crit)
-            crit_lists.append(crits)
-        times = t_forward,
+        # 4. Execute "after" callbacks.
         for callback in callbacks:
             callback.on_test_on_batch_end()
-        return crit_lists, times
+
+        return crit_lists
 
     def _fit_epoch(self, compute_crit_lists, dataset, optim, batch_size,
                    callbacks):
@@ -135,40 +185,28 @@ class Model(object):
 
         train_crit_lists = []
         test_crit_lists = []
+        num_crits = 0
         for compute_crits in compute_crit_lists:
             train_crit_lists.append([[] for x in compute_crits])
             test_crit_lists.append([[] for x in compute_crits])
+            num_crits += len(compute_crits)
 
-        t_train_forward = []
-        t_train_backward = []
-        t_train_optim = []
-        t_train_all = []
-        t_test_forward = []
-        t_test_all = []
+        num_callbacks = len(callbacks)
+        crit_counts = list(map(len, compute_crit_lists))
+        train_timer = TrainBatchTimer(
+            dataset.train.num_batches(batch_size), num_callbacks, crit_counts)
 
         for (xx, yy), is_training in dataset.each_batch(batch_size):
             xx = [Z.numpy_to_constant(x) for x in xx]
             yy = [Z.numpy_to_constant(y) for y in yy]
             if is_training:
-                t0 = time()
-                ret, times = self.train_on_batch(
-                    xx, yy, compute_crit_lists, optim, callbacks)
-                t_all = time() - t0
-                t_forward, t_backward, t_optim = times
+                ret = self.train_on_batch(
+                    xx, yy, compute_crit_lists, optim, callbacks, train_timer)
                 split_crit_lists = train_crit_lists
-                t_train_forward.append(t_forward)
-                t_train_backward.append(t_backward)
-                t_train_optim.append(t_optim)
-                t_train_all.append(t_all)
             else:
-                t0 = time()
-                ret, times = self.test_on_batch(
+                ret = self.test_on_batch(
                     xx, yy, compute_crit_lists, callbacks)
-                t_all = time() - t0
                 split_crit_lists = test_crit_lists
-                t_forward, = times
-                t_test_forward.append(t_forward)
-                t_test_all.append(t_all)
             for i, values in enumerate(ret):
                 for j, value in enumerate(values):
                     split_crit_lists[i][j].append(value)
@@ -178,29 +216,10 @@ class Model(object):
                 for j, values in enumerate(column):
                     split_crit_lists[i][j] = float(np.mean(values))
 
-        t_train_forward = float(np.mean(t_train_forward))
-        t_train_backward = float(np.mean(t_train_backward))
-        t_train_optim = float(np.mean(t_train_optim))
-        t_train_all = float(np.mean(t_train_all))
-        t_test_forward = float(np.mean(t_test_forward))
-        t_test_all = float(np.mean(t_test_all))
-        times = {
-            'train': {
-                'forward': t_train_forward,
-                'backward': t_train_backward,
-                'optim': t_train_optim,
-                'all': t_train_all,
-            },
-            'test': {
-                'forward': t_test_forward,
-                'all': t_test_all,
-            }
-        }
-
         for callback in callbacks:
             callback.on_epoch_end()
 
-        return (train_crit_lists, test_crit_lists), times
+        return train_crit_lists, test_crit_lists
 
     @require_kwargs_after(3)
     def fit(self, crit, data, test_frac=None, optim='sgd', batch=64,
@@ -220,7 +239,7 @@ class Model(object):
         for callback in callbacks:
             callback.on_fit_begin(epoch_offset, epochs)
         for epoch in range(epoch_offset, epoch_offset + epochs):
-            (train, test), times = \
+            train, test = \
                 self._fit_epoch(crit_lists, data, optim, batch, callbacks)
             d = {
                 'epoch': epoch,
@@ -228,7 +247,6 @@ class Model(object):
                     'train': train,
                     'test': test,
                 },
-                'time': times,
             }
             print(json.dumps(d, indent=4, sort_keys=True))
         for callback in callbacks:
