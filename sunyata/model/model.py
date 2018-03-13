@@ -79,13 +79,15 @@ class Model(object):
     def train_on_batch(self, xx, yy_true, compute_crit_lists, optim, callbacks,
                        t):
         # Start timing the whole method.
-        t.begin()
+        t.start_train_on_batch()
 
-        # 1. Execute "before" callbacks.
+        # 1. Execute "on begin" callbacks.
+        t.mark()
         for callback in callbacks:
             t.mark()
             callback.on_train_on_batch_begin()
             t.mark()
+        t.mark()
 
         losses = []
         with Z.autograd_record():
@@ -105,7 +107,7 @@ class Model(object):
                 losses.append(loss)
             t.mark()
 
-        # 3. Compute any additional metrics of each output.
+        # 4. Compute any additional metrics of each output.
         crit_lists = []
         t.mark()
         for i, (compute_crits, y_true, y_pred) in \
@@ -121,25 +123,27 @@ class Model(object):
             crit_lists.append(crits)
         t.mark()
 
-        # 4. Backpropagate gradients.
+        # 5. Backpropagate gradients.
         grads = [Z.ones((1,), 'float32') for x in losses]
         t.mark()
         Z.backward(losses, grads)
         t.mark()
 
-        # 5. Perform one step of the optimizer.
+        # 6. Perform one step of the optimizer.
         t.mark()
         optim.step()
         t.mark()
 
-        # 6. Execute "after" callbacks.
+        # 7. Execute "on end" callbacks.
+        t.mark()
         for callback in callbacks:
             t.mark()
             callback.on_train_on_batch_end()
             t.mark()
+        t.mark()
 
         # Stop timing the whole method.
-        t.end()
+        t.stop_train_on_batch()
 
         return crit_lists
 
@@ -191,10 +195,15 @@ class Model(object):
             test_crit_lists.append([[] for x in compute_crits])
             num_crits += len(compute_crits)
 
-        num_callbacks = len(callbacks)
-        crit_counts = list(map(len, compute_crit_lists))
+        callback_names = [x.__class__.__name__ for x in callbacks]
+        crit_name_lists = []
+        for compute_crits in compute_crit_lists:
+            crit_names = [x.__class__.__name__ for x in compute_crits]
+            crit_name_lists.append(crit_names)
+
         train_timer = TrainBatchTimer(
-            dataset.train.num_batches(batch_size), num_callbacks, crit_counts)
+            dataset.train.num_batches(batch_size), callback_names,
+            crit_name_lists)
 
         for (xx, yy), is_training in dataset.each_batch(batch_size):
             xx = [Z.numpy_to_constant(x) for x in xx]
@@ -210,6 +219,8 @@ class Model(object):
             for i, values in enumerate(ret):
                 for j, value in enumerate(values):
                     split_crit_lists[i][j].append(value)
+
+        train_timer.summary()
 
         for split_crit_lists in [train_crit_lists, test_crit_lists]:
             for i, column in enumerate(split_crit_lists):
