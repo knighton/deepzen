@@ -18,4 +18,4 @@ spec = SequenceSpec([
     SoftmaxSpec(),
 ])
 model = Model(spec)
-model.fit_clf(dataset, callback='progress_bar,row_per_epoch')
+model.fit_clf(dataset, callback='server,progress_bar,row_per_epoch')

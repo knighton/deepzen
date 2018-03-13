@@ -1,6 +1,7 @@
 from .base.callback import Callback
-from .row_per_epoch import RowPerEpoch
 from .progress_bar import ProgressBar
+from .row_per_epoch import RowPerEpoch
+from .server import Server
 
 
 def unpack_callback(arg):
@@ -9,6 +10,7 @@ def unpack_callback(arg):
     klass = {
         'row_per_epoch': RowPerEpoch,
         'progress_bar': ProgressBar,
+        'server': Server,
     }[arg]
     return klass()
     

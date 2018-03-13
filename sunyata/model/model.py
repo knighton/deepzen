@@ -214,11 +214,9 @@ class Model(object):
 
         train_crit_lists = []
         test_crit_lists = []
-        num_crits = 0
         for compute_crits in compute_crit_lists:
             train_crit_lists.append([[] for x in compute_crits])
             test_crit_lists.append([[] for x in compute_crits])
-            num_crits += len(compute_crits)
 
         for (xx, yy), is_training in dataset.each_batch(batch_size):
             xx = [Z.numpy_to_constant(x) for x in xx]
