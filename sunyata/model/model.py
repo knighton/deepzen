@@ -11,7 +11,7 @@ from ..iter.ram_split import RamSplit
 from ..iter.split import Split
 from ..optim import unpack_optim
 from ..util.py import require_kwargs_after
-from .train_batch_timer import TrainBatchTimer
+from .batch_timer import TestOnBatchTimer, TrainOnBatchTimer
 
 
 class Model(object):
@@ -79,7 +79,7 @@ class Model(object):
     def train_on_batch(self, xx, yy_true, compute_crit_lists, optim, callbacks,
                        t):
         # Start timing the whole method.
-        t.start_train_on_batch()
+        t.start()
 
         # 1. Execute "on begin" callbacks.
         t.mark()
@@ -143,47 +143,72 @@ class Model(object):
         t.mark()
 
         # Stop timing the whole method.
-        t.stop_train_on_batch()
+        t.stop()
 
         return crit_lists
 
-    def test_on_batch(self, xx, yy_true, compute_crit_lists, callbacks):
+    def test_on_batch(self, xx, yy_true, compute_crit_lists, callbacks, t):
+        # Start timing the whole method.
+        t.start()
+
         # 1. Execute "before" callbacks.
+        t.mark()
         for callback in callbacks:
+            t.mark()
             callback.on_test_on_batch_begin()
+            t.mark()
+        t.mark()
 
         # 2. Forward propagate.
+        t.mark()
         yy_pred = self.forward(xx, False)
+        t.mark()
 
         # 3. Compute the loss of each output.
         losses = []
+        t.mark()
         for i, (compute_crits, y_true, y_pred) in \
                 enumerate(zip(compute_crit_lists, yy_true, yy_pred)):
             compute_loss = compute_crits[0]
+            t.mark()
             loss = compute_loss(y_true, y_pred)
+            t.mark()
             losses.append(loss)
+        t.mark()
 
         # 3. Compute any additional metrics of each output.  (This could be
         #    done in the same loop as computing losses, but is done separately
         #    so timings can be compared directly.)
         crit_lists = []
+        t.mark()
         for i, (compute_crits, y_true, y_pred) in \
                 enumerate(zip(compute_crit_lists, yy_true, yy_pred)):
             loss = Z.variable_to_numpy(losses[i])[0]
             crits = [loss]
             for compute_metric in compute_crits[1:]:
-                metric = Z.variable_to_numpy(compute_metric(y_true, y_pred))[0]
+                t.mark()
+                metric = compute_metric(y_true, y_pred)
+                t.mark()
+                metric = Z.variable_to_numpy(metric)[0]
                 crits.append(metric)
             crit_lists.append(crits)
+        t.mark()
 
         # 4. Execute "after" callbacks.
+        t.mark()
         for callback in callbacks:
+            t.mark()
             callback.on_test_on_batch_end()
+            t.mark()
+        t.mark()
+
+        # Stop timing the whole method.
+        t.stop()
 
         return crit_lists
 
     def _fit_epoch(self, compute_crit_lists, dataset, optim, batch_size,
-                   callbacks, train_timer):
+                   callbacks, train_timer, test_timer):
         for callback in callbacks:
             callback.on_epoch_begin(dataset.num_batches(batch_size))
 
@@ -204,13 +229,11 @@ class Model(object):
                 split_crit_lists = train_crit_lists
             else:
                 batch_crit_lists = self.test_on_batch(
-                    xx, yy, compute_crit_lists, callbacks)
+                    xx, yy, compute_crit_lists, callbacks, test_timer)
                 split_crit_lists = test_crit_lists
             for i, batch_crits in enumerate(batch_crit_lists):
                 for j, batch_crit in enumerate(batch_crits):
                     split_crit_lists[i][j].append(batch_crit)
-
-        train_timer.summary()
 
         for split_crit_lists in [train_crit_lists, test_crit_lists]:
             for i, column in enumerate(split_crit_lists):
@@ -224,7 +247,7 @@ class Model(object):
 
     @require_kwargs_after(3)
     def fit(self, crit, data, test_frac=None, optim='sgd', batch=64,
-            epoch_offset=0, epochs=10, callback=None, timer_cache=1000):
+            epoch_offset=0, epochs=10, callback=None, timer_cache=10000):
         dataset = self._unpack_dataset(data, test_frac)
         y_sample_shapes = dataset.shapes()[0]
         compute_crit_lists = self._unpack_crit_lists(crit, y_sample_shapes)
@@ -249,13 +272,15 @@ class Model(object):
         for compute_crits in compute_crit_lists:
             crit_names = [x.__class__.__name__ for x in compute_crits]
             crit_name_lists.append(crit_names)
-        train_timer = TrainBatchTimer(
+        train_timer = TrainOnBatchTimer(
+            timer_cache_size, callback_names, crit_name_lists)
+        test_timer = TestOnBatchTimer(
             timer_cache_size, callback_names, crit_name_lists)
 
         for epoch in range(epoch_offset, epoch_offset + epochs):
             train_crit_lists, test_crit_lists = \
                 self._fit_epoch(compute_crit_lists, dataset, optim, batch_size,
-                                callbacks, train_timer)
+                                callbacks, train_timer, test_timer)
             d = {
                 'epoch': epoch,
                 'crit': {
@@ -269,7 +294,7 @@ class Model(object):
 
     @require_kwargs_after(2)
     def fit_reg(self, data, test_frac=None, optim='sgd', batch=64,
-                epoch_offset=0, epochs=10, callback=None, timer_cache=1000):
+                epoch_offset=0, epochs=10, callback=None, timer_cache=10000):
         crit = [['mean_squared_error']]
         return self.fit(crit, data, test_frac=test_frac, optim=optim,
                         batch=batch, epoch_offset=epoch_offset, epochs=epochs,
@@ -277,7 +302,7 @@ class Model(object):
 
     @require_kwargs_after(2)
     def fit_clf(self, data, test_frac=None, optim='sgd', batch=64,
-                epoch_offset=0, epochs=10, callback=None, timer_cache=1000):
+                epoch_offset=0, epochs=10, callback=None, timer_cache=10000):
         crit = [['cross_entropy', 'accuracy']]
         return self.fit(crit, data, test_frac=test_frac, optim=optim,
                         batch=batch, epoch_offset=epoch_offset, epochs=epochs,
