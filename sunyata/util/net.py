@@ -1,3 +1,4 @@
+import os
 from time import time
 from tqdm import tqdm
 from urllib.request import urlretrieve

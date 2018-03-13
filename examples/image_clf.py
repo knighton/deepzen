@@ -2,6 +2,7 @@ from argparse import ArgumentParser
 
 from sunyata.dataset.cifar import load_cifar
 from sunyata.dataset.mnist import load_mnist
+from sunyata.dataset.svhn import load_svhn
 from sunyata.layer import *  # noqa
 from sunyata.model import Model
 
@@ -15,16 +16,18 @@ def parse_args():
 
 def load_dataset(name):
     if name == 'mnist':
-        load = lambda: load_mnist()
+        get = lambda: load_mnist()
     elif name == 'cifar-10':
-        load = lambda: load_cifar(classes=10)
+        get = lambda: load_cifar(classes=10)
     elif name == 'cifar-20':
-        load = lambda: load_cifar(classes=20)
+        get = lambda: load_cifar(classes=20)
     elif name == 'cifar-100':
-        load = lambda: load_cifar(classes=100)
+        get = lambda: load_cifar(classes=100)
+    elif name == 'svhn':
+        get = lambda: load_svhn()
     else:
         assert False
-    return load()
+    return get()
 
 
 def run(args):
