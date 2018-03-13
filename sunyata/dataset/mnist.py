@@ -14,6 +14,16 @@ URL = 'https://s3.amazonaws.com/img-datasets/mnist.pkl.gz'
 
 
 def _transform_x(x, dtype):
+    """
+    Normalize image data for feeding to the neural net.
+
+    in:
+        np.ndarray  x      Raw pixels.
+        str         dtype  Desired dtype.
+
+    out:
+        np.ndarray  x      Floats from -1 to +1.
+    """
     x = np.expand_dims(x, 1)
     x = x.astype(dtype)
     x /= 127.5
@@ -22,6 +32,18 @@ def _transform_x(x, dtype):
 
 
 def _transform_y(y, one_hot, dtype):
+    """
+    Transform classes for feeding to the neural net.
+
+    in:
+        np.ndarray  y            Classes as integer IDs.
+        bool        one_hot      Whether to one-hot the classes.
+        int         num_classes  Number of classes (for one-hot).
+        str         dtype        Desired dtype.
+
+    out:
+        np.ndarray  y            Transformed class values.
+    """
     if one_hot:
         y = to_one_hot(y, 10, dtype)
     else:
@@ -30,24 +52,25 @@ def _transform_y(y, one_hot, dtype):
 
 
 @require_kwargs
-def load_mnist(dataset_name=DATASET_NAME, one_hot=True, x_dtype='float32',
-               y_dtype='float32', url=URL, verbose=2):
+def load_mnist(dataset_name=DATASET_NAME, one_hot=True, url=URL, verbose=2,
+               x_dtype='float32', y_dtype='float32'):
     """
     Load the MNIST handwritten digits dataset.
 
     in:
-        str    dataset_name  Sunyata dataset directory name
-        bool   one_hot       Whether to one_hot the classes
-        str    x_dtype       The desired dtype of X
-        str    y_dtype       The desired dtype of Y
-        str    url           URL to download raw data from
-        int    verbose       Verbosity level
+        str        dataset_name  Sunyata dataset directory name.
+        bool       one_hot       Whether to one-hot the classes.
+        str        url           URL to download raw data from.
+        {0, 1, 2}  verbose       Logging verbosity level.
+        str        x_dtype       The desired dtype of X.
+        str        y_dtype       The desired dtype of Y.
 
     out:
-        tuple  dataset      The dataset splits
+        tuple      dataset       The dataset splits as numpy ndarrays.
+        list<str>  class_names   The list of string class names.
     """
-    dataset_dir = get_dataset_root(dataset_name)
-    local = os.path.join(dataset_dir, os.path.basename(url))
+    dataset_root = get_dataset_root(dataset_name)
+    local = os.path.join(dataset_root, os.path.basename(url))
     if not os.path.exists(local):
         download(url, local, verbose)
     (x_train, y_train), (x_val, y_val) = \
@@ -56,4 +79,6 @@ def load_mnist(dataset_name=DATASET_NAME, one_hot=True, x_dtype='float32',
     y_train = _transform_y(y_train, one_hot, y_dtype)
     x_val = _transform_x(x_val, x_dtype)
     y_val = _transform_y(y_val, one_hot, y_dtype)
-    return (x_train, y_train), (x_val, y_val)
+    dataset = (x_train, y_train), (x_val, y_val)
+    class_names = list('0123456789')
+    return dataset, class_names

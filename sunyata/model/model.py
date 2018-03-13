@@ -245,7 +245,7 @@ class Model(object):
 
     @require_kwargs_after(3)
     def fit(self, crit, data, test_frac=None, optim='sgd', batch=64,
-            epoch_offset=0, epochs=10, callback=None, timer_cache=10000):
+            epoch_offset=0, epochs=20, callback=None, timer_cache=10000):
         dataset = self._unpack_dataset(data, test_frac)
         y_sample_shapes = dataset.shapes()[0]
         compute_crit_lists = self._unpack_crit_lists(crit, y_sample_shapes)
@@ -285,7 +285,7 @@ class Model(object):
 
     @require_kwargs_after(2)
     def fit_reg(self, data, test_frac=None, optim='sgd', batch=64,
-                epoch_offset=0, epochs=10, callback=None, timer_cache=10000):
+                epoch_offset=0, epochs=20, callback=None, timer_cache=10000):
         crit = [['mean_squared_error']]
         return self.fit(crit, data, test_frac=test_frac, optim=optim,
                         batch=batch, epoch_offset=epoch_offset, epochs=epochs,
@@ -293,7 +293,7 @@ class Model(object):
 
     @require_kwargs_after(2)
     def fit_clf(self, data, test_frac=None, optim='sgd', batch=64,
-                epoch_offset=0, epochs=10, callback=None, timer_cache=10000):
+                epoch_offset=0, epochs=20, callback=None, timer_cache=10000):
         crit = [['cross_entropy', 'accuracy']]
         return self.fit(crit, data, test_frac=test_frac, optim=optim,
                         batch=batch, epoch_offset=epoch_offset, epochs=epochs,
