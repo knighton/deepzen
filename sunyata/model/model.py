@@ -128,15 +128,16 @@ class Model(object):
             callback.on_test_on_batch_end()
         return crit_lists, times
 
-    def _fit_epoch(self, crit_lists, dataset, optim, batch_size, callbacks):
+    def _fit_epoch(self, compute_crit_lists, dataset, optim, batch_size,
+                   callbacks):
         for callback in callbacks:
             callback.on_epoch_begin(dataset.num_batches(batch_size))
 
-        train_results = []
-        test_results = []
-        for crits in crit_lists:
-            train_results.append([[] for x in crits])
-            test_results.append([[] for x in crits])
+        train_crit_lists = []
+        test_crit_lists = []
+        for compute_crits in compute_crit_lists:
+            train_crit_lists.append([[] for x in compute_crits])
+            test_crit_lists.append([[] for x in compute_crits])
 
         t_train_forward = []
         t_train_backward = []
@@ -151,30 +152,31 @@ class Model(object):
             if is_training:
                 t0 = time()
                 ret, times = self.train_on_batch(
-                    xx, yy, crit_lists, optim, callbacks)
+                    xx, yy, compute_crit_lists, optim, callbacks)
                 t_all = time() - t0
                 t_forward, t_backward, t_optim = times
-                split_results = train_results
+                split_crit_lists = train_crit_lists
                 t_train_forward.append(t_forward)
                 t_train_backward.append(t_backward)
                 t_train_optim.append(t_optim)
                 t_train_all.append(t_all)
             else:
                 t0 = time()
-                ret, times = self.test_on_batch(xx, yy, crit_lists, callbacks)
+                ret, times = self.test_on_batch(
+                    xx, yy, compute_crit_lists, callbacks)
                 t_all = time() - t0
-                split_results = test_results
+                split_crit_lists = test_crit_lists
                 t_forward, = times
                 t_test_forward.append(t_forward)
                 t_test_all.append(t_all)
             for i, values in enumerate(ret):
                 for j, value in enumerate(values):
-                    split_results[i][j].append(value)
+                    split_crit_lists[i][j].append(value)
 
-        for split_results in [train_results, test_results]:
-            for i, column in enumerate(split_results):
+        for split_crit_lists in [train_crit_lists, test_crit_lists]:
+            for i, column in enumerate(split_crit_lists):
                 for j, values in enumerate(column):
-                    split_results[i][j] = float(np.mean(values))
+                    split_crit_lists[i][j] = float(np.mean(values))
 
         t_train_forward = float(np.mean(t_train_forward))
         t_train_backward = float(np.mean(t_train_backward))
@@ -183,18 +185,22 @@ class Model(object):
         t_test_forward = float(np.mean(t_test_forward))
         t_test_all = float(np.mean(t_test_all))
         times = {
-            'train_forward': t_train_forward,
-            'train_backward': t_train_backward,
-            'train_optim': t_train_optim,
-            'train_all': t_train_all,
-            'test_forward': t_test_forward,
-            'test_all': t_test_all,
+            'train': {
+                'forward': t_train_forward,
+                'backward': t_train_backward,
+                'optim': t_train_optim,
+                'all': t_train_all,
+            },
+            'test': {
+                'forward': t_test_forward,
+                'all': t_test_all,
+            }
         }
 
         for callback in callbacks:
             callback.on_epoch_end()
 
-        return (train_results, test_results), times
+        return (train_crit_lists, test_crit_lists), times
 
     @require_kwargs_after(3)
     def fit(self, crit, data, test_frac=None, optim='sgd', batch=64,
