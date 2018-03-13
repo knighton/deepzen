@@ -4,8 +4,13 @@ from time import time
 
 
 class TrainBatchTimer(object):
-    def __init__(self, num_batches, callback_names, crit_name_lists):
-        self.num_batches = num_batches
+    def __init__(self, cache_size, callback_names, crit_name_lists):
+        # Fill the cache in order until full, then start replacing entries at
+        # random.
+        self.num_slots_used = 0
+        self.cache_size = cache_size
+
+        # How many timings we will be tracking, and need to allocate space for.
         self.callback_names = callback_names
         self.crit_name_lists = crit_name_lists
         self.num_losses = len(crit_name_lists)
@@ -36,25 +41,29 @@ class TrainBatchTimer(object):
         self.times_per_batch = self.stop_offset + 1
 
         # The matrix of batch x timing.
-        self.times = np.zeros((num_batches, self.times_per_batch), 'float64')
+        shape = self.cache_size, self.times_per_batch
+        self.times = np.zeros(shape, 'float64')
 
         # Where we are in the matrix during execution.
-        self.batch_id = 0
+        self.slot_id = None
         self.time_id = 0
 
     def start_train_on_batch(self):
-        assert 0 <= self.batch_id < self.num_batches
+        if self.num_slots_used < self.cache_size:
+            self.slot_id = self.num_slots_used
+            self.num_slots_used += 1
+        else:
+            self.slot_id = np.random.randint(self.cache_size)
         assert self.time_id == 0
         self.mark()
 
     def mark(self):
-        self.times[self.batch_id, self.time_id] = time()
+        self.times[self.slot_id, self.time_id] = time()
         self.time_id += 1
 
     def stop_train_on_batch(self):
         self.mark()
         assert self.time_id == self.times_per_batch
-        self.batch_id += 1
         self.time_id = 0
 
     def ns_int_summary_stats(cls, ff, num_quantiles):
@@ -77,8 +86,8 @@ class TrainBatchTimer(object):
         }
 
     def duration_stats(self, times, start_column, stop_column, num_quantiles):
-        durations = times[:self.batch_id, stop_column] - \
-            times[:self.batch_id, start_column]
+        durations = times[:self.num_slots_used, stop_column] - \
+            times[:self.num_slots_used, start_column]
         return self.ns_int_summary_stats(durations, num_quantiles)
 
     def analyze_to_json(self, num_quantiles):

@@ -183,7 +183,7 @@ class Model(object):
         return crit_lists
 
     def _fit_epoch(self, compute_crit_lists, dataset, optim, batch_size,
-                   callbacks):
+                   callbacks, train_timer):
         for callback in callbacks:
             callback.on_epoch_begin(dataset.num_batches(batch_size))
 
@@ -195,30 +195,20 @@ class Model(object):
             test_crit_lists.append([[] for x in compute_crits])
             num_crits += len(compute_crits)
 
-        callback_names = [x.__class__.__name__ for x in callbacks]
-        crit_name_lists = []
-        for compute_crits in compute_crit_lists:
-            crit_names = [x.__class__.__name__ for x in compute_crits]
-            crit_name_lists.append(crit_names)
-
-        train_timer = TrainBatchTimer(
-            dataset.train.num_batches(batch_size), callback_names,
-            crit_name_lists)
-
         for (xx, yy), is_training in dataset.each_batch(batch_size):
             xx = [Z.numpy_to_constant(x) for x in xx]
             yy = [Z.numpy_to_constant(y) for y in yy]
             if is_training:
-                ret = self.train_on_batch(
+                batch_crit_lists = self.train_on_batch(
                     xx, yy, compute_crit_lists, optim, callbacks, train_timer)
                 split_crit_lists = train_crit_lists
             else:
-                ret = self.test_on_batch(
+                batch_crit_lists = self.test_on_batch(
                     xx, yy, compute_crit_lists, callbacks)
                 split_crit_lists = test_crit_lists
-            for i, values in enumerate(ret):
-                for j, value in enumerate(values):
-                    split_crit_lists[i][j].append(value)
+            for i, batch_crits in enumerate(batch_crit_lists):
+                for j, batch_crit in enumerate(batch_crits):
+                    split_crit_lists[i][j].append(batch_crit)
 
         train_timer.summary()
 
@@ -235,28 +225,42 @@ class Model(object):
     @require_kwargs_after(3)
     def fit(self, crit, data, test_frac=None, optim='sgd', batch=64,
             epoch_offset=0, epochs=10, callback=None):
-        data = self._unpack_dataset(data, test_frac)
-        y_sample_shapes = data.shapes()[0]
-        crit_lists = self._unpack_crit_lists(crit, y_sample_shapes)
+        dataset = self._unpack_dataset(data, test_frac)
+        y_sample_shapes = dataset.shapes()[0]
+        compute_crit_lists = self._unpack_crit_lists(crit, y_sample_shapes)
         optim = unpack_optim(optim)
         callbacks = unpack_callbacks(callback)
         assert isinstance(batch, int)
         assert 0 < batch
+        batch_size = batch
         assert isinstance(epoch_offset, int)
         assert 0 <= epoch_offset
         assert isinstance(epochs, int)
         assert 0 <= epochs
+
         optim.set_params(self.layer.params())
+
         for callback in callbacks:
             callback.on_fit_begin(epoch_offset, epochs)
+
+        timer_cache_size = 1000
+        callback_names = [x.__class__.__name__ for x in callbacks]
+        crit_name_lists = []
+        for compute_crits in compute_crit_lists:
+            crit_names = [x.__class__.__name__ for x in compute_crits]
+            crit_name_lists.append(crit_names)
+        train_timer = TrainBatchTimer(
+            timer_cache_size, callback_names, crit_name_lists)
+
         for epoch in range(epoch_offset, epoch_offset + epochs):
-            train, test = \
-                self._fit_epoch(crit_lists, data, optim, batch, callbacks)
+            train_crit_lists, test_crit_lists = \
+                self._fit_epoch(compute_crit_lists, dataset, optim, batch_size,
+                                callbacks, train_timer)
             d = {
                 'epoch': epoch,
                 'crit': {
-                    'train': train,
-                    'test': test,
+                    'train': train_crit_lists,
+                    'test': test_crit_lists,
                 },
             }
             print(json.dumps(d, indent=4, sort_keys=True))
