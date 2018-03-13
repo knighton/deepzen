@@ -208,9 +208,9 @@ class Model(object):
         return crit_lists
 
     def _fit_epoch(self, compute_crit_lists, dataset, optim, batch_size,
-                   callbacks, train_timer, test_timer):
+                   callbacks, train_timer, test_timer, epoch):
         for callback in callbacks:
-            callback.on_epoch_begin(dataset.num_batches(batch_size))
+            callback.on_epoch_begin(epoch, dataset.num_batches(batch_size))
 
         train_crit_lists = []
         test_crit_lists = []
@@ -241,7 +241,7 @@ class Model(object):
                     split_crit_lists[i][j] = float(np.mean(values))
 
         for callback in callbacks:
-            callback.on_epoch_end()
+            callback.on_epoch_end(train_crit_lists, test_crit_lists)
 
         return train_crit_lists, test_crit_lists
 
@@ -261,11 +261,6 @@ class Model(object):
         assert isinstance(epochs, int)
         assert 0 <= epochs
 
-        optim.set_params(self.layer.params())
-
-        for callback in callbacks:
-            callback.on_fit_begin(epoch_offset, epochs)
-
         timer_cache_size = timer_cache
         callback_names = [x.__class__.__name__ for x in callbacks]
         crit_name_lists = []
@@ -277,18 +272,16 @@ class Model(object):
         test_timer = TestOnBatchTimer(
             timer_cache_size, callback_names, crit_name_lists)
 
+        optim.set_params(self.layer.params())
+
+        for callback in callbacks:
+            callback.on_fit_begin(crit_name_lists, epoch_offset, epochs)
+
         for epoch in range(epoch_offset, epoch_offset + epochs):
             train_crit_lists, test_crit_lists = \
                 self._fit_epoch(compute_crit_lists, dataset, optim, batch_size,
-                                callbacks, train_timer, test_timer)
-            d = {
-                'epoch': epoch,
-                'crit': {
-                    'train': train_crit_lists,
-                    'test': test_crit_lists,
-                },
-            }
-            print(json.dumps(d, indent=4, sort_keys=True))
+                                callbacks, train_timer, test_timer, epoch)
+
         for callback in callbacks:
             callback.on_fit_end()
 
