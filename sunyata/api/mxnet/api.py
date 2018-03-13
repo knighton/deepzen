@@ -2,10 +2,10 @@ from contextlib import contextmanager
 import mxnet as mx
 import numpy as np
 
-from .api import API
+from ..base.api import BaseAPI
 
 
-class MXNetAPI(API):
+class MXNetAPI(BaseAPI):
     def shape(self, x):
         return x.shape
 
