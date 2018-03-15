@@ -1,14 +1,11 @@
 import mxnet as mx
-import subprocess
 
 from ...base.core.cast import BaseCastAPI
-from .data_type import MXNetDataTypeAPI
-from .device import MXNetDeviceAPI
 
 
-class MXNetCastAPI(object):
-    def _init_api_mxnet_core_cast(self):
-        pass
+class MXNetCastAPI(BaseCastAPI):
+    def __init__(self):
+        BaseCastAPI.__init__(self)
 
     def cast(self, x, dtype=None, device=None, copy=False):
         # Get the input and output dtypes (None means don't change).

@@ -5,8 +5,8 @@ from ...base.core.device import BaseDeviceAPI
 
 
 class MXNetDeviceAPI(BaseDeviceAPI):
-    def _init_api_mxnet_core_device(self, num_gpus, home_device=None):
-        self._init_api_base_core_device(num_gpus, home_device)
+    def __init__(self, num_gpus, home_device=None):
+        BaseDeviceAPI.__init__(self, num_gpus, home_device)
         for device in self._devices:
             if device.type == 'cpu':
                 ctx = mx.cpu()

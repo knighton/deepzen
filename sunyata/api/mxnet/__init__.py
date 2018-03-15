@@ -4,5 +4,5 @@ from .transform import MXNetTransformAPI
 
 
 class MXNetAPI(MXNetCoreAPI, MXNetMetricAPI, MXNetTransformAPI):
-    def __init__(self, floatx='float32', device=None):
-        self._init_api_mxnet_core(floatx, device)
+    def __init__(self, floatx='float32', device=None, epsilon=1e-5):
+        MXNetCoreAPI.__init__(self, floatx, device, epsilon)

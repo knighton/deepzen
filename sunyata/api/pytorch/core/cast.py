@@ -1,13 +1,11 @@
 import torch
 
 from ...base.core.cast import BaseCastAPI
-from .data_type import PyTorchDataTypeAPI
-from .device import PyTorchDeviceAPI
 
 
-class PyTorchCastAPI(BaseCastAPI, PyTorchDataTypeAPI, PyTorchDeviceAPI):
-    def _init_api_pytorch_core_cast(self, dtype_xpu2tensor):
-        self._init_api_base_core_cast()
+class PyTorchCastAPI(BaseCastAPI):
+    def __init__(self, dtype_xpu2tensor):
+        BaseCastAPI.__init__(self)
         self._dtype_xpu2tensor = dtype_xpu2tensor
 
     def cast(self, x, dtype=None, device=None, copy=False):

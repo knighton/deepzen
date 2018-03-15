@@ -6,9 +6,8 @@ from . import MXNetCoreAPI as InnerAPI
 
 
 class MXNetCoreAPI(object):
-    def _init_api_mxnet_core(self, floatx='float32', device=None):
-        self.inner = InnerAPI()
-        self.inner._init_api_mxnet_core(floatx, device)
+    def __init__(self, floatx='float32', device=None, epsilon=1e-5):
+        self.inner = InnerAPI(floatx, device, epsilon)
 
     def shape(self, x):
         return x.shape

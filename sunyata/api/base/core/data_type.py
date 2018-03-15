@@ -2,7 +2,7 @@ from contextlib import contextmanager
 
 
 class BaseDataTypeAPI(object):
-    def _init_api_base_core_data_type(self, dtypes, home_floatx):
+    def __init__(self, dtypes, home_floatx):
         self._all_dtypes = set("""
              bool
                    int8   int16   int32   int64

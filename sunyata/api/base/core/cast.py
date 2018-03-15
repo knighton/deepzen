@@ -1,7 +1,4 @@
 class BaseCastAPI(object):
-    def _init_api_base_core_cast(self):
-        pass
-
     def cast(self, x, dtype=None, device=None, copy=False):
         raise NotImplementedError
 

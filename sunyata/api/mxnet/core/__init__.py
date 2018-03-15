@@ -1,19 +1,29 @@
+import subprocess
+
+from ...base.core import BaseCoreAPI
 from .cast import MXNetCastAPI
 from .data_type import MXNetDataTypeAPI
 from .device import MXNetDeviceAPI
+from .epsilon import MXNetEpsilonAPI
+from .logic import MXNetLogicAPI
+from .map import MXNetMapAPI
+from .reduce import MXNetReduceAPI
+from .reshape import MXNetReshapeAPI
 
 
-class MXNetCoreAPI(MXNetCastAPI, MXNetDataTypeAPI, MXNetDeviceAPI):
+class MXNetCoreAPI(BaseCoreAPI, MXNetCastAPI, MXNetDataTypeAPI, MXNetDeviceAPI,
+                   MXNetEpsilonAPI, MXNetLogicAPI, MXNetMapAPI, MXNetReduceAPI,
+                   MXNetReshapeAPI):
     def _discover_gpus(self):
-        cmd = 'nvidia-smi', '-L'
+        cmd = 'nvidia-smi -L'
         try:
-            result = subprocess.run(cmd, stdout=subprocess.PIPE)
+            result = subprocess.run(cmd.split(), stdout=subprocess.PIPE)
             lines = result.stdout.decode('unicode-escape')
             return len(lines)
         except:
             return 0
 
-    def _init_api_mxnet_core(self, floatx='float32', device=None):
+    def __init__(self, floatx='float32', device=None, epsilon=1e-5):
         config = """
             uint8  uint16  uint32  uint64
              int8   int16   int32   int64
@@ -24,6 +34,12 @@ class MXNetCoreAPI(MXNetCastAPI, MXNetDataTypeAPI, MXNetDeviceAPI):
 
         num_gpus = self._discover_gpus()
 
-        self._init_api_mxnet_core_data_type(dtypes, floatx)
-        self._init_api_mxnet_core_device(num_gpus, device)
-        self._init_api_mxnet_core_cast()
+        BaseCoreAPI.__init__(self)
+        MXNetCastAPI.__init__(self)
+        MXNetDataTypeAPI.__init__(self, dtypes, floatx)
+        MXNetDeviceAPI.__init__(self, num_gpus, device)
+        MXNetEpsilonAPI.__init__(self, epsilon)
+        MXNetLogicAPI.__init__(self)
+        MXNetMapAPI.__init__(self)
+        MXNetReduceAPI.__init__(self)
+        MXNetReshapeAPI.__init__(self)

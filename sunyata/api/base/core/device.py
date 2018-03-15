@@ -32,7 +32,7 @@ class GPU(Device):
 
 
 class BaseDeviceAPI(object):
-    def _init_api_base_core_device(self, num_gpus, home_device=None):
+    def __init__(self, num_gpus, home_device=None):
         self._devices = []
 
         cpu = CPU(0)

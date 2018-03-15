@@ -9,9 +9,8 @@ from . import PyTorchCoreAPI as InnerAPI
 class PyTorchCoreAPI(object):
     FLOAT32 = torch.FloatTensor
 
-    def _init_api_pytorch_core(self, floatx='float32', device=None):
-        self.inner = InnerAPI()
-        self.inner._init_api_pytorch_core(floatx, device)
+    def __init__(self, floatx='float32', device=None, epsilon=1e-56):
+        self.inner = InnerAPI(floatx, device, epsilon)
 
     def shape(self, x):
         return tuple(x.size())

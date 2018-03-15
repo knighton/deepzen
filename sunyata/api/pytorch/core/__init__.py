@@ -1,13 +1,21 @@
 import importlib
 import torch
 
+from ...base.core import BaseCoreAPI
 from .cast import PyTorchCastAPI
 from .data_type import PyTorchDataTypeAPI
 from .device import PyTorchDeviceAPI
+from .epsilon import PyTorchEpsilonAPI
+from .logic import PyTorchLogicAPI
+from .map import PyTorchMapAPI
+from .reduce import PyTorchReduceAPI
+from .reshape import PyTorchReshapeAPI
 
 
-class PyTorchCoreAPI(PyTorchCastAPI, PyTorchDataTypeAPI, PyTorchDeviceAPI):
-    def _init_api_pytorch_core(self, floatx='float32', device=None):
+class PyTorchCoreAPI(BaseCoreAPI, PyTorchCastAPI, PyTorchDataTypeAPI,
+                     PyTorchDeviceAPI, PyTorchEpsilonAPI, PyTorchLogicAPI,
+                     PyTorchMapAPI, PyTorchReduceAPI, PyTorchReshapeAPI):
+    def __init__(self, floatx='float32', device=None, epsilon=1e-5):
         config = """
             uint8    torch.ByteTensor    torch.cuda.ByteTensor
             int8     torch.CharTensor    torch.cuda.CharTensor
@@ -35,6 +43,12 @@ class PyTorchCoreAPI(PyTorchCastAPI, PyTorchDataTypeAPI, PyTorchDeviceAPI):
 
         num_gpus = torch.cuda.device_count()
 
-        self._init_api_pytorch_core_data_type(tensor2dtype, floatx)
-        self._init_api_pytorch_core_device(num_gpus, device)
-        self._init_api_pytorch_core_cast(dtype_xpu2tensor)
+        BaseCoreAPI.__init__(self)
+        PyTorchCastAPI.__init__(self, dtype_xpu2tensor)
+        PyTorchDataTypeAPI.__init__(self, tensor2dtype, floatx)
+        PyTorchDeviceAPI.__init__(self, num_gpus, device)
+        PyTorchEpsilonAPI.__init__(self, epsilon)
+        PyTorchLogicAPI.__init__(self)
+        PyTorchMapAPI.__init__(self)
+        PyTorchReduceAPI.__init__(self)
+        PyTorchReshapeAPI.__init__(self)

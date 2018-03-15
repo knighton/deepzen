@@ -1,0 +1,2 @@
+class BaseCoreAPI(object):
+    pass
