@@ -1,10 +1,8 @@
 from contextlib import contextmanager
 
-from ..api import API
 
-
-class BaseDataTypeAPI(API):
-    def _init_base_data_type_api(self, dtypes, home_floatx):
+class BaseDataTypeAPI(object):
+    def _init_api_base_core_data_type(self, dtypes, home_floatx):
         self._all_dtypes = set("""
              bool
                    int8   int16   int32   int64

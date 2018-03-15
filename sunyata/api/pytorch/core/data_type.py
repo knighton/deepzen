@@ -5,11 +5,11 @@ from ...base.core.data_type import BaseDataTypeAPI
 
 
 class PyTorchDataTypeAPI(BaseDataTypeAPI):
-    def _init_pytorch_data_type_api(self, tensor2dtype, home_floatx):
+    def _init_api_pytorch_core_data_type(self, tensor2dtype, home_floatx):
         dtypes = set()
         for dtype in tensor2dtype.values():
             dtypes.add(dtype)
-        self._init_base_data_type_api(dtypes, home_floatx)
+        self._init_api_base_core_data_type(dtypes, home_floatx)
         self._tensor2dtype = tensor2dtype
 
     def dtype(self, x=None):

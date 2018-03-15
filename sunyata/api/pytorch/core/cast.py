@@ -1,42 +1,13 @@
-import importlib
 import torch
 
-from ...base.core.storage import BaseStorageAPI
+from ...base.core.cast import BaseCastAPI
 from .data_type import PyTorchDataTypeAPI
 from .device import PyTorchDeviceAPI
 
 
-class PyTorchStorageAPI(BaseStorageAPI, PyTorchDataTypeAPI, PyTorchDeviceAPI):
-    def _init_pytorch_storage_api(self, floatx='float32', device=None):
-        config = """
-            uint8    torch.ByteTensor    torch.cuda.ByteTensor
-            int8     torch.CharTensor    torch.cuda.CharTensor
-            int16    torch.ShortTensor   torch.cuda.ShortTensor
-            int32    torch.IntTensor     torch.cuda.IntTensor
-            int64    torch.LongTensor    torch.cuda.LongTensor
-            float16  torch.HalfTensor    torch.cuda.HalfTensor
-            float32  torch.FloatTensor   torch.cuda.FloatTensor
-            float64  torch.DoubleTensor  torch.cuda.DoubleTensor
-        """
-
-        tensor2dtype = {}
-        dtype_xpu2tensor = {}
-        for line in config.strip().split('\n'):
-            dtype, cpu, gpu = line.split()
-            tensor2dtype[cpu] = dtype
-            tensor2dtype[gpu] = dtype
-            for xpu, path in [('cpu', cpu), ('gpu', gpu)]:
-                x = path.rindex('.')
-                module_name = path[:x]
-                class_name = path[x + 1:]
-                module = importlib.import_module(module_name)
-                klass = getattr(module, class_name)
-                dtype_xpu2tensor[(dtype, xpu)] = klass
-        self._init_pytorch_data_type_api(tensor2dtype, floatx)
-
-        num_gpus = torch.cuda.device_count()
-        self._init_pytorch_device_api(num_gpus, device)
-
+class PyTorchCastAPI(BaseCastAPI, PyTorchDataTypeAPI, PyTorchDeviceAPI):
+    def _init_api_pytorch_core_cast(self, dtype_xpu2tensor):
+        self._init_api_base_core_cast()
         self._dtype_xpu2tensor = dtype_xpu2tensor
 
     def cast(self, x, dtype=None, device=None, copy=False):

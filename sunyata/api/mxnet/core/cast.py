@@ -1,33 +1,14 @@
 import mxnet as mx
 import subprocess
 
-from ...base.core.storage import BaseStorageAPI
+from ...base.core.cast import BaseCastAPI
 from .data_type import MXNetDataTypeAPI
 from .device import MXNetDeviceAPI
 
 
-class MXNetStorageAPI(BaseStorageAPI, MXNetDataTypeAPI, MXNetDeviceAPI):
-    def _discover_gpus(self):
-        cmd = 'nvidia-smi', '-L'
-        try:
-            result = subprocess.run(cmd, stdout=subprocess.PIPE)
-            lines = result.stdout.decode('unicode-escape')
-            return len(lines)
-        except:
-            return 0
-
-    def _init_mxnet_storage_api(self, floatx='float32', device=None):
-        config = """
-            uint8  uint16  uint32  uint64
-             int8   int16   int32   int64
-                  float16 float32 float64
-        """
-
-        dtypes = set(config.split())
-        self._init_mxnet_data_type_api(dtypes, floatx)
-
-        num_gpus = self._discover_gpus()
-        self._init_mxnet_device_api(num_gpus, device)
+class MXNetCastAPI(object):
+    def _init_api_mxnet_core_cast(self):
+        pass
 
     def cast(self, x, dtype=None, device=None, copy=False):
         # Get the input and output dtypes (None means don't change).

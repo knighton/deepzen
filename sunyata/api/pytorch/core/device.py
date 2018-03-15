@@ -5,8 +5,8 @@ from ...base.core.device import BaseDeviceAPI
 
 
 class PyTorchDeviceAPI(BaseDeviceAPI):
-    def _init_pytorch_device_api(self, num_gpus, home_device=None):
-        self._init_base_device_api(num_gpus, home_device)
+    def _init_api_pytorch_core_device(self, num_gpus, home_device=None):
+        self._init_api_base_core_device(num_gpus, home_device)
 
     def device(self, x=None):
         if isinstance(x, (_TensorBase, Variable)):

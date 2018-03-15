@@ -1,7 +1,5 @@
 from contextlib import contextmanager
 
-from ..api import API
-
 
 class Device(object):
     def __init__(self, device_id, type, name):
@@ -33,8 +31,8 @@ class GPU(Device):
         self.gpu_id = gpu_id
 
 
-class BaseDeviceAPI(API):
-    def _init_base_device_api(self, num_gpus, home_device=None):
+class BaseDeviceAPI(object):
+    def _init_api_base_core_device(self, num_gpus, home_device=None):
         self._devices = []
 
         cpu = CPU(0)
