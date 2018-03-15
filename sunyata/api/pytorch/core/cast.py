@@ -40,7 +40,7 @@ class PyTorchCastAPI(BaseCastAPI):
                 assert False
         return x
 
-    def numpy_to_tensor(self, x, dtype=None, device=None):
+    def cast_numpy_to_tensor(self, x, dtype=None, device=None):
         # Get the input and output dtypes (None means don't change).
         from_dtype = x.dtype.name
         if dtype is None:

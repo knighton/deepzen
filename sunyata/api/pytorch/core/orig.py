@@ -25,7 +25,7 @@ class PyTorchCoreAPI(object):
         return x.view(x.size()[0], -1)
 
     def numpy_to_tensor(self, x):
-        return self.inner.numpy_to_tensor(x, 'float32')
+        return self.inner.cast_numpy_to_tensor(x, 'float32')
 
     def numpy_to_constant(self, x):
         x = self.numpy_to_tensor(x)

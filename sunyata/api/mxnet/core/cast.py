@@ -4,9 +4,6 @@ from ...base.core.cast import BaseCastAPI
 
 
 class MXNetCastAPI(BaseCastAPI):
-    def __init__(self):
-        BaseCastAPI.__init__(self)
-
     def cast(self, x, dtype=None, device=None, copy=False):
         # Get the input and output dtypes (None means don't change).
         from_dtype = self.dtype(x)
@@ -38,7 +35,7 @@ class MXNetCastAPI(BaseCastAPI):
 
         return x
 
-    def numpy_to_tensor(self, x, dtype=None, device=None):
+    def cast_numpy_to_tensor(self, x, dtype=None, device=None):
         # Get the input and output dtypes (None means don't change).
         from_dtype = x.dtype.name
         if dtype is None:

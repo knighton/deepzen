@@ -22,7 +22,7 @@ class MXNetCoreAPI(object):
         return mx.nd.flatten(x)
 
     def numpy_to_tensor(self, x):
-        return self.inner.numpy_to_tensor(x, 'float32')
+        return self.inner.cast_numpy_to_tensor(x, 'float32')
 
     def numpy_to_constant(self, x):
         assert isinstance(x, np.ndarray)

@@ -17,5 +17,8 @@ class BaseCastAPI(object):
     def to_gpu(self, x, gpu=None, copy=False):
         return self.cast(x, self.dtype(x), self.gpu(gpu), copy)
 
-    def numpy_to_tensor(self, x, dtype=None, device=None):
+    def cast_numpy_to_tensor(self, x, dtype=None, device=None):
         raise NotImplementedError
+
+    def numpy_to_tensor(self, x, device=None):
+        return self.cast_numpy_to_tensor(x, x.dtype.name, device)
