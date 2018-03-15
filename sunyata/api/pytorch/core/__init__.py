@@ -10,11 +10,13 @@ from .logic import PyTorchLogicAPI
 from .map import PyTorchMapAPI
 from .reduce import PyTorchReduceAPI
 from .reshape import PyTorchReshapeAPI
+from .variable import PyTorchVariableAPI
 
 
 class PyTorchCoreAPI(BaseCoreAPI, PyTorchCastAPI, PyTorchDataTypeAPI,
                      PyTorchDeviceAPI, PyTorchEpsilonAPI, PyTorchLogicAPI,
-                     PyTorchMapAPI, PyTorchReduceAPI, PyTorchReshapeAPI):
+                     PyTorchMapAPI, PyTorchReduceAPI, PyTorchReshapeAPI,
+                     PyTorchVariableAPI):
     def __init__(self, floatx='float32', device=None, epsilon=1e-5):
         config = """
             uint8    torch.ByteTensor    torch.cuda.ByteTensor
@@ -52,3 +54,4 @@ class PyTorchCoreAPI(BaseCoreAPI, PyTorchCastAPI, PyTorchDataTypeAPI,
         PyTorchMapAPI.__init__(self)
         PyTorchReduceAPI.__init__(self)
         PyTorchReshapeAPI.__init__(self)
+        PyTorchVariableAPI.__init__(self)
