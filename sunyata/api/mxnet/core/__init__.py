@@ -9,12 +9,13 @@ from .logic import MXNetLogicAPI
 from .map import MXNetMapAPI
 from .reduce import MXNetReduceAPI
 from .reshape import MXNetReshapeAPI
+from .type import MXNetTypeAPI
 from .variable import MXNetVariableAPI
 
 
 class MXNetCoreAPI(BaseCoreAPI, MXNetCastAPI, MXNetDataTypeAPI, MXNetDeviceAPI,
                    MXNetEpsilonAPI, MXNetLogicAPI, MXNetMapAPI, MXNetReduceAPI,
-                   MXNetReshapeAPI, MXNetVariableAPI):
+                   MXNetReshapeAPI, MXNetTypeAPI, MXNetVariableAPI):
     def _discover_gpus(self):
         cmd = 'nvidia-smi -L'
         try:
@@ -44,4 +45,5 @@ class MXNetCoreAPI(BaseCoreAPI, MXNetCastAPI, MXNetDataTypeAPI, MXNetDeviceAPI,
         MXNetMapAPI.__init__(self)
         MXNetReduceAPI.__init__(self)
         MXNetReshapeAPI.__init__(self)
+        MXNetTypeAPI.__init__(self)
         MXNetVariableAPI.__init__(self)
