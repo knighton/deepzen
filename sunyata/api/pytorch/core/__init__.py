@@ -2,13 +2,13 @@ from contextlib import contextmanager
 import numpy as np
 import torch
 from torch.autograd import Variable
-from torch.nn import functional as F
 
-from ..base.api import BaseAPI
+from ...base import API
 
 
-class PyTorchAPI(BaseAPI):
-    FLOAT32 = torch.FloatTensor
+class PyTorchCoreAPI(API):
+    def __init__(self):
+        self.FLOAT32 = torch.FloatTensor
 
     def shape(self, x):
         return tuple(x.size())
@@ -100,9 +100,6 @@ class PyTorchAPI(BaseAPI):
 
     def clip(self, x, min=-np.inf, max=np.inf):
         return x.clamp(min, max)
-
-    def softmax(self, x):
-        return F.softmax(x, -1)
 
     def assign_sub(self, x, decr):
         x.data -= decr

@@ -6,9 +6,9 @@ name = os.environ.get('SUNYATA_BACKEND', 'pytorch')
 print('Sunyata backend: %s.' % name)
 
 if name == 'mxnet':
-    from .mxnet.api import MXNetAPI as BackendAPI
+    from .mxnet import MXNetAPI as BackendAPI
 elif name == 'pytorch':
-    from .pytorch.api import PyTorchAPI as BackendAPI
+    from .pytorch import PyTorchAPI as BackendAPI
 else:
     assert False, \
         'Unsupported backend (selected: %s) (possible values: %s).' % \

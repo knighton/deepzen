@@ -2,10 +2,10 @@ from contextlib import contextmanager
 import mxnet as mx
 import numpy as np
 
-from ..base.api import BaseAPI
+from ...base import API
 
 
-class MXNetAPI(BaseAPI):
+class MXNetCoreAPI(API):
     def shape(self, x):
         return x.shape
 
@@ -79,9 +79,6 @@ class MXNetAPI(BaseAPI):
 
     def clip(self, x, min=-np.inf, max=np.inf):
         return mx.nd.clip(x, min, max)
-
-    def softmax(self, x):
-        return mx.nd.softmax(x)
 
     def assign_sub(self, x, decr):
         x -= decr
