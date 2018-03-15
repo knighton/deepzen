@@ -1,5 +1,2 @@
-from ...base import API
-
-
-class MXNetMetricAPI(API):
+class MXNetMetricAPI(object):
     pass

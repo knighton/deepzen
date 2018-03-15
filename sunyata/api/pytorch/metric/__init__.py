@@ -1,5 +1,2 @@
-from ...base import API
-
-
-class PyTorchMetricAPI(API):
+class PyTorchMetricAPI(object):
     pass

@@ -1,8 +1,6 @@
 from torch.nn import functional as F
 
-from ...base import API
 
-
-class PyTorchTransformAPI(API):
+class PyTorchTransformAPI(object):
     def softmax(self, x):
         return F.softmax(x, -1)

@@ -1,8 +1,6 @@
 import mxnet as mx
 
-from ...base import API
 
-
-class MXNetTransformAPI(API):
+class MXNetTransformAPI(object):
     def softmax(self, x):
         return mx.nd.softmax(x)

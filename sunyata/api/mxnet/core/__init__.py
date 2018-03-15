@@ -2,25 +2,28 @@ from contextlib import contextmanager
 import mxnet as mx
 import numpy as np
 
-from ...base import API
+from .storage import MXNetStorageAPI
 
 
-class MXNetCoreAPI(API):
+class MXNetCoreAPI(object):
+    def _init_mxnet_core_api(self, floatx='float32', device=None):
+        self.inner = MXNetStorageAPI()
+        self.inner._init_mxnet_storage_api(floatx, device)
+
     def shape(self, x):
         return x.shape
 
     def dtype_of(self, x):
-        return x.dtype.__name__
+        return self.inner.dtype(x)
 
     def cast(self, x, dtype):
-        return x.astype(dtype)
+        return self.inner.cast(x, dtype)
 
     def flatten(self, x):
         return mx.nd.flatten(x)
 
     def numpy_to_tensor(self, x):
-        assert isinstance(x, np.ndarray)
-        return mx.nd.array(x)
+        return self.inner.numpy_to_tensor(x, 'float32')
 
     def numpy_to_constant(self, x):
         assert isinstance(x, np.ndarray)

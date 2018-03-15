@@ -3,30 +3,30 @@ import numpy as np
 import torch
 from torch.autograd import Variable
 
-from ...base import API
+from .storage import PyTorchStorageAPI
 
 
-class PyTorchCoreAPI(API):
-    def __init__(self):
-        self.FLOAT32 = torch.FloatTensor
+class PyTorchCoreAPI(object):
+    FLOAT32 = torch.FloatTensor
+
+    def _init_pytorch_core_api(self, floatx='float32', device=None):
+        self.inner = PyTorchStorageAPI()
+        self.inner._init_pytorch_storage_api(floatx, device)
 
     def shape(self, x):
         return tuple(x.size())
 
     def dtype_of(self, x):
-        assert isinstance(x.data, self.FLOAT32)
-        return 'float32'
+        return self.inner.dtype(x)
 
     def cast(self, x, dtype):
-        assert dtype == 'float32'
-        return x.type(self.FLOAT32)
+        return self.inner.cast(x, dtype)
 
     def flatten(self, x):
         return x.view(x.size()[0], -1)
 
     def numpy_to_tensor(self, x):
-        assert isinstance(x, np.ndarray)
-        return torch.from_numpy(x).type(self.FLOAT32)
+        return self.inner.numpy_to_tensor(x, 'float32')
 
     def numpy_to_constant(self, x):
         x = self.numpy_to_tensor(x)
