@@ -9,7 +9,7 @@ from . import PyTorchCoreAPI as InnerAPI
 class PyTorchCoreAPI(object):
     FLOAT32 = torch.FloatTensor
 
-    def __init__(self, floatx='float32', device=None, epsilon=1e-56):
+    def __init__(self, floatx='float32', device=None, epsilon=1e-5):
         self.inner = InnerAPI(floatx, device, epsilon)
 
     def shape(self, x):
