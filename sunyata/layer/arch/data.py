@@ -8,15 +8,15 @@ class DataLayer(Layer):
         Layer.__init__(self, sig, sig)
 
     def forward(self, x, is_training):
-        self._x_sig.check(x)
+        self._x_sig.accepts_batch_tensor(x)
         return x
 
 
 class DataSpec(Spec):
     def __init__(self, shape, dtype):
-        self._required_sig = Signature(shape, dtype)
+        self._want_sig = Signature(shape, dtype)
 
     def build(self, x_sig=None):
         if x_sig is not None:
-            assert self._required_sig.equals(x_sig)
-        return DataLayer(self._required_sig)
+            assert self._want_sig == x_sig
+        return DataLayer(self._want_sig)

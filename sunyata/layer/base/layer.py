@@ -9,7 +9,7 @@ class Layer(Spec):
         self._params = []
 
     def build(self, x_sig=None):
-        assert self._x_sig.equals(x_sig)
+        assert self._x_sig == x_sig
         return self
 
     def x_sig(self):

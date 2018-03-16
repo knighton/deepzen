@@ -33,7 +33,7 @@ class Signature(object):
     def has_channels(self):
         return self._has_channels
 
-    def equals(self, x):
+    def __eq__(self, x):
         if self._sample_shape != x._sample_shape:
             return False
 
@@ -45,6 +45,6 @@ class Signature(object):
 
         return True
 
-    def check(self, x):
+    def accepts_batch_tensor(self, x):
         assert Z.shape(x)[1:] == self._sample_shape
         assert Z.dtype(x) == self._dtype
