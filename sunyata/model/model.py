@@ -1,6 +1,4 @@
-import json
 import numpy as np
-from time import time
 
 from .. import api as Z
 from ..callback import unpack_callbacks

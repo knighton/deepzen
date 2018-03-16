@@ -9,7 +9,7 @@ class RamSplit(Split):
         if isinstance(xx, np.ndarray):
             xx = [xx]
         else:
-            assert isinstance(x, (list, tuple))
+            assert isinstance(xx, (list, tuple))
         return xx
 
     @classmethod

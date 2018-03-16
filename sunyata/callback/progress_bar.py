@@ -1,4 +1,3 @@
-import time
 from tqdm import tqdm
 
 from .base.callback import Callback

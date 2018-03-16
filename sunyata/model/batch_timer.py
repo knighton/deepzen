@@ -11,10 +11,12 @@ class BatchTimer(object):
     * TestOnBatchTimer for test_on_batch().
 
     Shows you where time is being spent during training at a very fine-grained
-    level.  Times forward/backward/optim, individual callback methods, each loss    and metric function, and everything else of note.
+    level.  Times forward/backward/optim, individual callback methods, each loss
+    and metric function, and everything else of note.
 
     Internally, it is just a cache of time.time() values in a float64 numpy
-    ndarray.  Each row is the exact times of one batch's events.  Each column is    a specific event, which all happen in a fixed order.
+    ndarray.  Each row is the exact times of one batch's events.  Each column is
+    a specific event, which all happen in a fixed order.
 
     During execution, it fills the rows of the cache in ascending order, then
     switches to replacing rows randomly with new timing data.  Rows are filled

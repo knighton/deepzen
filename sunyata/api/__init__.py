@@ -12,7 +12,7 @@ elif name == 'pytorch':
 else:
     assert False, \
         'Unsupported backend (selected: %s) (possible values: %s).' % \
-            (name, ('mxnet', 'pytorch'))
+        (name, ('mxnet', 'pytorch'))
 
 api = BackendAPI()
 

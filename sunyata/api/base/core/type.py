@@ -1,6 +1,3 @@
-import numpy as np
-
-
 class BaseTypeAPI(object):
     def scalar(self, x):
         x = self.numpy(x)

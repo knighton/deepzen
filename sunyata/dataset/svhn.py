@@ -45,7 +45,7 @@ def _load_split(one_hot, verbose, x_dtype, y_dtype, dataset_root, split_url):
     else:
         y = y.astype(y_dtype)
     return x, y
-    
+
 
 @require_kwargs
 def load_svhn(dataset_name=DATASET_NAME, one_hot=True, test_url=TEST_URL,
@@ -73,4 +73,4 @@ def load_svhn(dataset_name=DATASET_NAME, one_hot=True, test_url=TEST_URL,
     test = _load_split(one_hot, verbose, x_dtype, y_dtype, dataset_root,
                        test_url)
     class_names = list('0123456789')
-    return (train, test),  class_names
+    return (train, test), class_names

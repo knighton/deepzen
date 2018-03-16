@@ -131,13 +131,13 @@ def load_cifar10(dataset_name=DATASET_NAME, one_hot=True, url=CIFAR10_URL,
     dataset_root = get_dataset_root(dataset_name)
     local = os.path.join(dataset_root, os.path.basename(url))
     if not os.path.exists(local):
-        download(url, local, verbose) 
+        download(url, local, verbose)
     tar = tarfile.open(local, 'r:gz')
     x, y = _load_cifar10_data(tar, one_hot, x_dtype, y_dtype, verbose)
     class_names = _load_cifar10_class_names(tar)
     tar.close()
-    return (x, y), class_names 
-    
+    return (x, y), class_names
+
 
 def _load_cifar100_split(tar, classes, one_hot, x_dtype, y_dtype, split):
     """

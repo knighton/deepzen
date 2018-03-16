@@ -13,7 +13,7 @@ def unpack_callback(arg):
         'server': Server,
     }[arg]
     return klass()
-    
+
 
 def unpack_callbacks(arg):
     if arg is None:
