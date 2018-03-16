@@ -23,9 +23,9 @@ class SequenceSpec(Spec):
     def __init__(self, specs):
         self.specs = specs
 
-    def build(self, form=None):
+    def build(self, sig=None):
         layers = []
         for spec in self.specs:
-            layer, form = spec.build(form)
+            layer, sig = spec.build(sig)
             layers.append(layer)
-        return SequenceLayer(layers), form
+        return SequenceLayer(layers), sig

@@ -12,5 +12,5 @@ class SoftmaxLayer(Layer):
 
 
 class SoftmaxSpec(Spec):
-    def build(self, form=None):
-        return SoftmaxLayer(), form
+    def build(self, sig=None):
+        return SoftmaxLayer(), sig

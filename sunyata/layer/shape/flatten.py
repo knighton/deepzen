@@ -1,8 +1,8 @@
 import numpy as np
 
 from ... import api as Z
-from ..base.form import Form
 from ..base.layer import Layer
+from ..base.signature import Signature
 from ..base.spec import Spec
 
 
@@ -15,6 +15,6 @@ class FlattenLayer(Layer):
 
 
 class FlattenSpec(Spec):
-    def build(self, form=None):
-        out_shape = int(np.prod(form.shape)),
-        return FlattenLayer(), Form(out_shape, form.dtype)
+    def build(self, sig=None):
+        out_shape = int(np.prod(sig.shape)),
+        return FlattenLayer(), Signature(out_shape, sig.dtype)

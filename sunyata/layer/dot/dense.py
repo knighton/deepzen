@@ -1,8 +1,8 @@
 import numpy as np
 
 from ... import api as Z
-from ..base.form import Form
 from ..base.layer import Layer
+from ..base.signature import Signature
 from ..base.spec import Spec
 
 
@@ -24,8 +24,8 @@ class DenseSpec(Spec):
         self.dim = dim
         self.has_bias = has_bias
 
-    def build(self, form=None):
-        in_dim, = form.shape
+    def build(self, sig=None):
+        in_dim, = sig.shape
         if self.dim is None:
             out_dim = in_dim
         else:
@@ -37,4 +37,4 @@ class DenseSpec(Spec):
         else:
             bias = None
         out_shape = (out_dim,)
-        return DenseLayer(kernel, bias), Form(out_shape, form.dtype)
+        return DenseLayer(kernel, bias), Signature(out_shape, sig.dtype)

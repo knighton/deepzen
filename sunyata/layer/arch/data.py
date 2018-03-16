@@ -1,25 +1,25 @@
-from ..base.form import Form
 from ..base.layer import Layer
+from ..base.signature import Signature
 from ..base.spec import Spec
 
 
 class DataLayer(Layer):
-    def __init__(self, form):
+    def __init__(self, sig):
         Layer.__init__(self)
-        self.form = form
+        self.sig = sig
 
     def forward(self, x, is_training):
-        self.form.check(x)
+        self.sig.check(x)
         return x
 
 
 class DataSpec(Spec):
     def __init__(self, shape, dtype):
-        self.form = Form(shape, dtype)
+        self.sig = Signature(shape, dtype)
 
-    def build(self, form=None):
-        if form is None:
-            form = self.form
+    def build(self, sig=None):
+        if sig is None:
+            sig = self.sig
         else:
-            assert self.form.equals(form)
-        return DataLayer(form), form
+            assert self.sig.equals(sig)
+        return DataLayer(sig), sig

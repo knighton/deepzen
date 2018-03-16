@@ -1,7 +1,7 @@
 from ... import api as Z
 
 
-class Form(object):
+class Signature(object):
     def __init__(self, shape, dtype):
         self.shape = shape
         self.dtype = dtype

@@ -12,5 +12,5 @@ class ReLULayer(Layer):
 
 
 class ReLUSpec(Spec):
-    def build(self, form=None):
-        return ReLULayer(), form
+    def build(self, sig=None):
+        return ReLULayer(), sig
