@@ -1,6 +1,6 @@
-from .. import api as Z
-from .base.layer import Layer
-from .base.spec import Spec
+from ... import api as Z
+from ..base.layer import Layer
+from ..base.spec import Spec
 
 
 class SoftmaxLayer(Layer):

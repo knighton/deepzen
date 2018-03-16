@@ -1,6 +1,6 @@
-from .base.form import Form
-from .base.layer import Layer
-from .base.spec import Spec
+from ..base.form import Form
+from ..base.layer import Layer
+from ..base.spec import Spec
 
 
 class DataLayer(Layer):

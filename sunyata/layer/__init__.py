@@ -1,7 +1,4 @@
-from .base import *  # noqa
-from .data import *  # noqa
-from .dense import *  # noqa
-from .flatten import *  # noqa
-from .relu import *  # noqa
-from .sequence import *  # noqa
-from .softmax import *  # noqa
+from .activ import *  # noqa
+from .arch import *  # noqa
+from .dot import *  # noqa
+from .reshape import *  # noqa

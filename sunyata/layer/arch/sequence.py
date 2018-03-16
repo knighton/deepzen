@@ -1,5 +1,5 @@
-from .base.layer import Layer
-from .base.spec import Spec
+from ..base.layer import Layer
+from ..base.spec import Spec
 
 
 class SequenceLayer(Layer):
