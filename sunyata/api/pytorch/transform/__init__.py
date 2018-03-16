@@ -1,11 +1,7 @@
-from torch.nn import functional as F
-
 from ...base.transform import BaseTransformAPI
+from .activ import PyTorchActivAPI
+from .dot import PyTorchDotAPI
 
 
-class PyTorchTransformAPI(BaseTransformAPI):
-    def softmax(self, x):
-        return F.softmax(x, -1)
-
-    def dense(self, x, kernel, bias):
-        return F.linear(x, kernel, bias)
+class PyTorchTransformAPI(BaseTransformAPI, PyTorchActivAPI, PyTorchDotAPI):
+    pass
