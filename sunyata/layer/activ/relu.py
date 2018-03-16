@@ -12,5 +12,8 @@ class ReLULayer(Layer):
 
 
 class ReLUSpec(Spec):
-    def build(self, x_sig=None):
+    def __init__(self, space=None):
+        Spec.__init__(self, space)
+
+    def checked_build(self, x_sig):
         return ReLULayer(x_sig)

@@ -27,6 +27,13 @@ class Signature(object):
         assert self._has_channels
         return -1 + len(self._sample_shape)
 
+    def spatial_ndim_or_none(self):
+        if self._has_channels:
+            x = -1 + len(self._sample_shape)
+        else:
+            x = None
+        return x
+
     def dtype(self):
         return self._dtype
 

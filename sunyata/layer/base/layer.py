@@ -4,11 +4,16 @@ from .spec import Spec
 
 class Layer(Spec):
     def __init__(self, x_sig, y_sig):
+        if x_sig:
+            space = x_sig.spatial_ndim_or_none()
+        else:
+            space = None
+        Spec.__init__(self, space)
         self._x_sig = x_sig
         self._y_sig = y_sig
         self._params = []
 
-    def build(self, x_sig=None):
+    def checked_build(self, x_sig):
         assert self._x_sig == x_sig
         return self
 

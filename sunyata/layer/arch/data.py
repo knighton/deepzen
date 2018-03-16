@@ -13,10 +13,12 @@ class DataLayer(Layer):
 
 
 class DataSpec(Spec):
-    def __init__(self, shape, dtype):
-        self._want_sig = Signature(shape, dtype)
+    def __init__(self, sample_shape, dtype, has_channels=True):
+        required_sig = Signature(sample_shape, dtype, has_channels)
+        Spec.__init__(self, required_sig.spatial_ndim_or_none())
+        self._required_sig = required_sig
 
-    def build(self, x_sig=None):
+    def checked_build(self, x_sig=None):
         if x_sig is not None:
-            assert self._want_sig == x_sig
-        return DataLayer(self._want_sig)
+            assert self._required_sig == x_sig
+        return DataLayer(self._required_sig)

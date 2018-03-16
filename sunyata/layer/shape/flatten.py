@@ -15,7 +15,10 @@ class FlattenLayer(Layer):
 
 
 class FlattenSpec(Spec):
-    def build(self, x_sig=None):
+    def __init__(self, space=None):
+        Spec.__init__(self, space)
+
+    def checked_build(self, x_sig):
         assert x_sig.has_channels()
         y_sample_shape = int(np.prod(x_sig.sample_shape())),
         y_sig = Signature(y_sample_shape, x_sig.dtype(), True)

@@ -21,10 +21,11 @@ class DenseLayer(Layer):
 
 class DenseSpec(Spec):
     def __init__(self, dim=None, has_bias=False):
+        Spec.__init__(self, 0)
         self.dim = dim
         self.has_bias = has_bias
 
-    def build(self, x_sig):
+    def checked_build(self, x_sig):
         assert x_sig.has_channels()
         in_dim, = x_sig.sample_shape()
         if self.dim is None:
@@ -37,6 +38,6 @@ class DenseSpec(Spec):
             bias = np.zeros(out_dim, 'float32')
         else:
             bias = None
-        out_shape = (out_dim,)
-        y_sig = Signature(out_shape, x_sig.dtype)
+        out_sample_shape = (out_dim,)
+        y_sig = Signature(out_sample_shape, x_sig.dtype(), x_sig.has_channels())
         return DenseLayer(x_sig, y_sig, kernel, bias)
