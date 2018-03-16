@@ -1,3 +1,3 @@
 class Spec(object):
-    def build(self, x=None):
+    def build(self, x_sig=None):
         raise NotImplementedError

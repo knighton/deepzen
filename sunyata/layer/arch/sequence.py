@@ -3,8 +3,8 @@ from ..base.spec import Spec
 
 
 class SequenceLayer(Layer):
-    def __init__(self, layers):
-        Layer.__init__(self)
+    def __init__(self, x_sig, y_sig, layers):
+        Layer.__init__(self, x_sig, y_sig)
         self.layers = layers
 
     def params(self):
@@ -23,9 +23,12 @@ class SequenceSpec(Spec):
     def __init__(self, specs):
         self.specs = specs
 
-    def build(self, sig=None):
+    def build(self, x_sig=None):
         layers = []
+        sig = x_sig
         for spec in self.specs:
-            layer, sig = spec.build(sig)
+            layer = spec.build(sig)
             layers.append(layer)
-        return SequenceLayer(layers), sig
+            sig = layer.y_sig()
+        y_sig = sig
+        return SequenceLayer(x_sig, y_sig, layers)

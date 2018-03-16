@@ -7,8 +7,8 @@ from ..base.spec import Spec
 
 
 class DenseLayer(Layer):
-    def __init__(self, kernel, bias):
-        Layer.__init__(self)
+    def __init__(self, x_sig, y_sig, kernel, bias):
+        Layer.__init__(self, x_sig, y_sig)
         self.kernel = self.param(kernel)
         if bias is None:
             self.bias = None
@@ -24,8 +24,8 @@ class DenseSpec(Spec):
         self.dim = dim
         self.has_bias = has_bias
 
-    def build(self, sig=None):
-        in_dim, = sig.shape
+    def build(self, x_sig=None):
+        in_dim, = x_sig.shape
         if self.dim is None:
             out_dim = in_dim
         else:
@@ -37,4 +37,5 @@ class DenseSpec(Spec):
         else:
             bias = None
         out_shape = (out_dim,)
-        return DenseLayer(kernel, bias), Signature(out_shape, sig.dtype)
+        y_sig = Signature(out_shape, x_sig.dtype)
+        return DenseLayer(x_sig, y_sig, kernel, bias)

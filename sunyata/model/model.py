@@ -69,7 +69,7 @@ class Model(object):
 
     def __init__(self, spec):
         self.spec = spec
-        self.layer, self.out_form = spec.build()
+        self.layer = spec.build()
 
     def forward(self, xx, is_training):
         x, = xx

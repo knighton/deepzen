@@ -4,13 +4,13 @@ from ..base.spec import Spec
 
 
 class SoftmaxLayer(Layer):
-    def __init__(self):
-        Layer.__init__(self)
+    def __init__(self, sig):
+        Layer.__init__(self, sig, sig)
 
     def forward(self, x, is_training):
         return Z.softmax(x)
 
 
 class SoftmaxSpec(Spec):
-    def build(self, sig=None):
-        return SoftmaxLayer(), sig
+    def build(self, x_sig=None):
+        return SoftmaxLayer(x_sig)
