@@ -5,6 +5,7 @@ from ..base.spec import Spec
 
 class DataLayer(Layer):
     def __init__(self, form):
+        Layer.__init__(self)
         self.form = form
 
     def forward(self, x, is_training):

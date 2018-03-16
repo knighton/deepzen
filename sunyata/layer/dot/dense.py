@@ -8,17 +8,12 @@ from ..base.spec import Spec
 
 class DenseLayer(Layer):
     def __init__(self, kernel, bias):
-        self.kernel = Z.variable(kernel)
+        Layer.__init__(self)
+        self.kernel = self.param(kernel)
         if bias is None:
             self.bias = None
         else:
-            self.bias = Z.variable(bias)
-
-    def params(self):
-        ret = [self.kernel]
-        if self.bias is not None:
-            ret.append(self.bias)
-        return ret
+            self.bias = self.param(bias)
 
     def forward(self, x, is_training):
         return Z.dense(x, self.kernel, self.bias)
@@ -26,15 +21,15 @@ class DenseLayer(Layer):
 
 class DenseSpec(Spec):
     def __init__(self, dim=None, has_bias=False):
-        self.out_dim = dim
+        self.dim = dim
         self.has_bias = has_bias
 
     def build(self, form=None):
         in_dim, = form.shape
-        if self.out_dim is None:
+        if self.dim is None:
             out_dim = in_dim
         else:
-            out_dim = self.out_dim
+            out_dim = self.dim
         kernel = np.random.normal(
             0, 0.1, (out_dim, in_dim)).astype('float32')
         if self.has_bias:

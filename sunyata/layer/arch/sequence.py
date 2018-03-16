@@ -4,6 +4,7 @@ from ..base.spec import Spec
 
 class SequenceLayer(Layer):
     def __init__(self, layers):
+        Layer.__init__(self)
         self.layers = layers
 
     def params(self):
