@@ -3,7 +3,7 @@ class BaseReshapeAPI(object):
         raise NotImplementedError
 
     def flatten(self, x):
-        return self.reshape(x, -1)
+        return self.reshape(x, (-1,))
 
     def expand_dims(self, x, axis):
         raise NotImplementedError

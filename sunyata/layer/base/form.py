@@ -11,4 +11,4 @@ class Form(object):
 
     def check(self, x):
         assert Z.shape(x)[1:] == self.shape
-        assert Z.dtype_of(x) == self.dtype
+        assert Z.dtype(x) == self.dtype

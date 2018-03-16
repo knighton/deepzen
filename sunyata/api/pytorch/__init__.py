@@ -1,4 +1,4 @@
-from .core.orig import PyTorchCoreAPI
+from .core import PyTorchCoreAPI
 from .metric import PyTorchMetricAPI
 from .transform import PyTorchTransformAPI
 

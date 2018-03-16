@@ -16,6 +16,15 @@ class PyTorchVariableAPI(BaseVariableAPI):
         x.data -= decr
         x.grad.data.zero_()
 
+    def ndim(self, x):
+        return x.dim()
+
+    def shape(self, x):
+        return tuple(x.size())
+
+    def size(self, x):
+        return x.numel()
+
     def data(self, x):
         return x.data
 

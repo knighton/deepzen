@@ -112,13 +112,13 @@ class Model(object):
         t.mark()
         for i, (compute_crits, y_true, y_pred) in \
                 enumerate(zip(compute_crit_lists, yy_true, yy_pred)):
-            loss = Z.variable_to_numpy(losses[i])[0]
+            loss = Z.scalar(losses[i])
             crits = [loss]
             for compute_metric in compute_crits[1:]:
                 t.mark()
                 metric = compute_metric(y_true, y_pred)
                 t.mark()
-                metric = Z.variable_to_numpy(metric)[0]
+                metric = Z.scalar(metric)
                 crits.append(metric)
             crit_lists.append(crits)
         t.mark()
@@ -183,13 +183,13 @@ class Model(object):
         t.mark()
         for i, (compute_crits, y_true, y_pred) in \
                 enumerate(zip(compute_crit_lists, yy_true, yy_pred)):
-            loss = Z.variable_to_numpy(losses[i])[0]
+            loss = Z.scalar(losses[i])
             crits = [loss]
             for compute_metric in compute_crits[1:]:
                 t.mark()
                 metric = compute_metric(y_true, y_pred)
                 t.mark()
-                metric = Z.variable_to_numpy(metric)[0]
+                metric = Z.scalar(metric)
                 crits.append(metric)
             crit_lists.append(crits)
         t.mark()
@@ -219,8 +219,8 @@ class Model(object):
             test_crit_lists.append([[] for x in compute_crits])
 
         for (xx, yy), is_training in dataset.each_batch(batch_size):
-            xx = [Z.numpy_to_constant(x) for x in xx]
-            yy = [Z.numpy_to_constant(y) for y in yy]
+            xx = [Z.constant(x) for x in xx]
+            yy = [Z.constant(y) for y in yy]
             if is_training:
                 batch_crit_lists = self.train_on_batch(
                     xx, yy, compute_crit_lists, optim, callbacks, train_timer)

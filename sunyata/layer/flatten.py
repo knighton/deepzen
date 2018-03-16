@@ -8,7 +8,7 @@ from .base.spec import Spec
 
 class FlattenLayer(Layer):
     def forward(self, x):
-        return Z.flatten(x)
+        return Z.batch_flatten(x)
 
 
 class FlattenSpec(Spec):

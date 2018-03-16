@@ -14,9 +14,18 @@ class MXNetVariableAPI(BaseVariableAPI):
         backward(loss_variables, grad_tensors)
 
     def assign_sub(self, x, decr):
-        x.data -= decr
+        x[:] -= decr
         if x.grad is not None:
             x.grad[:] = 0
+
+    def ndim(self, x):
+        return x.ndim
+
+    def shape(self, x):
+        return x.shape
+
+    def size(self, x):
+        return x.size
 
     def data(self, x):
         return x[:]

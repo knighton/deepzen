@@ -1,4 +1,4 @@
-from .core.orig import MXNetCoreAPI
+from .core import MXNetCoreAPI
 from .metric import MXNetMetricAPI
 from .transform import MXNetTransformAPI
 

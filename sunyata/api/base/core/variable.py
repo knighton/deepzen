@@ -12,6 +12,15 @@ class BaseVariableAPI(object):
     def assign_sub(self, x, decr):
         raise NotImplementedError
 
+    def ndim(self, x):
+        raise NotImplementedError
+
+    def shape(self, x):
+        raise NotImplementedError
+
+    def size(self, x):
+        raise NotImplementedError
+
     def data(self, x):
         raise NotImplementedError
 
