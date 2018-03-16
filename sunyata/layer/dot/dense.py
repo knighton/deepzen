@@ -19,13 +19,17 @@ class DenseLayer(Layer):
 
 
 class DenseSpec(Spec):
-    def __init__(self, out_dim):
-        self.out_dim = out_dim
+    def __init__(self, dim=None):
+        self.out_dim = dim
 
     def build(self, form=None):
         in_dim, = form.shape
+        if self.out_dim is None:
+            out_dim = in_dim
+        else:
+            out_dim = self.out_dim
         kernel = np.random.normal(
-            0, 0.1, (self.out_dim, in_dim)).astype('float32')
-        bias = np.zeros(self.out_dim, 'float32')
-        out_shape = (self.out_dim,)
+            0, 0.1, (out_dim, in_dim)).astype('float32')
+        bias = np.zeros(out_dim, 'float32')
+        out_shape = (out_dim,)
         return DenseLayer(kernel, bias), Form(out_shape, form.dtype)
