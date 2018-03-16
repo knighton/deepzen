@@ -24,8 +24,9 @@ class DenseSpec(Spec):
         self.dim = dim
         self.has_bias = has_bias
 
-    def build(self, x_sig=None):
-        in_dim, = x_sig.shape
+    def build(self, x_sig):
+        assert x_sig.has_channels()
+        in_dim, = x_sig.sample_shape()
         if self.dim is None:
             out_dim = in_dim
         else:
