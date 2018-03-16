@@ -30,3 +30,7 @@ def require_kwargs_after(num_args):
         wrap.__name__ = func.__name__
         return wrap
     return make_wrap
+
+
+def class_path(klass):
+    return klass.__module__ + '.' + klass.__class__.__name__
