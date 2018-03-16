@@ -1,4 +1,7 @@
 class BaseTransformAPI(object):
+    def relu(self, x):
+        return self.clip(x, min=0)
+
     def softmax(self, x):
         axes = list(range(self.ndim(x)))[1:]
         e_x = self.exp(x)

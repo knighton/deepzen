@@ -5,7 +5,7 @@ from .base.spec import Spec
 
 class ReLULayer(Layer):
     def forward(self, x):
-        return Z.clip(x, min=0)
+        return Z.relu(x)
 
 
 class ReLUSpec(Spec):
