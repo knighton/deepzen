@@ -73,7 +73,7 @@ class Model(object):
 
     def forward(self, xx, is_training):
         x, = xx
-        y_pred = self.layer.forward(x)
+        y_pred = self.layer.forward(x, is_training)
         return [y_pred]
 
     def train_on_batch(self, xx, yy_true, compute_crit_lists, optim, callbacks,

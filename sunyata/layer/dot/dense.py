@@ -14,7 +14,7 @@ class DenseLayer(Layer):
     def params(self):
         return [self.kernel, self.bias]
 
-    def forward(self, x):
+    def forward(self, x, is_training):
         return Z.dense(x, self.kernel, self.bias)
 
 

@@ -4,7 +4,7 @@ from ..base.spec import Spec
 
 
 class ReLULayer(Layer):
-    def forward(self, x):
+    def forward(self, x, is_training):
         return Z.relu(x)
 
 

@@ -12,9 +12,9 @@ class SequenceLayer(Layer):
             params += layer.params()
         return params
 
-    def forward(self, x):
+    def forward(self, x, is_training):
         for layer in self.layers:
-            x = layer.forward(x)
+            x = layer.forward(x, is_training)
         return x
 
 

@@ -7,7 +7,7 @@ class DataLayer(Layer):
     def __init__(self, form):
         self.form = form
 
-    def forward(self, x):
+    def forward(self, x, is_training):
         self.form.check(x)
         return x
 
