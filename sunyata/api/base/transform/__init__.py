@@ -1,6 +1,8 @@
 class BaseTransformAPI(object):
     def softmax(self, x):
-        raise NotImplementedError
+        axes = list(range(self.ndim(x)))[1:]
+        e_x = self.exp(x)
+        return e_x / self.sum(e_x, axes, True)
 
     def batch_reshape(self, x, batch_shape):
         batch_size = self.shape(x)[0]
