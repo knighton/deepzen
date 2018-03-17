@@ -36,9 +36,9 @@ class DenseSpec(Spec):
             out_dim = in_dim
         else:
             out_dim = self.dim
-        kernel = self.kernel_init((out_dim, in_dim), Z.dtype(), 'kernel')
+        kernel = self.kernel_init((out_dim, in_dim), x_sig.dtype(), 'kernel')
         if self.has_bias:
-            bias = self.bias_init((out_dim,), Z.dtype(), 'bias')
+            bias = self.bias_init((out_dim,), x_sig.dtype(), 'bias')
         else:
             bias = None
         out_sample_shape = (out_dim,)
