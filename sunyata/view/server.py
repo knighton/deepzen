@@ -3,10 +3,10 @@ import logging
 import requests
 from threading import Thread
 
-from .base.callback import Callback
+from .base.view import View
 
 
-class Server(Callback):
+class Server(View):
     def __init__(self, host='0.0.0.0', port=31337):
         self.host = host
         self.port = port
@@ -19,7 +19,7 @@ class Server(Callback):
 
         @app.route('/')
         def serve_root():
-            return open('sunyata/callback/server/index.html').read()
+            return open('sunyata/view/server/index.html').read()
 
         @app.route('/stop', methods=['POST'])
         def server_stop():

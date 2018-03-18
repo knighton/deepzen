@@ -1,11 +1,11 @@
-from .base.callback import Callback
+from .base.view import View
 from .progress_bar import ProgressBar
 from .row_per_epoch import RowPerEpoch
 from .server import Server
 
 
-def unpack_callback(arg):
-    if isinstance(arg, Callback):
+def unpack_view(arg):
+    if isinstance(arg, View):
         return arg
     klass = {
         'row_per_epoch': RowPerEpoch,
@@ -15,14 +15,14 @@ def unpack_callback(arg):
     return klass()
 
 
-def unpack_callbacks(arg):
+def unpack_views(arg):
     if arg is None:
         return []
     if isinstance(arg, str):
         arg = arg.split(',')
     if not isinstance(arg, (list, tuple)):
         arg = [arg]
-    callbacks = []
+    views = []
     for item in arg:
-        callbacks.append(unpack_callback(item))
-    return callbacks
+        views.append(unpack_view(item))
+    return views

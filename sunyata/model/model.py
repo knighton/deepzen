@@ -1,14 +1,14 @@
 import numpy as np
 
 from .. import api as Z
-from ..callback import unpack_callbacks
-from ..metric.loss import unpack_loss
-from ..metric import unpack_metric
 from ..iter.dataset import Dataset
 from ..iter.ram_split import RamSplit
 from ..iter.split import Split
+from ..metric.loss import unpack_loss
+from ..metric import unpack_metric
 from ..optim import unpack_optim
 from ..util.py import require_kwargs_after
+from ..view import unpack_views
 from .batch_timer import TestOnBatchTimer, TrainOnBatchTimer
 
 
@@ -74,16 +74,15 @@ class Model(object):
         y_pred = self.layer.forward(x, is_training)
         return [y_pred]
 
-    def train_on_batch(self, xx, yy_true, compute_crit_lists, optim, callbacks,
-                       t):
+    def train_on_batch(self, xx, yy_true, compute_crit_lists, optim, views, t):
         # Start timing the whole method.
         t.start()
 
-        # 1. Execute "on begin" callbacks.
+        # 1. Execute "on begin" views.
         t.mark()
-        for callback in callbacks:
+        for view in views:
             t.mark()
-            callback.on_train_on_batch_begin()
+            view.on_train_on_batch_begin()
             t.mark()
         t.mark()
 
@@ -132,11 +131,11 @@ class Model(object):
         optim.step()
         t.mark()
 
-        # 7. Execute "on end" callbacks.
+        # 7. Execute "on end" views.
         t.mark()
-        for callback in callbacks:
+        for view in views:
             t.mark()
-            callback.on_train_on_batch_end()
+            view.on_train_on_batch_end()
             t.mark()
         t.mark()
 
@@ -145,15 +144,15 @@ class Model(object):
 
         return crit_lists
 
-    def test_on_batch(self, xx, yy_true, compute_crit_lists, callbacks, t):
+    def test_on_batch(self, xx, yy_true, compute_crit_lists, views, t):
         # Start timing the whole method.
         t.start()
 
-        # 1. Execute "before" callbacks.
+        # 1. Execute "before" views.
         t.mark()
-        for callback in callbacks:
+        for view in views:
             t.mark()
-            callback.on_test_on_batch_begin()
+            view.on_test_on_batch_begin()
             t.mark()
         t.mark()
 
@@ -192,11 +191,11 @@ class Model(object):
             crit_lists.append(crits)
         t.mark()
 
-        # 4. Execute "after" callbacks.
+        # 4. Execute "after" views.
         t.mark()
-        for callback in callbacks:
+        for view in views:
             t.mark()
-            callback.on_test_on_batch_end()
+            view.on_test_on_batch_end()
             t.mark()
         t.mark()
 
@@ -206,9 +205,9 @@ class Model(object):
         return crit_lists
 
     def _fit_epoch(self, compute_crit_lists, dataset, optim, batch_size,
-                   callbacks, train_timer, test_timer, epoch):
-        for callback in callbacks:
-            callback.on_epoch_begin(epoch, dataset.num_batches(batch_size))
+                   views, train_timer, test_timer, epoch):
+        for view in views:
+            view.on_epoch_begin(epoch, dataset.num_batches(batch_size))
 
         train_crit_lists = []
         test_crit_lists = []
@@ -221,11 +220,11 @@ class Model(object):
             yy = [Z.constant(y) for y in yy]
             if is_training:
                 batch_crit_lists = self.train_on_batch(
-                    xx, yy, compute_crit_lists, optim, callbacks, train_timer)
+                    xx, yy, compute_crit_lists, optim, views, train_timer)
                 split_crit_lists = train_crit_lists
             else:
                 batch_crit_lists = self.test_on_batch(
-                    xx, yy, compute_crit_lists, callbacks, test_timer)
+                    xx, yy, compute_crit_lists, views, test_timer)
                 split_crit_lists = test_crit_lists
             for i, batch_crits in enumerate(batch_crit_lists):
                 for j, batch_crit in enumerate(batch_crits):
@@ -236,19 +235,19 @@ class Model(object):
                 for j, values in enumerate(column):
                     split_crit_lists[i][j] = float(np.mean(values))
 
-        for callback in callbacks:
-            callback.on_epoch_end(train_crit_lists, test_crit_lists)
+        for view in views:
+            view.on_epoch_end(train_crit_lists, test_crit_lists)
 
         return train_crit_lists, test_crit_lists
 
     @require_kwargs_after(3)
     def fit(self, crit, data, test_frac=None, optim='sgd', batch=64,
-            epoch_offset=0, epochs=20, callback=None, timer_cache=10000):
+            epoch_offset=0, epochs=20, view=None, timer_cache=10000):
         dataset = self._unpack_dataset(data, test_frac)
         y_sample_shapes = dataset.shapes()[0]
         compute_crit_lists = self._unpack_crit_lists(crit, y_sample_shapes)
         optim = unpack_optim(optim)
-        callbacks = unpack_callbacks(callback)
+        views = unpack_views(view)
         assert isinstance(batch, int)
         assert 0 < batch
         batch_size = batch
@@ -258,41 +257,41 @@ class Model(object):
         assert 0 <= epochs
 
         timer_cache_size = timer_cache
-        callback_names = [x.__class__.__name__ for x in callbacks]
+        view_names = [x.__class__.__name__ for x in views]
         crit_name_lists = []
         for compute_crits in compute_crit_lists:
             crit_names = [x.__class__.__name__ for x in compute_crits]
             crit_name_lists.append(crit_names)
         train_timer = TrainOnBatchTimer(
-            timer_cache_size, callback_names, crit_name_lists)
+            timer_cache_size, view_names, crit_name_lists)
         test_timer = TestOnBatchTimer(
-            timer_cache_size, callback_names, crit_name_lists)
+            timer_cache_size, view_names, crit_name_lists)
 
         optim.set_params(self.layer.params())
 
-        for callback in callbacks:
-            callback.on_fit_begin(crit_name_lists, epoch_offset, epochs)
+        for view in views:
+            view.on_fit_begin(crit_name_lists, epoch_offset, epochs)
 
         for epoch in range(epoch_offset, epoch_offset + epochs):
             train_crit_lists, test_crit_lists = \
                 self._fit_epoch(compute_crit_lists, dataset, optim, batch_size,
-                                callbacks, train_timer, test_timer, epoch)
+                                views, train_timer, test_timer, epoch)
 
-        for callback in callbacks:
-            callback.on_fit_end()
+        for view in views:
+            view.on_fit_end()
 
     @require_kwargs_after(2)
     def fit_reg(self, data, test_frac=None, optim='sgd', batch=64,
-                epoch_offset=0, epochs=20, callback=None, timer_cache=10000):
+                epoch_offset=0, epochs=20, view=None, timer_cache=10000):
         crit = [['mean_squared_error']]
         return self.fit(crit, data, test_frac=test_frac, optim=optim,
                         batch=batch, epoch_offset=epoch_offset, epochs=epochs,
-                        callback=callback, timer_cache=timer_cache)
+                        view=view, timer_cache=timer_cache)
 
     @require_kwargs_after(2)
     def fit_clf(self, data, test_frac=None, optim='sgd', batch=64,
-                epoch_offset=0, epochs=20, callback=None, timer_cache=10000):
+                epoch_offset=0, epochs=20, view=None, timer_cache=10000):
         crit = [['cross_entropy', 'accuracy']]
         return self.fit(crit, data, test_frac=test_frac, optim=optim,
                         batch=batch, epoch_offset=epoch_offset, epochs=epochs,
-                        callback=callback, timer_cache=timer_cache)
+                        view=view, timer_cache=timer_cache)

@@ -1,7 +1,7 @@
-from .base.callback import Callback
+from .base.view import View
 
 
-class RowPerEpoch(Callback):
+class RowPerEpoch(View):
     def __init__(self, epoch_cols=10, crit_cols=9, crit_decimal_places=4):
         self.epoch_cols = epoch_cols
         assert crit_decimal_places + 2 <= crit_cols

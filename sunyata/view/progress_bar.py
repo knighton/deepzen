@@ -1,9 +1,9 @@
 from tqdm import tqdm
 
-from .base.callback import Callback
+from .base.view import View
 
 
-class ProgressBar(Callback):
+class ProgressBar(View):
     def on_epoch_begin(self, epoch, num_batches):
         self.bar = tqdm(total=num_batches, leave=False)
 

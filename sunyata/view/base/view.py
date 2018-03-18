@@ -1,4 +1,4 @@
-class Callback(object):
+class View(object):
     def on_fit_begin(self, crit_name_lists, epoch_offset, num_epochs):
         pass
 

@@ -11,7 +11,7 @@ class BatchTimer(object):
     * TestOnBatchTimer for test_on_batch().
 
     Shows you where time is being spent during training at a very fine-grained
-    level.  Times forward/backward/optim, individual callback methods, each loss
+    level.  Times forward/backward/optim, individual view callbacks, each loss
     and metric function, and everything else of note.
 
     Internally, it is just a cache of time.time() values in a float64 numpy
@@ -25,25 +25,25 @@ class BatchTimer(object):
 
     When requested, it pairs up the columns gathering how long each event took,
     then returns timing summary statistics and quantiles for each event.  You
-    should call fit() with the 'server' callback to visualize this data in real
-    time with human-friendly charts, otherwise the granularity can be unwieldy.
+    should call fit() with the 'server' view to visualize this data in real time
+    with human-friendly charts, otherwise the granularity can be unwieldy.
     """
 
     def init_middle(self, middle_offset):
         raise NotImplementedError
 
-    def __init__(self, cache_size, callback_names, crit_name_lists):
+    def __init__(self, cache_size, view_names, crit_name_lists):
         # During execution, we will fill the rows of the cache in ascending
         # order until full, then start replacing rows at random.
         self.cache_used = 0
         self.cache_size = cache_size
 
-        # The names of the callbacks and criteria (losses and add'l metrics).
+        # The names of the views and criteria (losses and add'l metrics).
         #
         # The names are used for displaying results.  The counts of these
         # different kinds of things are used for computing offsets for where to
         # store the times recorded during each batch.
-        self.callback_names = callback_names
+        self.view_names = view_names
         self.crit_name_lists = crit_name_lists
         self.num_losses = len(crit_name_lists)
         self.num_metrics = sum(map(len, crit_name_lists)) - len(crit_name_lists)
@@ -60,23 +60,23 @@ class BatchTimer(object):
         #
         # Lengths of each section:
         # - Start: 1.
-        # - On begin: 1 + 2 * num callbacks + 1.
+        # - On begin: 1 + 2 * num views + 1.
         # - Forward: 1 + 1.
         # - Losses: 1 + 2 * num losses + 1.
         # - Metrics: 1 + 2 * num metrics + 1.
         #   (train_on_batch() does additional work here...)
-        # - On end: 1 + 2 * num callbacks + 1.
+        # - On end: 1 + 2 * num views + 1.
         # - Stop: 1.
         self.start_offset = 0
         self.on_begin_offset = self.start_offset + 1
         self.forward_offset = \
-            self.on_begin_offset + 1 + 2 * len(self.callback_names) + 1
+            self.on_begin_offset + 1 + 2 * len(self.view_names) + 1
         self.losses_offset = self.forward_offset + 2
         self.metrics_offset = self.losses_offset + 1 + 2 * self.num_losses + 1
         middle_offset = self.metrics_offset + 1 + 2 * self.num_metrics + 1
         self.on_end_offset = self.init_middle(middle_offset)
         self.stop_offset = \
-            self.on_end_offset + 1 + 2 * len(self.callback_names) + 1
+            self.on_end_offset + 1 + 2 * len(self.view_names) + 1
 
         # The number of times we record the time per batch (row width).
         self.marks_per_batch = self.stop_offset + 1
@@ -138,17 +138,17 @@ class BatchTimer(object):
         tt = self.marks - np.expand_dims(self.marks[:, 0], 1)
         tt *= 1e9
 
-        # "On begin" callbacks.
+        # "On begin" view callbacks.
         start = self.on_begin_offset
-        stop = self.on_begin_offset + 1 + len(self.callback_names) * 2
+        stop = self.on_begin_offset + 1 + len(self.view_names) * 2
         t_on_begin = self.duration_stats(tt, start, stop, num_quantiles)
 
         tt_on_begin = []
-        for i in range(len(self.callback_names)):
+        for i in range(len(self.view_names)):
             start = self.on_begin_offset + 1 + i * 2
             stop = self.on_begin_offset + 1 + i * 2 + 1
-            per_callback = self.duration_stats(tt, start, stop, num_quantiles)
-            tt_on_begin.append(per_callback)
+            per_view = self.duration_stats(tt, start, stop, num_quantiles)
+            tt_on_begin.append(per_view)
 
         # Forward.
         start = self.forward_offset
@@ -183,17 +183,17 @@ class BatchTimer(object):
         # batches.
         middle_name2stats = self.middle_steps_stats(tt, num_quantiles)
 
-        # "On end" callbacks.
+        # "On end" view callbacks.
         start = self.on_end_offset
         stop = self.on_end_offset + 1
         t_on_end = self.duration_stats(tt, start, stop, num_quantiles)
 
         tt_on_end = []
-        for i in range(len(self.callback_names)):
+        for i in range(len(self.view_names)):
             start = self.on_end_offset + 1 + i * 2
             stop = self.on_end_offset + 1 + i * 2 + 1
-            per_callback = self.duration_stats(tt, start, stop, num_quantiles)
-            tt_on_end.append(per_callback)
+            per_view = self.duration_stats(tt, start, stop, num_quantiles)
+            tt_on_end.append(per_view)
 
         # End-to-end times.
         start = self.start_offset
@@ -224,7 +224,7 @@ class BatchTimer(object):
             'metric': t_metric,
             'crit_each': ttt_crit,
 
-            'callback_names': self.callback_names,
+            'view_names': self.view_names,
             'on_begin': t_on_begin,
             'on_begin_each': tt_on_begin,
             'on_end': t_on_end,
