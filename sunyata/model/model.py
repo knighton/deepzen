@@ -2,8 +2,8 @@ import numpy as np
 
 from .. import api as Z
 from ..callback import unpack_callbacks
-from ..crit.loss import unpack_loss
-from ..crit.metric import unpack_metric
+from ..metric.loss import unpack_loss
+from ..metric import unpack_metric
 from ..iter.dataset import Dataset
 from ..iter.ram_split import RamSplit
 from ..iter.split import Split

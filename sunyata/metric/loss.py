@@ -1,6 +1,6 @@
 from .. import api as Z
 from ..util.dataset import is_sample_one_scalar
-from .metric import Metric
+from .base.metric import Metric
 
 
 class Loss(Metric):
@@ -8,12 +8,12 @@ class Loss(Metric):
         raise NotImplementedError
 
 
-class MeanSquaredError(Metric):
+class MeanSquaredError(Loss):
     def __call__(self, true, pred):
         return Z.sum(Z.pow(true - pred, 2))
 
 
-class CategoricalCrossEntropy(Metric):
+class CategoricalCrossEntropy(Loss):
     def __call__(self, true, pred):
         pred = Z.clip(pred, 1e-6, 1 - 1e-6)
         x = -true * Z.log(pred)
