@@ -1,24 +1,24 @@
 class BaseDropoutAPI(object):
-    def _dropout_mask_shape(self, shape, axis=None):
+    def _dropout_mask_shape(self, x_shape, axis=None):
         if axis is None:
-            return shape
+            return x_shape
         if isinstance(axis, int):
-            keep_axes = [axis]
+            axes = [axis]
         elif isinstance(axis, (list, tuple)):
-            keep_axes = axis
+            axes = axis
         else:
             assert False
-        x = [1] * len(shape)
-        x[0] = shape[0]
-        for axis in keep_axes:
-            x[axis] = shape[axis]
-        return tuple(x)
+        mask_shape = [1] * len(x_shape)
+        mask_shape[0] = x_shape[0]
+        for axis in axes:
+            mask_shape[1 + axis] = x_shape[1 + axis]
+        return tuple(mask_shape)
 
-    def dropout(self, x, is_training, rate=0.5, axis=None, spatial_ndim=None):
+    def dropout(self, x, is_training, rate=0.5, axis=None, space=None):
         if not is_training:
             return x
-        if spatial_ndim is not None:
-            assert self.spatial_ndim(x) == spatial_ndim
+        if space is not None:
+            assert self.spatial_ndim(x) == space
         mask_shape = self._dropout_mask_shape(self.shape(x), axis)
         mask = self.random_binomial(
             mask_shape, rate, self.dtype(x), self.device(x))

@@ -12,9 +12,15 @@ class PyTorchVariableAPI(BaseVariableAPI):
     def backward(self, loss_variables, grad_tensors):
         backward(loss_variables, grad_tensors)
 
+    def assign_set(self, x, new_x):
+        x = new_x
+        if x.grad is not None:
+            x.grad.data.zero_()
+
     def assign_sub(self, x, decr):
         x.data -= decr
-        x.grad.data.zero_()
+        if x.grad is not None:
+            x.grad.data.zero_()
 
     def ndim(self, x):
         return x.dim()

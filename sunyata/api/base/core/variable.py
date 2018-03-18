@@ -9,6 +9,13 @@ class BaseVariableAPI(object):
     def backward(self, loss_variables, grad_tensors):
         raise NotImplementedError
 
+    def assign_set(self, x, new_x):
+        raise NotImplementedError
+
+    def assign_momentum(self, mov_avg, instance, momentum):
+        new_mov_avg = momentum * mov_avg + (1 - momentum) * instance
+        self.assign_set(mov_avg, new_mov_avg)
+
     def assign_sub(self, x, decr):
         raise NotImplementedError
 

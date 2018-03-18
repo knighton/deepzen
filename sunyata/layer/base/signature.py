@@ -34,6 +34,10 @@ class Signature(object):
             x = None
         return x
 
+    def channels(self):
+        assert self._has_channels
+        return self._sample_shape[0]
+
     def dtype(self):
         return self._dtype
 
