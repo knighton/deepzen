@@ -103,7 +103,8 @@ class BaseBatchNormSpec(Spec):
 
 
 class InstanceBatchNormSpec(BaseBatchNormSpec):
-    def __init__(self, axis=0, beta_init='zero', gamma_init='one', space=None):
+    def __init__(self, axis=0, beta_init='zero', gamma_init='one', center=True,
+                 scale=True, space=None):
         """
         InstanceBatchNormSpec init.
 
@@ -120,6 +121,8 @@ class InstanceBatchNormSpec(BaseBatchNormSpec):
         self._axis = axis
         self._beta_init = unpack_distribution(beta_init)
         self._gamma_init = unpack_distribution(gamma_init)
+        self._center = center
+        self._scale = scale
 
     def checked_build(self, x_sig):
         """
@@ -132,15 +135,21 @@ class InstanceBatchNormSpec(BaseBatchNormSpec):
             MovAvgBatchNormLayer  layer  The specified layer.
         """
         args = self._get_state_init_args(self._axis, x_sig)
-        beta = self._beta_init(*args)
-        gamma = self._gamma_init(*args)
+        if self._center:
+            beta = self._beta_init(*args)
+        else:
+            beta = None
+        if self._scale:
+            gamma = self._gamma_init(*args)
+        else:
+            gamma = None
         return InstanceBatchNormLayer(x_sig, beta, gamma)
 
 
 class MovAvgBatchNormSpec(BaseBatchNormSpec):
     def __init__(self, momentum=0.99, axis=0, beta_init='zero',
                  gamma_init='one', mean_init='zero', var_init='one',
-                 space=None):
+                 center=True, scale=True, space=None):
         """
         MovAvgBatchNormSpec init.
 
@@ -179,8 +188,14 @@ class MovAvgBatchNormSpec(BaseBatchNormSpec):
             MovAvgBatchNormLayer  layer  The specified layer.
         """
         args = self._get_state_init_args(self._axis, x_sig)
-        beta = self._beta_init(*args)
-        gamma = self._gamma_init(*args)
+        if self._center:
+            beta = self._beta_init(*args)
+        else:
+            beta = None
+        if self._scale:
+            gamma = self._gamma_init(*args)
+        else:
+            gamma = None
         mean = self._mean_init(*args)
         var = self._var_init(*args)
         return MovAvgBatchNormLayer(x_sig, self._momentum, beta, gamma, mean,
