@@ -4,7 +4,7 @@ import pickle
 import tarfile
 from tqdm import tqdm
 
-from ..nondiff.one_hot import to_one_hot
+from ..transform.one_hot import to_one_hot
 from ..util.dataset import train_test_split
 from ..util.net import download
 from ..util.py import require_kwargs

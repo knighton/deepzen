@@ -1,7 +1,7 @@
 import os
 from scipy.io import loadmat
 
-from ..nondiff.one_hot import to_one_hot
+from ..transform.one_hot import to_one_hot
 from ..util.net import download
 from ..util.py import require_kwargs
 from ..util.sunyata import get_dataset_root
