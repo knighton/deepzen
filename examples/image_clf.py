@@ -11,12 +11,15 @@ def parse_args():
     ap = ArgumentParser()
     ap.add_argument('--dataset', type=str, default='mnist',
                     help='The dataset to train on.')
-    ap.add_argument('--model', type=str, default='simple_mlp',
+    ap.add_argument('--model', type=str, default='simple',
                     help='The model architecture to train.')
     ap.add_argument('--epochs', type=int, default=100,
                     help='Number of epochs to train for.')
-    ap.add_argument('--batch', type=int, default=128,
-                    help='Batch size.')
+    ap.add_argument('--batch', type=int, default=128, help='Batch size.')
+    ap.add_argument('--optim', type=str, default='sgd', help='Optimizer.')
+    ap.add_argument('--callback', type=str,
+                    default='server,progress_bar,row_per_epoch',
+                    help='Callbacks list.')
     return ap.parse_args()
 
 
@@ -96,7 +99,7 @@ def run(args):
     dataset, class_names = Datasets.get(args.dataset)
     model = Models.get(args.model, dataset)
     model.fit_clf(dataset, epochs=args.epochs, batch=args.batch,
-                  callback='server,progress_bar,row_per_epoch')
+                  optim=args.optim, callback=args.callback)
 
 
 if __name__ == '__main__':
