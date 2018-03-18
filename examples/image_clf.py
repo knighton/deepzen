@@ -13,6 +13,10 @@ def parse_args():
                     help='The dataset to train on.')
     ap.add_argument('--model', type=str, default='simple_mlp',
                     help='The model architecture to train.')
+    ap.add_argument('--epochs', type=int, default=100,
+                    help='Number of epochs to train for.')
+    ap.add_argument('--batch', type=int, default=128,
+                    help='Batch size.')
     return ap.parse_args()
 
 
@@ -59,15 +63,18 @@ class Models(object):
             DataSpec(image_shape, dtype),
             FlattenSpec(),
 
-            DenseSpec(256),
+            DenseSpec(512),
+            MovAvgBatchNormSpec(),
             ReLUSpec(),
             DropoutSpec(),
 
             DenseSpec(256),
+            MovAvgBatchNormSpec(),
             ReLUSpec(),
             DropoutSpec(),
 
-            DenseSpec(256),
+            DenseSpec(128),
+            MovAvgBatchNormSpec(),
             ReLUSpec(),
             DropoutSpec(),
 
@@ -88,7 +95,8 @@ class Models(object):
 def run(args):
     dataset, class_names = Datasets.get(args.dataset)
     model = Models.get(args.model, dataset)
-    model.fit_clf(dataset, callback='server,progress_bar,row_per_epoch')
+    model.fit_clf(dataset, epochs=args.epochs, batch=args.batch,
+                  callback='server,progress_bar,row_per_epoch')
 
 
 if __name__ == '__main__':
