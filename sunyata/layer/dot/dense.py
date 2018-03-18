@@ -1,5 +1,3 @@
-import numpy as np
-
 from ... import api as Z
 from ...dist import unpack_distribution
 from ..base.layer import Layer

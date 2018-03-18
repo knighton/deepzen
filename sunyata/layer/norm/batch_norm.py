@@ -93,7 +93,7 @@ class BaseBatchNormSpec(Spec):
         if isinstance(axis, int):
             axes = [axis]
         elif isinstance(axis, (list, tuple)):
-            axes = axis 
+            axes = axis
         else:
             assert False
         state_shape = list(x_sig.batch_shape(1))
