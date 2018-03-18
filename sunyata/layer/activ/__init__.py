@@ -1,2 +1,2 @@
-from .relu import *  # noqa
-from .softmax import *  # noqa
+from .map import *  # noqa
+from .relative import *  # noqa

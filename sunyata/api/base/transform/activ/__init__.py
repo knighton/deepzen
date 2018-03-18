@@ -1,6 +1,6 @@
-from .relu import BaseReLUAPI
-from .softmax import BaseSoftmaxAPI
+from .map import BaseMapAPI
+from .relative import BaseRelativeAPI
 
 
-class BaseActivAPI(BaseReLUAPI, BaseSoftmaxAPI):
+class BaseActivAPI(BaseMapAPI, BaseRelativeAPI):
     pass
