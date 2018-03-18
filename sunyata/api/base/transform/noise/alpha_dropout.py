@@ -1,4 +1,4 @@
-class BaseDropoutAPI(object):
+class BaseAlphaDropoutAPI(object):
     _alpha_dropout_alpha = 1.6732632423543772848170429916717
     _alpha_dropout_scale = 1.0507009873554804934193349852946
     _alpha_dropout_alpha_p = -_alpha_dropout_alpha * _alpha_dropout_scale
