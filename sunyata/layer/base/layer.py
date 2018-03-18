@@ -27,6 +27,8 @@ class Layer(Spec):
         return self._params
 
     def param(self, x, learned=True):
+        if x is None:
+            return None
         if learned:
             x = Z.variable(x)
             self._params.append(x)

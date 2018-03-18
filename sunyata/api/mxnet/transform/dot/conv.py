@@ -1,6 +1,6 @@
 import mxnet as mx
 
-from .....util.unpack import unpack_dim
+from .....util.unpack import unpack_shape
 from ....base.transform.dot.conv import BaseConvAPI
 
 
@@ -11,9 +11,9 @@ class MXNetConvAPI(BaseConvAPI):
         else:
             assert space == x.ndim - 2
         face = kernel.shape[2:]
-        stride = self.unpack_shape(stride, space)
-        padding = self.unpack_shape(padding, space)
-        dilation = self.unpack_shape(dilation, space)
+        stride = unpack_shape(stride, space)
+        padding = unpack_shape(padding, space)
+        dilation = unpack_shape(dilation, space)
         out_dim = kernel.shape[0]
         return mx.nd.Convolution(x, kernel, bias, face, stride, dilation,
                                  padding, out_dim)
