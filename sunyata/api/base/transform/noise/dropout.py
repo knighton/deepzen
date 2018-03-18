@@ -26,13 +26,13 @@ class BaseDropoutAPI(object):
         return x * mask / (1 - rate)
 
     def dropout0d(self, x, is_training, rate=0.5, axis=None):
-        return self._dropout(x, is_training, rate, axis, 0)
+        return self.dropout(x, is_training, rate, axis, 0)
 
     def dropout1d(self, x, is_training, rate=0.5, axis=None):
-        return self._dropout(x, is_training, rate, axis, 1)
+        return self.dropout(x, is_training, rate, axis, 1)
 
     def dropout2d(self, x, is_training, rate=0.5, axis=None):
-        return self._dropout(x, is_training, rate, axis, 2)
+        return self.dropout(x, is_training, rate, axis, 2)
 
     def dropout3d(self, x, is_training, rate=0.5, axis=None):
-        return self._dropout(x, is_training, rate, axis, 3)
+        return self.dropout(x, is_training, rate, axis, 3)
