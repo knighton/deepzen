@@ -1,9 +1,9 @@
 import numpy as np
 
 from .. import api as Z
-from ..iter.dataset import Dataset
-from ..iter.ram_split import RamSplit
-from ..iter.split import Split
+from ..io.dataset import Dataset
+from ..io.ram_split import RamSplit
+from ..io.split import Split
 from ..metric.loss import unpack_loss
 from ..metric import unpack_metric
 from ..optim import unpack_optim
