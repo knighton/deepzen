@@ -11,41 +11,83 @@ def parse_args():
     ap = ArgumentParser()
     ap.add_argument('--dataset', type=str, default='mnist',
                     help='The dataset to train on.')
+    ap.add_argument('--model', type=str, default='simple_mlp',
+                    help='The model architecture to train.')
     return ap.parse_args()
 
 
-def load_dataset(name):
-    if name == 'mnist':
-        get = lambda: load_mnist()
-    elif name == 'cifar-10':
-        get = lambda: load_cifar(classes=10)
-    elif name == 'cifar-20':
-        get = lambda: load_cifar(classes=20)
-    elif name == 'cifar-100':
-        get = lambda: load_cifar(classes=100)
-    elif name == 'svhn':
-        get = lambda: load_svhn()
-    else:
-        assert False
-    return get()
+class Datasets(object):
+    """
+    A collection of image classification datasets.
+
+    Select with --dataset.
+    """
+
+    mnist = load_mnist
+    cifar_10 = lambda: load_cifar(classes=10)
+    cifar_20 = lambda: load_cifar(classes=20)
+    cifar_100 = lambda: load_cifar(classes=100)
+    svhn = load_svhn
+
+    @classmethod
+    def get(cls, name):
+        get = getattr(cls, name)
+        return get()
+
+
+class Models(object):
+    """
+    A collection of image classification models.
+
+    Select with --model.
+    """
+
+    @classmethod
+    def simple(cls, image_shape, dtype, num_classes):
+        return SequenceSpec([
+            DataSpec(image_shape, dtype),
+            FlattenSpec(),
+            DenseSpec(128),
+            ReLUSpec(),
+            DenseSpec(num_classes),
+            SoftmaxSpec(),
+        ])
+
+    @classmethod
+    def mlp(cls, image_shape, dtype, num_classes):
+        return SequenceSpec([
+            DataSpec(image_shape, dtype),
+            FlattenSpec(),
+
+            DenseSpec(256),
+            ReLUSpec(),
+            DropoutSpec(),
+
+            DenseSpec(256),
+            ReLUSpec(),
+            DropoutSpec(),
+
+            DenseSpec(256),
+            ReLUSpec(),
+            DropoutSpec(),
+
+            DenseSpec(num_classes),
+            SoftmaxSpec(),
+        ])
+
+    @classmethod
+    def get(cls, name, dataset):
+        x_train, y_train = dataset[0]
+        image = x_train[0]
+        num_classes = len(y_train[0])
+        get = getattr(cls, name)
+        spec = get(image.shape, image.dtype, num_classes)
+        return Model(spec)
 
 
 def run(args):
-    dataset, class_names = load_dataset(args.dataset)
-    x_sample = dataset[0][0][0]
-    y_sample = dataset[0][1][0]
-    num_classes, = y_sample.shape
-    spec = SequenceSpec([
-        DataSpec(x_sample.shape, x_sample.dtype),
-        FlattenSpec(),
-        DenseSpec(256),
-        ReLUSpec(),
-        DenseSpec(64),
-        ReLUSpec(),
-        DenseSpec(num_classes),
-        SoftmaxSpec(),
-    ])
-    model = Model(spec)
+    dataset, class_names = Datasets.get(args.dataset)
+    model = Models.get(args.model, dataset)
     model.fit_clf(dataset, callback='server,progress_bar,row_per_epoch')
 
 
