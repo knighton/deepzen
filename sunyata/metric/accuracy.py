@@ -9,12 +9,14 @@ class Accuracy(Metric):
 
 class BinaryAccuracy(Accuracy):
     name = 'binary_accuracy', 'bin_acc'
+
     def __call__(self, true, pred):
         return Z.binary_accuracy(true, pred)
 
 
 class CategoricalAccuracy(Accuracy):
     name = 'categorical_accuracy', 'cat_acc'
+
     def __call__(self, true, pred):
         return Z.categorical_accuracy(true, pred)
 
