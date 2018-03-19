@@ -99,7 +99,7 @@ class Model(object):
                     zip(compute_crit_lists, yy_true, yy_pred):
                 compute_loss = compute_crits[0]
                 t.mark()
-                loss = compute_loss(y_true, y_pred)
+                loss = Z.mean(compute_loss(y_true, y_pred))
                 t.mark()
                 losses.append(loss)
             t.mark()
@@ -113,7 +113,7 @@ class Model(object):
             crits = [loss]
             for compute_metric in compute_crits[1:]:
                 t.mark()
-                metric = compute_metric(y_true, y_pred)
+                metric = Z.mean(compute_metric(y_true, y_pred))
                 t.mark()
                 metric = Z.scalar(metric)
                 crits.append(metric)
@@ -168,7 +168,7 @@ class Model(object):
                 enumerate(zip(compute_crit_lists, yy_true, yy_pred)):
             compute_loss = compute_crits[0]
             t.mark()
-            loss = compute_loss(y_true, y_pred)
+            loss = Z.mean(compute_loss(y_true, y_pred))
             t.mark()
             losses.append(loss)
         t.mark()
@@ -184,7 +184,7 @@ class Model(object):
             crits = [loss]
             for compute_metric in compute_crits[1:]:
                 t.mark()
-                metric = compute_metric(y_true, y_pred)
+                metric = Z.mean(compute_metric(y_true, y_pred))
                 t.mark()
                 metric = Z.scalar(metric)
                 crits.append(metric)

@@ -1,11 +1,64 @@
 from .. import api as Z
-from .base.metric import Metric
+from ..util.dataset import is_sample_one_scalar
+from .base.metric import collect_metrics, Metric
 
 
-class CategoricalAccuracy(Metric):
+class Accuracy(Metric):
+    pass
+
+
+class BinaryAccuracy(Accuracy):
+    name = 'binary_accuracy', 'bin_acc'
     def __call__(self, true, pred):
-        true_indices = Z.argmax(true, -1)
-        pred_indices = Z.argmax(pred, -1)
-        hits = Z.equal(true_indices, pred_indices)
-        hits = Z.cast(hits, 'float32')
-        return Z.mean(hits)
+        return Z.binary_accuracy(true, pred)
+
+
+class CategoricalAccuracy(Accuracy):
+    name = 'categorical_accuracy', 'cat_acc'
+    def __call__(self, true, pred):
+        return Z.categorical_accuracy(true, pred)
+
+
+class TopKAccuracy(Accuracy):
+    @classmethod
+    def unpack(cls, s):
+        if s.startswith('accuracy@'):
+            s = s[9:]
+        elif s.startswith('acc@'):
+            s = s[4:]
+        else:
+            return None
+
+        try:
+            k = int(s)
+        except:
+            return None
+
+        return cls(k)
+
+    def __init__(self, k):
+        self._k = k
+
+    def __call__(self, true, pred):
+        return Z.top_k_accuracy(true, pred, self._k)
+
+
+NAME2ACCURACY = collect_metrics(Accuracy, [BinaryAccuracy, CategoricalAccuracy])
+
+
+def unpack_accuracy(x, y_sample_shape):
+    if isinstance(x, Accuracy):
+        return x
+
+    if x in {'acc', 'accuracy'}:
+        if is_sample_one_scalar(y_sample_shape):
+            acc = BinaryAccuracy()
+        else:
+            acc = CategoricalAccuracy()
+        return acc
+
+    acc = NAME2ACCURACY.get(x)
+    if acc is not None:
+        return acc
+
+    return TopKAccuracy.unpack(x)
