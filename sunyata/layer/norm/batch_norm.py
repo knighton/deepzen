@@ -176,6 +176,8 @@ class MovAvgBatchNormSpec(BaseBatchNormSpec):
         self._gamma_init = unpack_distribution(gamma_init)
         self._mean_init = unpack_distribution(mean_init)
         self._var_init = unpack_distribution(var_init)
+        self._center = center
+        self._scale = scale
 
     def checked_build(self, x_sig):
         """
