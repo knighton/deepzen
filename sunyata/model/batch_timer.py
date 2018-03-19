@@ -12,7 +12,7 @@ class BatchTimer(object):
 
     Shows you where time is being spent during training at a very fine-grained
     level.  Times forward/backward/optim, individual view callbacks, each loss
-    and metric function, and everything else of note.
+    and every other metric, and everything else of note.
 
     Internally, it is just a cache of time.time() values in a float64 numpy
     ndarray.  Each row is the exact times of one batch's events.  Each column is
@@ -32,21 +32,22 @@ class BatchTimer(object):
     def init_middle(self, middle_offset):
         raise NotImplementedError
 
-    def __init__(self, cache_size, view_names, crit_name_lists):
+    def __init__(self, cache_size, view_names, metric_name_lists):
         # During execution, we will fill the rows of the cache in ascending
         # order until full, then start replacing rows at random.
         self.cache_used = 0
         self.cache_size = cache_size
 
-        # The names of the views and criteria (losses and add'l metrics).
+        # The names of the views and metrics (losses and other metrics).
         #
         # The names are used for displaying results.  The counts of these
         # different kinds of things are used for computing offsets for where to
         # store the times recorded during each batch.
         self.view_names = view_names
-        self.crit_name_lists = crit_name_lists
-        self.num_losses = len(crit_name_lists)
-        self.num_metrics = sum(map(len, crit_name_lists)) - len(crit_name_lists)
+        self.metric_name_lists = metric_name_lists
+        self.num_losses = len(metric_name_lists)
+        self.num_addl_metrics = sum(map(len, metric_name_lists)) - \
+            len(metric_name_lists)
 
         # Offsets of different events that we track while running a batch.
         #
@@ -73,7 +74,7 @@ class BatchTimer(object):
             self.on_begin_offset + 1 + 2 * len(self.view_names) + 1
         self.losses_offset = self.forward_offset + 2
         self.metrics_offset = self.losses_offset + 1 + 2 * self.num_losses + 1
-        middle_offset = self.metrics_offset + 1 + 2 * self.num_metrics + 1
+        middle_offset = self.metrics_offset + 1 + 2 * self.num_addl_metrics + 1
         self.on_end_offset = self.init_middle(middle_offset)
         self.stop_offset = \
             self.on_end_offset + 1 + 2 * len(self.view_names) + 1
@@ -169,11 +170,11 @@ class BatchTimer(object):
 
         # Additional metrics.
         start = self.metrics_offset
-        stop = self.metrics_offset + 1 * self.num_metrics * 2
-        t_metric = self.duration_stats(tt, start, stop, num_quantiles)
+        stop = self.metrics_offset + 1 * self.num_addl_metrics * 2
+        t_addl_metric = self.duration_stats(tt, start, stop, num_quantiles)
 
         tt_metric = []
-        for i in range(self.num_metrics):
+        for i in range(self.num_addl_metrics):
             start = self.metrics_offset + 1 + i * 2
             stop = self.metrics_offset + 1 + i * 2 + 1
             per_metric = self.duration_stats(tt, start, stop, num_quantiles)
@@ -200,16 +201,16 @@ class BatchTimer(object):
         stop = self.stop_offset
         t_all = self.duration_stats(tt, start, stop, num_quantiles)
 
-        # Gather the loss/metric timings into a criteria timing stats list of
-        # lists corresponding to the given criteria names.
-        ttt_crit = []
+        # Gather the loss/metric timings into a metric timing stats list of
+        # lists corresponding to the given metric names.
+        ttt_metric = []
         metric_index = 0
-        for y_index, crit_names in enumerate(self.crit_name_lists):
-            tt_crit = [tt_loss[y_index]]
-            for name in crit_names[1:]:
-                tt_crit.append(tt_metric[metric_index])
+        for y_index, metric_names in enumerate(self.metric_name_lists):
+            tt_metric = [tt_loss[y_index]]
+            for name in metric_names[1:]:
+                tt_metric.append(tt_metric[metric_index])
                 metric_index += 1
-            ttt_crit.append(tt_crit)
+            ttt_metric.append(tt_metric)
         assert metric_index == len(tt_metric)
 
         # Gather the computed stats into a dict, including the stats for the
@@ -219,10 +220,10 @@ class BatchTimer(object):
 
             'forward': t_forward,
 
-            'crit_names': self.crit_name_lists,
+            'metric_names': self.metric_name_lists,
             'loss': t_loss,
-            'metric': t_metric,
-            'crit_each': ttt_crit,
+            'metric': t_addl_metric,
+            'metric_each': ttt_metric,
 
             'view_names': self.view_names,
             'on_begin': t_on_begin,
