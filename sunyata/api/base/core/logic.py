@@ -42,7 +42,7 @@ class BaseLogicAPI(object):
             tensor  c     Elementwise a if cond else b.
         """
         if self.dtype(cond) != 'bool':
-            cond = self.equal(cond, 0)
+            cond = self.not_equal(cond, 0)
         return cond * true + (1 - cond) * false
 
     def less(self, a, b):
