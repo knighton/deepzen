@@ -2,7 +2,7 @@ import numpy as np
 from time import time
 
 
-class BatchTimer(object):
+class SplitOnBatchTimer(object):
     """
     Efficient fine-grained intra-batch timing statistics during Model training.
 
@@ -238,11 +238,11 @@ class BatchTimer(object):
         return ret
 
 
-class TrainOnBatchTimer(BatchTimer):
+class TrainOnBatchTimer(SplitOnBatchTimer):
     """
     Model.train_on_batch() timing statistics.
 
-    See BatchTimer for details.
+    See SplitOnBatchTimer for details.
     """
 
     def init_middle(self, middle_offset):
@@ -267,11 +267,11 @@ class TrainOnBatchTimer(BatchTimer):
         }
 
 
-class TestOnBatchTimer(BatchTimer):
+class TestOnBatchTimer(SplitOnBatchTimer):
     """
     Model.test_on_batch() timing statistics.
 
-    See BatchTimer for details.
+    See SplitOnBatchTimer for details.
     """
 
     def init_middle(self, middle_offset):
@@ -279,3 +279,16 @@ class TestOnBatchTimer(BatchTimer):
 
     def middle_steps_stats(self, tt, num_quantiles):
         return {}
+
+
+class IntraBatchTimer(object):
+    """
+    Efficient fine-grained intra-batch timing statistics during Model training.
+
+    Contains two collections of timing statistics: train and test.
+    """
+
+    def __init__(self, cache_size, hook_names, scorer_name_lists):
+        self.train = TrainOnBatchTimer(
+            cache_size, hook_names, scorer_name_lists)
+        self.test = TestOnBatchTimer(cache_size, hook_names, scorer_name_lists)

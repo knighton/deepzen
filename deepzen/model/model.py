@@ -9,7 +9,7 @@ from ..scorer.loss import get_loss_scorer
 from ..scorer import get_scorer
 from ..optim import get_optimizer
 from ..util.py import require_kwargs_after
-from .batch_timer import TestOnBatchTimer, TrainOnBatchTimer
+from .batch_timer import IntraBatchTimer
 
 
 class Model(object):
@@ -207,8 +207,8 @@ class Model(object):
 
         return score_lists
 
-    def _fit_epoch(self, scorer_lists, dataset, optim, batch_size, hooks,
-                   train_timer, test_timer, epoch):
+    def _fit_epoch(self, scorer_lists, dataset, optim, batch_size, hooks, timer,
+                   epoch):
         for hook in hooks:
             hook.on_epoch_begin(epoch, dataset.num_batches(batch_size))
 
@@ -223,11 +223,11 @@ class Model(object):
             yy = [Z.constant(y) for y in yy]
             if is_training:
                 batch_score_lists = self.train_on_batch(
-                    xx, yy, scorer_lists, optim, hooks, train_timer)
+                    xx, yy, scorer_lists, optim, hooks, timer.train)
                 split_score_lists = train_score_lists
             else:
                 batch_score_lists = self.test_on_batch(
-                    xx, yy, scorer_lists, hooks, test_timer)
+                    xx, yy, scorer_lists, hooks, timer.test)
                 split_score_lists = test_score_lists
             for i, batch_scores in enumerate(batch_score_lists):
                 for j, batch_score in enumerate(batch_scores):
@@ -267,10 +267,7 @@ class Model(object):
         for scorers in scorer_lists:
             scorer_names = [x.__class__.__name__ for x in scorers]
             scorer_name_lists.append(scorer_names)
-        train_timer = TrainOnBatchTimer(
-            timer_cache_size, hook_names, scorer_name_lists)
-        test_timer = TestOnBatchTimer(
-            timer_cache_size, hook_names, scorer_name_lists)
+        timer = IntraBatchTimer(timer_cache_size, hook_names, scorer_name_lists)
 
         optim.set_params(self.layer.params())
 
@@ -280,7 +277,7 @@ class Model(object):
         for epoch in range(epoch_offset, epoch_offset + epochs):
             train_score_lists, test_score_lists = \
                 self._fit_epoch(scorer_lists, dataset, optim, batch_size, hooks,
-                                train_timer, test_timer, epoch)
+                                timer, epoch)
 
         for hook in hooks:
             hook.on_fit_end()
