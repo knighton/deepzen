@@ -247,7 +247,7 @@ class Model(object):
     def fit(self, data, loss, test_frac=None, optim='sgd', batch=64,
             epoch_offset=0, epochs=20, hook=None, timer_cache=10000):
         dataset = self._unpack_dataset(data, test_frac)
-        y_sample_shapes = dataset.shapes()[0]
+        y_sample_shapes = dataset.shapes()[1]
         scorer_lists = self._get_scorer_lists(loss, y_sample_shapes)
         optim = get_optimizer(optim)
         hooks = get_hooks(hook)
