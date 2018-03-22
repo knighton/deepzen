@@ -34,7 +34,7 @@ class PyTorchCastAPI(BaseCastAPI):
             if to_device.type == 'cpu':
                 x = to_tensor_class(x)
             elif to_device.type == 'gpu':
-                with torch.cuda.device(to_device.gpu_id()):
+                with torch.cuda.device(to_device.gpu_id):
                     x = x.type(to_tensor_class)
             else:
                 assert False
@@ -58,8 +58,8 @@ class PyTorchCastAPI(BaseCastAPI):
         if to_device.type == 'cpu':
             x = to_tensor_class(x)
         elif to_device.type == 'gpu':
-            with torch.cuda.device(to_device.gpu_id()):
-                x = x.type(to_tensor_class)
+            with torch.cuda.device(to_device.gpu_id):
+                x = to_tensor_class(x)
         else:
             assert False
         return x

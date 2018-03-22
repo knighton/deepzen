@@ -65,7 +65,7 @@ class BaseDeviceAPI(object):
 
     def get_device(self, x=None):
         if x is None:
-            return self._device_scopes[-1]
+            x = self._device_scopes[-1]
         elif isinstance(x, Device):
             pass
         elif isinstance(x, int):
