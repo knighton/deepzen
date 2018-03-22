@@ -20,7 +20,7 @@ class Constant(Initializer):
         return x
 
     @classmethod
-    def unpack(cls, x):
+    def parse(cls, x):
         if isinstance(x, (float, int)):
             x = cls(x)
         elif isinstance(x, str):
