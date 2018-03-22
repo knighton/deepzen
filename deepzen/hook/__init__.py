@@ -1,28 +1,16 @@
-from .base.hook import Hook
-from .progress_bar import ProgressBar
-from .row_per_epoch import RowPerEpoch
-from .server import Server
+from .base.registry import get_hook
+from .progress_bar import *  # noqa
+from .row_per_epoch import *  # noqa
+from .server import *  # noqa
 
 
-def unpack_hook(arg):
-    if isinstance(arg, Hook):
-        return arg
-    klass = {
-        'row_per_epoch': RowPerEpoch,
-        'progress_bar': ProgressBar,
-        'server': Server,
-    }[arg]
-    return klass()
-
-
-def unpack_hooks(arg):
-    if arg is None:
-        return []
-    if isinstance(arg, str):
-        arg = arg.split(',')
-    if not isinstance(arg, (list, tuple)):
-        arg = [arg]
-    hooks = []
-    for item in arg:
-        hooks.append(unpack_hook(item))
-    return hooks
+def get_hooks(x):
+    if x is None:
+        xx = []
+    elif isinstance(x, str):
+        xx = x.split(',')
+    elif isinstance(x, (list, tuple)):
+        xx = x
+    else:
+        assert False
+    return list(map(get_hook, xx))

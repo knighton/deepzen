@@ -4,9 +4,13 @@ import requests
 from threading import Thread
 
 from .base.hook import Hook
+from .base.registry import register_hook
 
 
+@register_hook
 class Server(Hook):
+    name = 'server'
+
     def __init__(self, host='0.0.0.0', port=31337):
         self.host = host
         self.port = port

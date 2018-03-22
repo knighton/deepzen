@@ -1,9 +1,13 @@
 from tqdm import tqdm
 
 from .base.hook import Hook
+from .base.registry import register_hook
 
 
+@register_hook
 class ProgressBar(Hook):
+    name = 'progress_bar'
+
     def on_epoch_begin(self, epoch, num_batches):
         self.bar = tqdm(total=num_batches, leave=False)
 

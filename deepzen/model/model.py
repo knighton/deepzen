@@ -1,7 +1,7 @@
 import numpy as np
 
 from .. import api as Z
-from ..hook import unpack_hooks
+from ..hook import get_hooks
 from ..io.dataset import Dataset
 from ..io.ram_split import RamSplit
 from ..io.split import Split
@@ -248,7 +248,7 @@ class Model(object):
         y_sample_shapes = dataset.shapes()[0]
         compute_metric_lists = self._get_metric_lists(loss, y_sample_shapes)
         optim = get_optimizer(optim)
-        hooks = unpack_hooks(hook)
+        hooks = get_hooks(hook)
         assert isinstance(batch, int)
         assert 0 < batch
         batch_size = batch
