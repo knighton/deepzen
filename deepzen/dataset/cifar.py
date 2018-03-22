@@ -8,7 +8,7 @@ from ..transform.one_hot import to_one_hot
 from ..util.dataset import train_test_split
 from ..util.net import download
 from ..util.py import require_kwargs
-from ..util.sunyata import get_dataset_root
+from ..util.config import get_dataset_root_dir
 
 
 DATASET_NAME = 'cifar'
@@ -118,7 +118,7 @@ def load_cifar10(dataset_name=DATASET_NAME, one_hot=True, url=CIFAR10_URL,
     Load the CIFAR-10 image classificaiton dataset.
 
     in:
-        str         dataset_name  Sunyata dataset directory name.
+        str         dataset_name  DeepZen dataset directory name.
         bool        one_hot       Whether to one-hot the classes.
         str         url           URL to download CIFAR-10 dataset from.
         {0, 1, 2}   verbose       Logging verbosity level.
@@ -128,7 +128,7 @@ def load_cifar10(dataset_name=DATASET_NAME, one_hot=True, url=CIFAR10_URL,
     out:
         tuple       dataset       The dataset splits as numpy ndarrays.
     """
-    dataset_root = get_dataset_root(dataset_name)
+    dataset_root = get_dataset_root_dir(dataset_name)
     local = os.path.join(dataset_root, os.path.basename(url))
     if not os.path.exists(local):
         download(url, local, verbose)
@@ -204,7 +204,7 @@ def load_cifar100(classes=100, dataset_name=DATASET_NAME, one_hot=True,
     in:
         {20, 100}   classes       Number of classes (selects coarse or fine
                                   labels).
-        str         dataset_name  Sunyata dataset directory name.
+        str         dataset_name  DeepZen dataset directory name.
         bool        one_hot       Whether to one-hot the classes.
         str         url           URL to download CIFAR-20/100 dataset from.
         {0, 1, 2}   verbose       Logging verbosity level.
@@ -216,7 +216,7 @@ def load_cifar100(classes=100, dataset_name=DATASET_NAME, one_hot=True,
         list<str>   class_names   The list of string class names.
     """
 
-    dataset_root = get_dataset_root(dataset_name)
+    dataset_root = get_dataset_root_dir(dataset_name)
     local = os.path.join(dataset_root, os.path.basename(url))
     if not os.path.exists(local):
         download(url, local, verbose)
@@ -240,7 +240,7 @@ def load_cifar(cifar100_url=CIFAR100_URL, cifar10_url=CIFAR10_URL, classes=10,
         str            cifar100_url  URL to download CIFAR-20/100 dataset from.
         str            cifar10_url   URL to download CIFAR-10 dataset from.
         {10, 20, 100}  classes       Number of classes (selects dataset).
-        str            dataset_name  Sunyata dataset directory name.
+        str            dataset_name  DeepZen dataset directory name.
         bool           one_hot       Whether to one-hot the classes.
         float          test_frac     If CIFAR-10, the fraction of the dataset to
                                      use for the test split.

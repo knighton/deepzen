@@ -19,7 +19,7 @@ class Server(View):
 
         @app.route('/')
         def serve_root():
-            return open('sunyata/view/server/index.html').read()
+            return open('deepzen/view/server/index.html').read()
 
         @app.route('/stop', methods=['POST'])
         def server_stop():

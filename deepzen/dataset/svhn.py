@@ -2,9 +2,9 @@ import os
 from scipy.io import loadmat
 
 from ..transform.one_hot import to_one_hot
+from ..util.config import get_dataset_root_dir
 from ..util.net import download
 from ..util.py import require_kwargs
-from ..util.sunyata import get_dataset_root
 
 
 DATASET_NAME = 'svhn'
@@ -21,7 +21,7 @@ def _load_split(one_hot, verbose, x_dtype, y_dtype, dataset_root, split_url):
         {0, 1, 2}   verbose       Logging verbosity level.
         str         x_dtype       The desired dtype of X.
         str         y_dtype       The desired dtype of Y.
-        str         dataset_root  Sunyata SVHN dataset root directory.
+        str         dataset_root  DeepZen SVHN dataset root directory.
         str         split_url     URL to download the SVHN split from.
 
     out:
@@ -55,7 +55,7 @@ def load_svhn(dataset_name=DATASET_NAME, one_hot=True, test_url=TEST_URL,
     Load the Street View House Numbers (SVHN) dataset.
 
     in:
-        str        dataset_name  Sunyata dataset directory name.
+        str        dataset_name  DeepZen dataset directory name.
         bool       one_hot       Whether to one-hot the classes.
         str        test_url      URL to download the test split from.
         str        train_url     URL to download the training split from.
@@ -67,7 +67,7 @@ def load_svhn(dataset_name=DATASET_NAME, one_hot=True, test_url=TEST_URL,
         tuple      dataset       The dataset splits as numpy ndarrays.
         list<str>  class_names   The list of string class names.
     """
-    dataset_root = get_dataset_root(dataset_name)
+    dataset_root = get_dataset_root_dir(dataset_name)
     train = _load_split(one_hot, verbose, x_dtype, y_dtype, dataset_root,
                         train_url)
     test = _load_split(one_hot, verbose, x_dtype, y_dtype, dataset_root,

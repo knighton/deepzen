@@ -4,9 +4,9 @@ import os
 import pickle
 
 from ..transform.one_hot import to_one_hot
+from ..util.config import get_dataset_root_dir
 from ..util.net import download
 from ..util.py import require_kwargs
-from ..util.sunyata import get_dataset_root
 
 
 DATASET_NAME = 'mnist'
@@ -58,7 +58,7 @@ def load_mnist(dataset_name=DATASET_NAME, one_hot=True, url=URL, verbose=2,
     Load the MNIST handwritten digits dataset.
 
     in:
-        str        dataset_name  Sunyata dataset directory name.
+        str        dataset_name  DeepZen dataset directory name.
         bool       one_hot       Whether to one-hot the classes.
         str        url           URL to download raw data from.
         {0, 1, 2}  verbose       Logging verbosity level.
@@ -69,7 +69,7 @@ def load_mnist(dataset_name=DATASET_NAME, one_hot=True, url=URL, verbose=2,
         tuple      dataset       The dataset splits as numpy ndarrays.
         list<str>  class_names   The list of string class names.
     """
-    dataset_root = get_dataset_root(dataset_name)
+    dataset_root = get_dataset_root_dir(dataset_name)
     local = os.path.join(dataset_root, os.path.basename(url))
     if not os.path.exists(local):
         download(url, local, verbose)

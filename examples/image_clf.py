@@ -1,10 +1,10 @@
 from argparse import ArgumentParser
 
-from sunyata.dataset.cifar import load_cifar
-from sunyata.dataset.mnist import load_mnist
-from sunyata.dataset.svhn import load_svhn
-from sunyata.layer import *  # noqa
-from sunyata.model import Model
+from deepzen.dataset.cifar import load_cifar
+from deepzen.dataset.mnist import load_mnist
+from deepzen.dataset.svhn import load_svhn
+from deepzen.layer import *  # noqa
+from deepzen.model import Model
 
 
 def parse_args():

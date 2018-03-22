@@ -2,8 +2,8 @@ import os
 import sys
 
 
-name = os.environ.get('SUNYATA_BACKEND', 'pytorch')
-print('Sunyata backend: %s.' % name)
+name = os.environ.get('DEEPZEN_BACKEND', 'pytorch')
+print('DeepZen backend: %s.' % name)
 
 if name == 'mxnet':
     from .mxnet import MXNetAPI as BackendAPI
