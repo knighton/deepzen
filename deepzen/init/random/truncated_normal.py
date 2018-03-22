@@ -1,10 +1,10 @@
 import numpy as np
 from scipy.stats import truncnorm
 
-from ..base.distribution import Distribution
+from ..base.initializer import Initializer
 
 
-class TruncatedNormal(Distribution):
+class TruncatedNormal(Initializer):
     @classmethod
     def make(cls, shape, dtype, mean=0, std=0.05, min_stds=-2, max_stds=2):
         dist = truncnorm(min_stds, max_stds)

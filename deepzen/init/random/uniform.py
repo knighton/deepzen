@@ -1,9 +1,9 @@
 import numpy as np
 
-from ..base.distribution import Distribution
+from ..base.initializer import Initializer
 
 
-class Uniform(Distribution):
+class Uniform(Initializer):
     @classmethod
     def make(self, shape, dtype, min=-0.05, max=0.05):
         return np.random.uniform(min, max, shape).astype(dtype)

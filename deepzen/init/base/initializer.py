@@ -1,7 +1,7 @@
 from ...util.py import class_path
 
 
-class Distribution(object):
+class Initializer(object):
     @classmethod
     def from_json(cls, x):
         return cls(**x)

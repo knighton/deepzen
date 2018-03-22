@@ -1,9 +1,9 @@
 import numpy as np
 
-from ..base.distribution import Distribution
+from ..base.initializer import Initializer
 
 
-class Orthogonal(Distribution):
+class Orthogonal(Initializer):
     @classmethod
     def make(cls, shape, dtype, scale=1):
         shape_2d = np.prod(shape[:-1]), shape[-1]

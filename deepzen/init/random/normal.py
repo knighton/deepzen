@@ -1,9 +1,9 @@
 import numpy as np
 
-from ..base.distribution import Distribution
+from ..base.initializer import Initializer
 
 
-class Normal(Distribution):
+class Normal(Initializer):
     @classmethod
     def make(cls, shape, dtype, mean=0, std=0.05):
         return np.random.normal(mean, std, shape).astype(dtype)

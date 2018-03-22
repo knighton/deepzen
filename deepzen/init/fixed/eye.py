@@ -1,9 +1,9 @@
 import numpy as np
 
-from ..base.distribution import Distribution
+from ..base.initializer import Initializer
 
 
-class Eye(Distribution):
+class Eye(Initializer):
     @classmethod
     def make(cls, dim, scale, dtype):
         x = scale * np.eye(dim)

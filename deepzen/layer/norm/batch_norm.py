@@ -1,5 +1,5 @@
 from ... import api as Z
-from ...dist import unpack_distribution
+from ...init import unpack_initializer
 from ..base.layer import Layer
 from ..base.spec import Spec
 
@@ -113,14 +113,14 @@ class InstanceBatchNormSpec(BaseBatchNormSpec):
 
         @params
             {int, shape}  axis        Sample axis/axes to norm over.
-            Distribution  beta_init   Beta weight initializer.
-            Distribution  gamma_init  Gamma weight initializer.
+            Initializer   beta_init   Beta weight initializer.
+            Initializer   gamma_init  Gamma weight initializer.
             {None, int}   space       Optional x spatial ndim requirement.
         """
         BaseBatchNormSpec.__init__(self, space)
         self._axis = axis
-        self._beta_init = unpack_distribution(beta_init)
-        self._gamma_init = unpack_distribution(gamma_init)
+        self._beta_init = unpack_initializer(beta_init)
+        self._gamma_init = unpack_initializer(gamma_init)
         self._center = center
         self._scale = scale
 
@@ -162,20 +162,20 @@ class MovAvgBatchNormSpec(BaseBatchNormSpec):
         @params
             scalar        momentum    Momentum of mean and var moving averages.
             {int, shape}  axis        Sample axis/axes to norm over.
-            Distribution  beta_init   Beta weight initializer.
-            Distribution  gamma_init  Gamma weight initializer.
-            Distribution  mean_init   Mean moving average weight initializer.
-            Distribution  var_init    Var moving average weight initializer.
+            Initializer   beta_init   Beta weight initializer.
+            Initializer   gamma_init  Gamma weight initializer.
+            Initializer   mean_init   Mean moving average weight initializer.
+            Initializer   var_init    Var moving average weight initializer.
             {None, int}   space       Optional x spatial ndim requirement.
         """
         BaseBatchNormSpec.__init__(self, space)
         assert 0 <= momentum <= 1
         self._momentum = momentum
         self._axis = axis
-        self._beta_init = unpack_distribution(beta_init)
-        self._gamma_init = unpack_distribution(gamma_init)
-        self._mean_init = unpack_distribution(mean_init)
-        self._var_init = unpack_distribution(var_init)
+        self._beta_init = unpack_initializer(beta_init)
+        self._gamma_init = unpack_initializer(gamma_init)
+        self._mean_init = unpack_initializer(mean_init)
+        self._var_init = unpack_initializer(var_init)
         self._center = center
         self._scale = scale
 

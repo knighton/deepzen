@@ -1,16 +1,16 @@
 import numpy as np
 
-from ..base.distribution import Distribution
+from ..base.initializer import Initializer
 
 
-class One(Distribution):
+class Zero(Initializer):
     @classmethod
     def make(cls, shape, dtype):
-        return np.ones(shape, dtype)
+        return np.zeros(shape, dtype)
 
     def __call__(self, shape, dtype, meaning=None):
         return self.make(shape, dtype)
 
 
-def one():
-    return One()
+def zero():
+    return Zero()

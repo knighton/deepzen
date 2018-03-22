@@ -1,12 +1,12 @@
 import numpy as np
 
-from ..base.distribution import Distribution
+from ..base.initializer import Initializer
 from .normal import Normal
 from .truncated_normal import TruncatedNormal
 from .uniform import Uniform
 
 
-class VarianceScaler(Distribution):
+class VarianceScaler(Initializer):
     @classmethod
     def get_fans(cls, shape, meaning):
         if meaning == 'kernel':

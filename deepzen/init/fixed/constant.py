@@ -1,9 +1,9 @@
 import numpy as np
 
-from ..base.distribution import Distribution
+from ..base.initializer import Initializer
 
 
-class Constant(Distribution):
+class Constant(Initializer):
     @classmethod
     def make(cls, value, shape, dtype):
         return np.full(shape, value, dtype)
