@@ -30,9 +30,9 @@ class Datasets(object):
     """
 
     mnist = load_mnist
-    cifar_10 = lambda: load_cifar(classes=10)
-    cifar_20 = lambda: load_cifar(classes=20)
-    cifar_100 = lambda: load_cifar(classes=100)
+    cifar10 = lambda: load_cifar(classes=10)
+    cifar20 = lambda: load_cifar(classes=20)
+    cifar100 = lambda: load_cifar(classes=100)
     svhn = load_svhn
 
     @classmethod
