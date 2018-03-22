@@ -1,3 +1,4 @@
+from ... import api as Z
 from ..base.layer import Layer
 from ..base.signature import Signature
 from ..base.spec import Spec
@@ -13,7 +14,13 @@ class DataLayer(Layer):
 
 
 class DataSpec(Spec):
-    def __init__(self, sample_shape, dtype, has_channels=True):
+    def __init__(self, sample_shape, dtype, has_channels=None):
+        if has_channels is None:
+            dtype = Z.dtype(dtype)
+            if dtype.startswith('float'):
+                has_channels = True
+            else:
+                has_channels = False
         required_sig = Signature(sample_shape, dtype, has_channels)
         Spec.__init__(self, required_sig.spatial_ndim_or_none())
         self._required_sig = required_sig
