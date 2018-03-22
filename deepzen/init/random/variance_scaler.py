@@ -1,12 +1,16 @@
 import numpy as np
 
 from ..base.initializer import Initializer
+from ..base.registry import register_initializer
 from .normal import Normal
 from .truncated_normal import TruncatedNormal
 from .uniform import Uniform
 
 
+@register_initializer
 class VarianceScaler(Initializer):
+    name = 'variance_scaler'
+
     @classmethod
     def get_fans(cls, shape, meaning):
         if meaning == 'kernel':
@@ -60,41 +64,46 @@ class VarianceScaler(Initializer):
         return self.make(shape, dtype, meaning, self.dist, self.fan, self.scale)
 
 
-def variance_scaler(dist, fan, scale):
-    return VarianceScaler(dist, fan, scale)
-
-
+@register_initializer
 def glorot_normal():
     return VarianceScaler('normal', 'avg', 1)
 
 
+@register_initializer
 def glorot_truncated_normal():
     return VarianceScaler('truncated_normal', 'avg', 1)
 
 
+@register_initializer
 def glorot_uniform():
     return VarianceScaler('uniform', 'avg', 1)
 
 
+@register_initializer
 def he_normal():
     return VarianceScaler('normal', 'in', 2)
 
 
+@register_initializer
 def he_truncated_normal():
     return VarianceScaler('truncated_normal', 'in', 2)
 
 
+@register_initializer
 def he_uniform():
     return VarianceScaler('uniform', 'in', 2)
 
 
+@register_initializer
 def lecun_normal():
     return VarianceScaler('normal', 'in', 1)
 
 
+@register_initializer
 def lecun_truncated_normal():
     return VarianceScaler('truncated_normal', 'in', 1)
 
 
+@register_initializer
 def lecun_uniform():
     return VarianceScaler('uniform', 'in', 1)

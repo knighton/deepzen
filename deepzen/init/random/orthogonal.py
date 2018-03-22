@@ -1,9 +1,13 @@
 import numpy as np
 
 from ..base.initializer import Initializer
+from ..base.registry import register_initializer
 
 
+@register_initializer
 class Orthogonal(Initializer):
+    name = 'orthogonal'
+
     @classmethod
     def make(cls, shape, dtype, scale=1):
         shape_2d = np.prod(shape[:-1]), shape[-1]
@@ -18,7 +22,3 @@ class Orthogonal(Initializer):
 
     def __call__(self, shape, dtype, meaning=None):
         return self.make(shape, dtype, self.scale)
-
-
-def orthogonal(scale=1):
-    return Orthogonal(scale)

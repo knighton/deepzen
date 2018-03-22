@@ -2,6 +2,7 @@ import numpy as np
 from scipy.stats import truncnorm
 
 from ..base.initializer import Initializer
+from ..base.registry import register_initializer
 
 
 class TruncatedNormal(Initializer):
@@ -23,12 +24,13 @@ class TruncatedNormal(Initializer):
                          shape, dtype)
 
 
-def truncated_normal_within_stds(mean=0, std=0.05, min_stds=-2, max_stds=2):
+@register_initializer
+def truncated_normal_stds(mean=0, std=0.05, min_stds=-2, max_stds=2):
     return TruncatedNormal(mean, std, min_stds, max_stds)
 
 
-def truncated_normal_within_values(mean=0, std=0.05, min_value=-0.1,
-                                   max_value=0.1):
+@register_initializer
+def truncated_normal_value(mean=0, std=0.05, min_value=-0.1, max_value=0.1):
     min_stds = (min_value - mean) / std
     max_stds = (max_value - mean) / std
     return TruncatedNormal(mean, std, min_stds, max_stds)
