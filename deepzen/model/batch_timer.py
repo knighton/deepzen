@@ -281,7 +281,7 @@ class TestOnBatchTimer(SplitOnBatchTimer):
         return {}
 
 
-class IntraBatchTimer(object):
+class BatchTimer(object):
     """
     Efficient fine-grained intra-batch timing statistics during Model training.
 

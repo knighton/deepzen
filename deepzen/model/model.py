@@ -9,7 +9,7 @@ from ..scorer.loss import get_loss_scorer
 from ..scorer import get_scorer
 from ..optim import get_optimizer
 from ..util.py import require_kwargs_after
-from .batch_timer import IntraBatchTimer
+from .batch_timer import BatchTimer
 
 
 class Model(object):
@@ -267,7 +267,7 @@ class Model(object):
         for scorers in scorer_lists:
             scorer_names = [x.__class__.__name__ for x in scorers]
             scorer_name_lists.append(scorer_names)
-        timer = IntraBatchTimer(timer_cache_size, hook_names, scorer_name_lists)
+        timer = BatchTimer(timer_cache_size, hook_names, scorer_name_lists)
 
         optim.set_params(self.layer.params())
 
