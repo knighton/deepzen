@@ -1,6 +1,7 @@
 from .adadelta import Adadelta
 from .adagrad import Adagrad
 from .adam import Adam
+from .adamax import Adamax
 from .base.registry import get_optimizer
 from .nag import NAG
 from .rmsprop import RMSprop
