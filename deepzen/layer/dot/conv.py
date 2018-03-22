@@ -1,5 +1,5 @@
 from ... import api as Z
-from ...init import unpack_initializer
+from ...init import get_initializer
 from ...util.unpack import unpack_shape
 from ..base.layer import Layer
 from ..base.signature import Signature
@@ -31,8 +31,8 @@ class ConvSpec(Spec):
         self._stride = stride
         self._padding = padding
         self._dilation = dilation
-        self._kernel_init = unpack_initializer(kernel_init)
-        self._bias_init = unpack_initializer(bias_init)
+        self._kernel_init = get_initializer(kernel_init)
+        self._bias_init = get_initializer(bias_init)
         self._has_bias = has_bias
 
     def checked_build(self, x_sig):

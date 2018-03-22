@@ -1,5 +1,5 @@
 from ... import api as Z
-from ...init import unpack_initializer
+from ...init import get_initializer
 from ..base.layer import Layer
 from ..base.signature import Signature
 from ..base.spec import Spec
@@ -21,8 +21,8 @@ class DenseSpec(Spec):
         Spec.__init__(self, 0)
         self._dim = dim
         self._has_bias = has_bias
-        self._kernel_init = unpack_initializer(kernel_init)
-        self._bias_init = unpack_initializer(bias_init)
+        self._kernel_init = get_initializer(kernel_init)
+        self._bias_init = get_initializer(bias_init)
 
     def checked_build(self, x_sig):
         assert x_sig.has_channels()

@@ -1,5 +1,5 @@
 from ... import api as Z
-from ...init import unpack_initializer
+from ...init import get_initializer
 from ..base.layer import Layer
 from ..base.signature import Signature
 from ..base.spec import Spec
@@ -21,7 +21,7 @@ class EmbedSpec(Spec):
         self._vocab = vocab
         self._dim = dim
         self._dtype = dtype
-        self._table_init = unpack_initializer(table_init)
+        self._table_init = get_initializer(table_init)
 
     def checked_build(self, x_sig):
         assert not x_sig.has_channels()

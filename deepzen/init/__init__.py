@@ -1,8 +1,3 @@
-import sys
-
-from .base.registry import get
+from .base.registry import get_initializer
 from .fixed import *  # noqa
 from .random import *  # noqa
-
-
-unpack_initializer = get

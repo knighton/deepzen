@@ -29,7 +29,7 @@ def _check_name(name):
         assert c.islower() or c == '_'
 
 
-def put(x):
+def put_initializer(x):
     global NAME2GET
     for name in _names_of(x):
         _check_name(name)
@@ -41,11 +41,11 @@ def put(x):
 
 
 def register_initializer(x):
-    put(x)
+    put_initializer(x)
     return x
 
 
-def get(x):
+def get_initializer(x):
     if isinstance(x, Initializer):
         return x
 

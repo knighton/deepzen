@@ -1,5 +1,5 @@
 from ... import api as Z
-from ...init import unpack_initializer
+from ...init import get_initializer
 from ..base.layer import Layer
 from ..base.spec import Spec
 
@@ -119,8 +119,8 @@ class InstanceBatchNormSpec(BaseBatchNormSpec):
         """
         BaseBatchNormSpec.__init__(self, space)
         self._axis = axis
-        self._beta_init = unpack_initializer(beta_init)
-        self._gamma_init = unpack_initializer(gamma_init)
+        self._beta_init = get_initializer(beta_init)
+        self._gamma_init = get_initializer(gamma_init)
         self._center = center
         self._scale = scale
 
@@ -172,10 +172,10 @@ class MovAvgBatchNormSpec(BaseBatchNormSpec):
         assert 0 <= momentum <= 1
         self._momentum = momentum
         self._axis = axis
-        self._beta_init = unpack_initializer(beta_init)
-        self._gamma_init = unpack_initializer(gamma_init)
-        self._mean_init = unpack_initializer(mean_init)
-        self._var_init = unpack_initializer(var_init)
+        self._beta_init = get_initializer(beta_init)
+        self._gamma_init = get_initializer(gamma_init)
+        self._mean_init = get_initializer(mean_init)
+        self._var_init = get_initializer(var_init)
         self._center = center
         self._scale = scale
 
