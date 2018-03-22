@@ -1,8 +1,12 @@
 from .. import api as Z
 from .base.optimizer import Optimizer
+from .base.registry import register_optimizer
 
 
+@register_optimizer
 class SGDM(Optimizer):
+    name = 'sgdm'
+
     def __init__(self, lr=0.01, momentum=0.9):
         super().__init__()
         assert 0 < lr

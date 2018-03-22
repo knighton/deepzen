@@ -1,8 +1,12 @@
 from .. import api as Z
 from .base.optimizer import Optimizer
+from .base.registry import register_optimizer
 
 
+@register_optimizer
 class Adagrad(Optimizer):
+    name = 'adagrad'
+
     def __init__(self, lr=0.01, decay=0.99, epsilon=1e-6):
         Optimizer.__init__(self)
         assert 0 < lr

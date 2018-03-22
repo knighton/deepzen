@@ -6,7 +6,7 @@ from ..io.ram_split import RamSplit
 from ..io.split import Split
 from ..metric.loss import unpack_loss
 from ..metric import unpack_metric
-from ..optim import unpack_optim
+from ..optim import get_optimizer
 from ..util.py import require_kwargs_after
 from ..view import unpack_views
 from .batch_timer import TestOnBatchTimer, TrainOnBatchTimer
@@ -247,7 +247,7 @@ class Model(object):
         dataset = self._unpack_dataset(data, test_frac)
         y_sample_shapes = dataset.shapes()[0]
         compute_metric_lists = self._unpack_metric_lists(loss, y_sample_shapes)
-        optim = unpack_optim(optim)
+        optim = get_optimizer(optim)
         views = unpack_views(view)
         assert isinstance(batch, int)
         assert 0 < batch
