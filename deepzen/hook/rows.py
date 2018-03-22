@@ -3,8 +3,8 @@ from .base.registry import register_hook
 
 
 @register_hook
-class RowPerEpoch(Hook):
-    name = 'row_per_epoch'
+class Rows(Hook):
+    name = 'rows'
 
     def __init__(self, epoch_cols=10, metric_cols=9, metric_decimal_places=4):
         self.epoch_cols = epoch_cols

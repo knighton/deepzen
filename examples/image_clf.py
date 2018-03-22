@@ -17,8 +17,7 @@ def parse_args():
                     help='Number of epochs to train for.')
     ap.add_argument('--batch', type=int, default=128, help='Batch size.')
     ap.add_argument('--optim', type=str, default='sgd', help='Optimizer.')
-    ap.add_argument('--hook', type=str,
-                    default='server,progress_bar,row_per_epoch',
+    ap.add_argument('--hook', type=str, default='server,progress_bar,rows',
                     help='List of training monitors.')
     return ap.parse_args()
 

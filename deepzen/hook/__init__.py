@@ -1,6 +1,6 @@
 from .base.registry import get_hook
 from .progress_bar import *  # noqa
-from .row_per_epoch import *  # noqa
+from .rows import *  # noqa
 from .server import *  # noqa
 
 
