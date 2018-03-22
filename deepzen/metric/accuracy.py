@@ -1,12 +1,30 @@
 from .. import api as Z
 from ..util.dataset import is_sample_one_scalar
-from .base.metric import collect_metrics, Metric
+from ..util.registry import Registry
+from .base.metric import Metric
 
 
 class Accuracy(Metric):
     pass
 
 
+REGISTRY = Registry(Accuracy)
+
+
+def register_accuracy(x):
+    return REGISTRY.register(x)
+
+
+def get_accuracy(x, y_sample_shape):
+    if x in {'accuracy', 'acc'}:
+        if is_sample_one_scalar(y_sample_shape):
+            x = 'binary_accuracy'
+        else:
+            x = 'categorical_accuracy'
+    return REGISTRY.get(x)
+
+
+@register_accuracy
 class BinaryAccuracy(Accuracy):
     name = 'binary_accuracy', 'bin_acc'
 
@@ -14,6 +32,7 @@ class BinaryAccuracy(Accuracy):
         return Z.binary_accuracy(true, pred)
 
 
+@register_accuracy
 class CategoricalAccuracy(Accuracy):
     name = 'categorical_accuracy', 'cat_acc'
 
@@ -21,9 +40,12 @@ class CategoricalAccuracy(Accuracy):
         return Z.categorical_accuracy(true, pred)
 
 
+@register_accuracy
 class TopKAccuracy(Accuracy):
+    name = 'top_k_accuracy', 'top_k_acc'
+
     @classmethod
-    def unpack(cls, s):
+    def parse(cls, s):
         if s.startswith('accuracy@'):
             s = s[9:]
         elif s.startswith('acc@'):
@@ -43,24 +65,3 @@ class TopKAccuracy(Accuracy):
 
     def __call__(self, true, pred):
         return Z.top_k_accuracy(true, pred, self._k)
-
-
-NAME2ACCURACY = collect_metrics(Accuracy, [BinaryAccuracy, CategoricalAccuracy])
-
-
-def unpack_accuracy(x, y_sample_shape):
-    if isinstance(x, Accuracy):
-        return x
-
-    if x in {'acc', 'accuracy'}:
-        if is_sample_one_scalar(y_sample_shape):
-            acc = BinaryAccuracy()
-        else:
-            acc = CategoricalAccuracy()
-        return acc
-
-    acc = NAME2ACCURACY.get(x)
-    if acc is not None:
-        return acc
-
-    return TopKAccuracy.unpack(x)

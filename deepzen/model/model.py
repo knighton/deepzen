@@ -5,8 +5,8 @@ from ..hook import unpack_hooks
 from ..io.dataset import Dataset
 from ..io.ram_split import RamSplit
 from ..io.split import Split
-from ..metric.loss import unpack_loss
-from ..metric import unpack_metric
+from ..metric.loss import get_loss
+from ..metric import get_metric
 from ..optim import get_optimizer
 from ..util.py import require_kwargs_after
 from .batch_timer import TestOnBatchTimer, TrainOnBatchTimer
@@ -41,17 +41,17 @@ class Model(object):
         return [s.split(',') for s in ss]
 
     @classmethod
-    def _unpack_loss_and_metrics(cls, arg, y_sample_shape):
+    def _get_loss_and_metrics(cls, arg, y_sample_shape):
         if not isinstance(arg, (list, tuple)):
             arg = [arg]
         metrics = []
-        metrics.append(unpack_loss(arg[0], y_sample_shape))
+        metrics.append(get_loss(arg[0], y_sample_shape))
         for item in arg[1:]:
-            metrics.append(unpack_metric(item, y_sample_shape))
+            metrics.append(get_metric(item, y_sample_shape))
         return metrics
 
     @classmethod
-    def _unpack_metric_lists(cls, arg, y_sample_shapes):
+    def _get_metric_lists(cls, arg, y_sample_shapes):
         if isinstance(arg, str):
             if ' ' in arg or ',' in arg:
                 arg = cls._parse_metric_lists_str(arg)
@@ -61,7 +61,7 @@ class Model(object):
         assert len(arg) == len(y_sample_shapes)
         for item, y_sample_shape in zip(arg, y_sample_shapes):
             loss_and_metrics = \
-                cls._unpack_loss_and_metrics(item, y_sample_shape)
+                cls._get_loss_and_metrics(item, y_sample_shape)
             metric_lists.append(loss_and_metrics)
         return metric_lists
 
@@ -246,7 +246,7 @@ class Model(object):
             epoch_offset=0, epochs=20, hook=None, timer_cache=10000):
         dataset = self._unpack_dataset(data, test_frac)
         y_sample_shapes = dataset.shapes()[0]
-        compute_metric_lists = self._unpack_metric_lists(loss, y_sample_shapes)
+        compute_metric_lists = self._get_metric_lists(loss, y_sample_shapes)
         optim = get_optimizer(optim)
         hooks = unpack_hooks(hook)
         assert isinstance(batch, int)
