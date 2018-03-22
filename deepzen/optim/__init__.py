@@ -1,9 +1,9 @@
-from .adadelta import Adadelta
-from .adagrad import Adagrad
-from .adam import Adam
-from .adamax import Adamax
-from .base.registry import get_optimizer
-from .nag import NAG
-from .rmsprop import RMSprop
-from .sgd import SGD
-from .sgdm import SGDM
+from .adadelta import Adadelta  # noqa
+from .adagrad import Adagrad  # noqa
+from .adam import Adam  # noqa
+from .adamax import Adamax  # noqa
+from .base.registry import get_optimizer  # noqa
+from .nag import NAG  # noqa
+from .rmsprop import RMSprop  # noqa
+from .sgd import SGD  # noqa
+from .sgdm import SGDM  # noqa

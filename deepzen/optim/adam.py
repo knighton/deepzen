@@ -9,7 +9,7 @@ class Adam(Optimizer):
 
     def __init__(self, beta1=0.9, beta2=0.999, epsilon=1e-6, lr=0.001):
         Optimizer.__init__(self)
-        assert 0 < beta1< 1
+        assert 0 < beta1 < 1
         assert 0 < beta2 < 1
         assert 0 < epsilon
         assert 0 < lr
