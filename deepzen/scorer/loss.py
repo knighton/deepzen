@@ -1,10 +1,10 @@
 from .. import api as Z
 from ..util.dataset import is_sample_one_scalar
 from ..util.registry import Registry
-from .base.metric import Metric
+from .base.scorer import Scorer
 
 
-class Loss(Metric):
+class Loss(Scorer):
     pass
 
 
@@ -15,7 +15,7 @@ def register_loss(x):
     return REGISTRY.register(x)
 
 
-def get_loss(x, y_sample_shape):
+def get_loss_scorer(x, y_sample_shape):
     if x in {'cross_entropy', 'xe'}:
         if is_sample_one_scalar(y_sample_shape):
             x = 'binary_cross_entropy'

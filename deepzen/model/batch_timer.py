@@ -12,7 +12,7 @@ class BatchTimer(object):
 
     Shows you where time is being spent during training at a very fine-grained
     level.  Times forward/backward/optim, individual hook callbacks, each loss
-    and every other metric, and everything else of note.
+    function and every other scorer, and everything else of note.
 
     Internally, it is just a cache of time.time() values in a float64 numpy
     ndarray.  Each row is the exact times of one batch's events.  Each column is
@@ -32,22 +32,22 @@ class BatchTimer(object):
     def init_middle(self, middle_offset):
         raise NotImplementedError
 
-    def __init__(self, cache_size, hook_names, metric_name_lists):
+    def __init__(self, cache_size, hook_names, scorer_name_lists):
         # During execution, we will fill the rows of the cache in ascending
         # order until full, then start replacing rows at random.
         self.cache_used = 0
         self.cache_size = cache_size
 
-        # The names of the hooks and metrics (losses and other metrics).
+        # The names of the hooks and scorers (losses and auxiliary scorers).
         #
         # The names are used for displaying results.  The counts of these
         # different kinds of things are used for computing offsets for where to
         # store the times recorded during each batch.
         self.hook_names = hook_names
-        self.metric_name_lists = metric_name_lists
-        self.num_losses = len(metric_name_lists)
-        self.num_addl_metrics = sum(map(len, metric_name_lists)) - \
-            len(metric_name_lists)
+        self.scorer_name_lists = scorer_name_lists
+        self.num_losses = len(scorer_name_lists)
+        self.num_aux_scores = sum(map(len, scorer_name_lists)) - \
+            len(scorer_name_lists)
 
         # Offsets of different events that we track while running a batch.
         #
@@ -64,7 +64,7 @@ class BatchTimer(object):
         # - On begin: 1 + 2 * num hooks + 1.
         # - Forward: 1 + 1.
         # - Losses: 1 + 2 * num losses + 1.
-        # - Metrics: 1 + 2 * num metrics + 1.
+        # - Aux scorers: 1 + 2 * num auxiliary scorers + 1.
         #   (train_on_batch() does additional work here...)
         # - On end: 1 + 2 * num hooks + 1.
         # - Stop: 1.
@@ -73,8 +73,9 @@ class BatchTimer(object):
         self.forward_offset = \
             self.on_begin_offset + 1 + 2 * len(self.hook_names) + 1
         self.losses_offset = self.forward_offset + 2
-        self.metrics_offset = self.losses_offset + 1 + 2 * self.num_losses + 1
-        middle_offset = self.metrics_offset + 1 + 2 * self.num_addl_metrics + 1
+        self.aux_scores_offset = \
+            self.losses_offset + 1 + 2 * self.num_losses + 1
+        middle_offset = self.aux_scores_offset + 1 + 2 * self.num_aux_scores + 1
         self.on_end_offset = self.init_middle(middle_offset)
         self.stop_offset = \
             self.on_end_offset + 1 + 2 * len(self.hook_names) + 1
@@ -148,8 +149,8 @@ class BatchTimer(object):
         for i in range(len(self.hook_names)):
             start = self.on_begin_offset + 1 + i * 2
             stop = self.on_begin_offset + 1 + i * 2 + 1
-            per_hook = self.duration_stats(tt, start, stop, num_quantiles)
-            tt_on_begin.append(per_hook)
+            t_on_begin = self.duration_stats(tt, start, stop, num_quantiles)
+            tt_on_begin.append(t_on_begin)
 
         # Forward.
         start = self.forward_offset
@@ -165,20 +166,20 @@ class BatchTimer(object):
         for i in range(self.num_losses):
             start = self.losses_offset + 1 + i * 2
             stop = self.losses_offset + 1 + i * 2 + 1
-            per_y = self.duration_stats(tt, start, stop, num_quantiles)
-            tt_loss.append(per_y)
+            t_loss = self.duration_stats(tt, start, stop, num_quantiles)
+            tt_loss.append(t_loss)
 
-        # Additional metrics.
-        start = self.metrics_offset
-        stop = self.metrics_offset + 1 * self.num_addl_metrics * 2
-        t_addl_metric = self.duration_stats(tt, start, stop, num_quantiles)
+        # Auxiliary scores.
+        start = self.aux_scores_offset
+        stop = self.aux_scores_offset + 1 * self.num_aux_scores * 2
+        t_aux_score = self.duration_stats(tt, start, stop, num_quantiles)
 
-        tt_metric = []
-        for i in range(self.num_addl_metrics):
-            start = self.metrics_offset + 1 + i * 2
-            stop = self.metrics_offset + 1 + i * 2 + 1
-            per_metric = self.duration_stats(tt, start, stop, num_quantiles)
-            tt_metric.append(per_metric)
+        tt_aux_score = []
+        for i in range(self.num_aux_scores):
+            start = self.aux_scores_offset + 1 + i * 2
+            stop = self.aux_scores_offset + 1 + i * 2 + 1
+            t_aux_score = self.duration_stats(tt, start, stop, num_quantiles)
+            tt_aux_score.append(t_aux_score)
 
         # Handle the middle steps that are different between train and test
         # batches.
@@ -193,25 +194,25 @@ class BatchTimer(object):
         for i in range(len(self.hook_names)):
             start = self.on_end_offset + 1 + i * 2
             stop = self.on_end_offset + 1 + i * 2 + 1
-            per_hook = self.duration_stats(tt, start, stop, num_quantiles)
-            tt_on_end.append(per_hook)
+            t_on_end = self.duration_stats(tt, start, stop, num_quantiles)
+            tt_on_end.append(t_on_end)
 
         # End-to-end times.
         start = self.start_offset
         stop = self.stop_offset
         t_all = self.duration_stats(tt, start, stop, num_quantiles)
 
-        # Gather the loss/metric timings into a metric timing stats list of
-        # lists corresponding to the given metric names.
-        ttt_metric = []
-        metric_index = 0
-        for y_index, metric_names in enumerate(self.metric_name_lists):
-            tt_metric = [tt_loss[y_index]]
-            for name in metric_names[1:]:
-                tt_metric.append(tt_metric[metric_index])
-                metric_index += 1
-            ttt_metric.append(tt_metric)
-        assert metric_index == len(tt_metric)
+        # Gather the loss/aux scorer timings into a scorer timing stats list of
+        # lists corresponding to the scorer name lists.
+        ttt_score = []
+        aux_score_index = 0
+        for y_index, scorer_names in enumerate(self.scorer_name_lists):
+            tt_score = [tt_loss[y_index]]
+            for name in scorer_names[1:]:
+                tt_score.append(tt_aux_score[aux_score_index])
+                aux_score_index += 1
+            ttt_score.append(tt_score)
+        assert aux_score_index == len(tt_aux_score)
 
         # Gather the computed stats into a dict, including the stats for the
         # custom middle steps.
@@ -220,16 +221,16 @@ class BatchTimer(object):
 
             'forward': t_forward,
 
-            'metric_names': self.metric_name_lists,
-            'loss': t_loss,
-            'metric': t_addl_metric,
-            'metric_each': ttt_metric,
+            'scorer_names': self.scorer_name_lists,
+            'scorer_loss': t_loss,
+            'scorer_aux': t_aux_score,
+            'scorer_each': ttt_score,
 
             'hook_names': self.hook_names,
-            'on_begin': t_on_begin,
-            'on_begin_each': tt_on_begin,
-            'on_end': t_on_end,
-            'on_end_each': tt_on_end,
+            'hook_on_begin': t_on_begin,
+            'hook_on_begin_each': tt_on_begin,
+            'hook_on_end': t_on_end,
+            'hook_on_end_each': tt_on_end,
         }
         for name in middle_name2stats:
             assert name not in ret

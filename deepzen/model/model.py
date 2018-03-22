@@ -5,8 +5,8 @@ from ..hook import get_hooks
 from ..io.dataset import Dataset
 from ..io.ram_split import RamSplit
 from ..io.split import Split
-from ..metric.loss import get_loss
-from ..metric import get_metric
+from ..scorer.loss import get_loss_scorer
+from ..scorer import get_scorer
 from ..optim import get_optimizer
 from ..util.py import require_kwargs_after
 from .batch_timer import TestOnBatchTimer, TrainOnBatchTimer
@@ -36,34 +36,37 @@ class Model(object):
         return Dataset(train, test)
 
     @classmethod
-    def _parse_metric_lists_str(cls, s):
+    def _parse_scorer_lists_str(cls, s):
         ss = s.split(' ')
         return [s.split(',') for s in ss]
 
     @classmethod
-    def _get_loss_and_metrics(cls, arg, y_sample_shape):
-        if not isinstance(arg, (list, tuple)):
-            arg = [arg]
-        metrics = []
-        metrics.append(get_loss(arg[0], y_sample_shape))
-        for item in arg[1:]:
-            metrics.append(get_metric(item, y_sample_shape))
-        return metrics
+    def _get_loss_and_aux_scorers(cls, x, y_sample_shape):
+        if isinstance(x, (list, tuple)):
+            xx = x
+        else:
+            xx = [x]
+        scorers = []
+        scorers.append(get_loss_scorer(xx[0], y_sample_shape))
+        for x in xx[1:]:
+            scorers.append(get_scorer(x, y_sample_shape))
+        return scorers
 
     @classmethod
-    def _get_metric_lists(cls, arg, y_sample_shapes):
-        if isinstance(arg, str):
-            if ' ' in arg or ',' in arg:
-                arg = cls._parse_metric_lists_str(arg)
+    def _get_scorer_lists(cls, x, y_sample_shapes):
+        if isinstance(x, str):
+            if ' ' in x or ',' in x:
+                xxx = cls._parse_scorer_lists_str(x)
             else:
-                arg = [arg]
-        metric_lists = []
-        assert len(arg) == len(y_sample_shapes)
-        for item, y_sample_shape in zip(arg, y_sample_shapes):
-            loss_and_metrics = \
-                cls._get_loss_and_metrics(item, y_sample_shape)
-            metric_lists.append(loss_and_metrics)
-        return metric_lists
+                xxx = [x]
+        else:
+            xxx = x
+        scorer_lists = []
+        assert len(xxx) == len(y_sample_shapes)
+        for xx, y_sample_shape in zip(xxx, y_sample_shapes):
+            scorers = cls._get_loss_and_aux_scorers(xx, y_sample_shape)
+            scorer_lists.append(scorers)
+        return scorer_lists
 
     def __init__(self, spec):
         self.spec = spec
@@ -74,8 +77,7 @@ class Model(object):
         y_pred = self.layer.forward(x, is_training)
         return [y_pred]
 
-    def train_on_batch(self, xx, yy_true, compute_metric_lists, optim, hooks,
-                       t):
+    def train_on_batch(self, xx, yy_true, scorer_lists, optim, hooks, t):
         # Start timing the whole method.
         t.start()
 
@@ -96,29 +98,29 @@ class Model(object):
 
             # 3. Compute the loss of each output.
             t.mark()
-            for compute_metrics, y_true, y_pred in \
-                    zip(compute_metric_lists, yy_true, yy_pred):
-                compute_loss = compute_metrics[0]
+            for scorers, y_true, y_pred in \
+                    zip(scorer_lists, yy_true, yy_pred):
+                get_loss = scorers[0]
                 t.mark()
-                loss = Z.mean(compute_loss(y_true, y_pred))
+                loss = Z.mean(get_loss(y_true, y_pred))
                 t.mark()
                 losses.append(loss)
             t.mark()
 
-        # 4. Compute any additional metrics of each output.
-        metric_lists = []
+        # 4. Compute any additional scores of each output.
+        score_lists = []
         t.mark()
-        for i, (compute_metrics, y_true, y_pred) in \
-                enumerate(zip(compute_metric_lists, yy_true, yy_pred)):
+        for i, (scorers, y_true, y_pred) in \
+                enumerate(zip(scorer_lists, yy_true, yy_pred)):
             loss = Z.scalar(losses[i])
-            metrics = [loss]
-            for compute_metric in compute_metrics[1:]:
+            scores = [loss]
+            for aux_scorer in scorers[1:]:
                 t.mark()
-                metric = Z.mean(compute_metric(y_true, y_pred))
+                score = Z.mean(aux_scorer(y_true, y_pred))
                 t.mark()
-                metric = Z.scalar(metric)
-                metrics.append(metric)
-            metric_lists.append(metrics)
+                score = Z.scalar(score)
+                scores.append(score)
+            score_lists.append(scores)
         t.mark()
 
         # 5. Backpropagate gradients.
@@ -143,9 +145,9 @@ class Model(object):
         # Stop timing the whole method.
         t.stop()
 
-        return metric_lists
+        return score_lists
 
-    def test_on_batch(self, xx, yy_true, compute_metric_lists, hooks, t):
+    def test_on_batch(self, xx, yy_true, scorer_lists, hooks, t):
         # Start timing the whole method.
         t.start()
 
@@ -165,31 +167,31 @@ class Model(object):
         # 3. Compute the loss of each output.
         losses = []
         t.mark()
-        for i, (compute_metrics, y_true, y_pred) in \
-                enumerate(zip(compute_metric_lists, yy_true, yy_pred)):
-            compute_loss = compute_metrics[0]
+        for i, (scorers, y_true, y_pred) in \
+                enumerate(zip(scorer_lists, yy_true, yy_pred)):
+            get_loss = scorers[0]
             t.mark()
-            loss = Z.mean(compute_loss(y_true, y_pred))
+            loss = Z.mean(get_loss(y_true, y_pred))
             t.mark()
             losses.append(loss)
         t.mark()
 
-        # 3. Compute any additional metrics of each output.  (This could be
-        #    done in the same loop as computing losses, but is done separately
-        #    so timings can be compared directly.)
-        metric_lists = []
+        # 3. Compute any additional scores of each output.  (This could be done
+        #    in the same loop as computing losses, but is done separately so
+        #    timings can be compared directly.)
+        score_lists = []
         t.mark()
-        for i, (compute_metrics, y_true, y_pred) in \
-                enumerate(zip(compute_metric_lists, yy_true, yy_pred)):
+        for i, (scorers, y_true, y_pred) in \
+                enumerate(zip(scorer_lists, yy_true, yy_pred)):
             loss = Z.scalar(losses[i])
-            metrics = [loss]
-            for compute_metric in compute_metrics[1:]:
+            scores = [loss]
+            for aux_scorer in scorers[1:]:
                 t.mark()
-                metric = Z.mean(compute_metric(y_true, y_pred))
+                score = Z.mean(aux_scorer(y_true, y_pred))
                 t.mark()
-                metric = Z.scalar(metric)
-                metrics.append(metric)
-            metric_lists.append(metrics)
+                score = Z.scalar(score)
+                scores.append(score)
+            score_lists.append(scores)
         t.mark()
 
         # 4. Execute "after" hooks.
@@ -203,50 +205,50 @@ class Model(object):
         # Stop timing the whole method.
         t.stop()
 
-        return metric_lists
+        return score_lists
 
-    def _fit_epoch(self, compute_metric_lists, dataset, optim, batch_size,
-                   hooks, train_timer, test_timer, epoch):
+    def _fit_epoch(self, scorer_lists, dataset, optim, batch_size, hooks,
+                   train_timer, test_timer, epoch):
         for hook in hooks:
             hook.on_epoch_begin(epoch, dataset.num_batches(batch_size))
 
-        train_metric_lists = []
-        test_metric_lists = []
-        for compute_metrics in compute_metric_lists:
-            train_metric_lists.append([[] for x in compute_metrics])
-            test_metric_lists.append([[] for x in compute_metrics])
+        train_score_lists = []
+        test_score_lists = []
+        for scorers in scorer_lists:
+            train_score_lists.append([[] for x in scorers])
+            test_score_lists.append([[] for x in scorers])
 
         for (xx, yy), is_training in dataset.each_batch(batch_size):
             xx = [Z.constant(x) for x in xx]
             yy = [Z.constant(y) for y in yy]
             if is_training:
-                batch_metric_lists = self.train_on_batch(
-                    xx, yy, compute_metric_lists, optim, hooks, train_timer)
-                split_metric_lists = train_metric_lists
+                batch_score_lists = self.train_on_batch(
+                    xx, yy, scorer_lists, optim, hooks, train_timer)
+                split_score_lists = train_score_lists
             else:
-                batch_metric_lists = self.test_on_batch(
-                    xx, yy, compute_metric_lists, hooks, test_timer)
-                split_metric_lists = test_metric_lists
-            for i, batch_metrics in enumerate(batch_metric_lists):
-                for j, batch_metric in enumerate(batch_metrics):
-                    split_metric_lists[i][j].append(batch_metric)
+                batch_score_lists = self.test_on_batch(
+                    xx, yy, scorer_lists, hooks, test_timer)
+                split_score_lists = test_score_lists
+            for i, batch_scores in enumerate(batch_score_lists):
+                for j, batch_score in enumerate(batch_scores):
+                    split_score_lists[i][j].append(batch_score)
 
-        for split_metric_lists in [train_metric_lists, test_metric_lists]:
-            for i, column in enumerate(split_metric_lists):
+        for split_score_lists in [train_score_lists, test_score_lists]:
+            for i, column in enumerate(split_score_lists):
                 for j, values in enumerate(column):
-                    split_metric_lists[i][j] = float(np.mean(values))
+                    split_score_lists[i][j] = float(np.mean(values))
 
         for hook in hooks:
-            hook.on_epoch_end(train_metric_lists, test_metric_lists)
+            hook.on_epoch_end(train_score_lists, test_score_lists)
 
-        return train_metric_lists, test_metric_lists
+        return train_score_lists, test_score_lists
 
     @require_kwargs_after(3)
     def fit(self, data, loss, test_frac=None, optim='sgd', batch=64,
             epoch_offset=0, epochs=20, hook=None, timer_cache=10000):
         dataset = self._unpack_dataset(data, test_frac)
         y_sample_shapes = dataset.shapes()[0]
-        compute_metric_lists = self._get_metric_lists(loss, y_sample_shapes)
+        scorer_lists = self._get_scorer_lists(loss, y_sample_shapes)
         optim = get_optimizer(optim)
         hooks = get_hooks(hook)
         assert isinstance(batch, int)
@@ -256,28 +258,29 @@ class Model(object):
         assert 0 <= epoch_offset
         assert isinstance(epochs, int)
         assert 0 <= epochs
-
+        assert isinstance(timer_cache, int)
+        assert 0 < timer_cache
         timer_cache_size = timer_cache
+
         hook_names = [x.__class__.__name__ for x in hooks]
-        metric_name_lists = []
-        for compute_metrics in compute_metric_lists:
-            metric_names = [x.__class__.__name__ for x in compute_metrics]
-            metric_name_lists.append(metric_names)
+        scorer_name_lists = []
+        for scorers in scorer_lists:
+            scorer_names = [x.__class__.__name__ for x in scorers]
+            scorer_name_lists.append(scorer_names)
         train_timer = TrainOnBatchTimer(
-            timer_cache_size, hook_names, metric_name_lists)
+            timer_cache_size, hook_names, scorer_name_lists)
         test_timer = TestOnBatchTimer(
-            timer_cache_size, hook_names, metric_name_lists)
+            timer_cache_size, hook_names, scorer_name_lists)
 
         optim.set_params(self.layer.params())
 
         for hook in hooks:
-            hook.on_fit_begin(metric_name_lists, epoch_offset, epochs)
+            hook.on_fit_begin(scorer_name_lists, epoch_offset, epochs)
 
         for epoch in range(epoch_offset, epoch_offset + epochs):
-            train_metric_lists, test_metric_lists = \
-                self._fit_epoch(compute_metric_lists, dataset, optim,
-                                batch_size, hooks, train_timer, test_timer,
-                                epoch)
+            train_score_lists, test_score_lists = \
+                self._fit_epoch(scorer_lists, dataset, optim, batch_size, hooks,
+                                train_timer, test_timer, epoch)
 
         for hook in hooks:
             hook.on_fit_end()

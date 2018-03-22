@@ -1,10 +1,10 @@
 from .. import api as Z
 from ..util.dataset import is_sample_one_scalar
 from ..util.registry import Registry
-from .base.metric import Metric
+from .base.scorer import Scorer
 
 
-class Accuracy(Metric):
+class Accuracy(Scorer):
     pass
 
 
@@ -15,7 +15,7 @@ def register_accuracy(x):
     return REGISTRY.register(x)
 
 
-def get_accuracy(x, y_sample_shape):
+def get_accuracy_scorer(x, y_sample_shape):
     if x in {'accuracy', 'acc'}:
         if is_sample_one_scalar(y_sample_shape):
             x = 'binary_accuracy'
