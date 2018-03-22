@@ -1,4 +1,4 @@
-class View(object):
+class Hook(object):
     def on_fit_begin(self, metric_name_lists, epoch_offset, num_epochs):
         pass
 

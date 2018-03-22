@@ -1,6 +1,7 @@
 import numpy as np
 
 from .. import api as Z
+from ..hook import unpack_hooks
 from ..io.dataset import Dataset
 from ..io.ram_split import RamSplit
 from ..io.split import Split
@@ -8,7 +9,6 @@ from ..metric.loss import unpack_loss
 from ..metric import unpack_metric
 from ..optim import get_optimizer
 from ..util.py import require_kwargs_after
-from ..view import unpack_views
 from .batch_timer import TestOnBatchTimer, TrainOnBatchTimer
 
 
@@ -74,16 +74,16 @@ class Model(object):
         y_pred = self.layer.forward(x, is_training)
         return [y_pred]
 
-    def train_on_batch(self, xx, yy_true, compute_metric_lists, optim, views,
+    def train_on_batch(self, xx, yy_true, compute_metric_lists, optim, hooks,
                        t):
         # Start timing the whole method.
         t.start()
 
-        # 1. Execute "on begin" views.
+        # 1. Execute "on begin" hooks.
         t.mark()
-        for view in views:
+        for hook in hooks:
             t.mark()
-            view.on_train_on_batch_begin()
+            hook.on_train_on_batch_begin()
             t.mark()
         t.mark()
 
@@ -132,11 +132,11 @@ class Model(object):
         optim.step()
         t.mark()
 
-        # 7. Execute "on end" views.
+        # 7. Execute "on end" hooks.
         t.mark()
-        for view in views:
+        for hook in hooks:
             t.mark()
-            view.on_train_on_batch_end()
+            hook.on_train_on_batch_end()
             t.mark()
         t.mark()
 
@@ -145,15 +145,15 @@ class Model(object):
 
         return metric_lists
 
-    def test_on_batch(self, xx, yy_true, compute_metric_lists, views, t):
+    def test_on_batch(self, xx, yy_true, compute_metric_lists, hooks, t):
         # Start timing the whole method.
         t.start()
 
-        # 1. Execute "before" views.
+        # 1. Execute "before" hooks.
         t.mark()
-        for view in views:
+        for hook in hooks:
             t.mark()
-            view.on_test_on_batch_begin()
+            hook.on_test_on_batch_begin()
             t.mark()
         t.mark()
 
@@ -192,11 +192,11 @@ class Model(object):
             metric_lists.append(metrics)
         t.mark()
 
-        # 4. Execute "after" views.
+        # 4. Execute "after" hooks.
         t.mark()
-        for view in views:
+        for hook in hooks:
             t.mark()
-            view.on_test_on_batch_end()
+            hook.on_test_on_batch_end()
             t.mark()
         t.mark()
 
@@ -206,9 +206,9 @@ class Model(object):
         return metric_lists
 
     def _fit_epoch(self, compute_metric_lists, dataset, optim, batch_size,
-                   views, train_timer, test_timer, epoch):
-        for view in views:
-            view.on_epoch_begin(epoch, dataset.num_batches(batch_size))
+                   hooks, train_timer, test_timer, epoch):
+        for hook in hooks:
+            hook.on_epoch_begin(epoch, dataset.num_batches(batch_size))
 
         train_metric_lists = []
         test_metric_lists = []
@@ -221,11 +221,11 @@ class Model(object):
             yy = [Z.constant(y) for y in yy]
             if is_training:
                 batch_metric_lists = self.train_on_batch(
-                    xx, yy, compute_metric_lists, optim, views, train_timer)
+                    xx, yy, compute_metric_lists, optim, hooks, train_timer)
                 split_metric_lists = train_metric_lists
             else:
                 batch_metric_lists = self.test_on_batch(
-                    xx, yy, compute_metric_lists, views, test_timer)
+                    xx, yy, compute_metric_lists, hooks, test_timer)
                 split_metric_lists = test_metric_lists
             for i, batch_metrics in enumerate(batch_metric_lists):
                 for j, batch_metric in enumerate(batch_metrics):
@@ -236,19 +236,19 @@ class Model(object):
                 for j, values in enumerate(column):
                     split_metric_lists[i][j] = float(np.mean(values))
 
-        for view in views:
-            view.on_epoch_end(train_metric_lists, test_metric_lists)
+        for hook in hooks:
+            hook.on_epoch_end(train_metric_lists, test_metric_lists)
 
         return train_metric_lists, test_metric_lists
 
     @require_kwargs_after(3)
     def fit(self, data, loss, test_frac=None, optim='sgd', batch=64,
-            epoch_offset=0, epochs=20, view=None, timer_cache=10000):
+            epoch_offset=0, epochs=20, hook=None, timer_cache=10000):
         dataset = self._unpack_dataset(data, test_frac)
         y_sample_shapes = dataset.shapes()[0]
         compute_metric_lists = self._unpack_metric_lists(loss, y_sample_shapes)
         optim = get_optimizer(optim)
-        views = unpack_views(view)
+        hooks = unpack_hooks(hook)
         assert isinstance(batch, int)
         assert 0 < batch
         batch_size = batch
@@ -258,42 +258,42 @@ class Model(object):
         assert 0 <= epochs
 
         timer_cache_size = timer_cache
-        view_names = [x.__class__.__name__ for x in views]
+        hook_names = [x.__class__.__name__ for x in hooks]
         metric_name_lists = []
         for compute_metrics in compute_metric_lists:
             metric_names = [x.__class__.__name__ for x in compute_metrics]
             metric_name_lists.append(metric_names)
         train_timer = TrainOnBatchTimer(
-            timer_cache_size, view_names, metric_name_lists)
+            timer_cache_size, hook_names, metric_name_lists)
         test_timer = TestOnBatchTimer(
-            timer_cache_size, view_names, metric_name_lists)
+            timer_cache_size, hook_names, metric_name_lists)
 
         optim.set_params(self.layer.params())
 
-        for view in views:
-            view.on_fit_begin(metric_name_lists, epoch_offset, epochs)
+        for hook in hooks:
+            hook.on_fit_begin(metric_name_lists, epoch_offset, epochs)
 
         for epoch in range(epoch_offset, epoch_offset + epochs):
             train_metric_lists, test_metric_lists = \
                 self._fit_epoch(compute_metric_lists, dataset, optim,
-                                batch_size, views, train_timer, test_timer,
+                                batch_size, hooks, train_timer, test_timer,
                                 epoch)
 
-        for view in views:
-            view.on_fit_end()
+        for hook in hooks:
+            hook.on_fit_end()
 
     @require_kwargs_after(2)
     def fit_reg(self, data, test_frac=None, optim='sgd', batch=64,
-                epoch_offset=0, epochs=20, view=None, timer_cache=10000):
+                epoch_offset=0, epochs=20, hook=None, timer_cache=10000):
         loss = [['mean_squared_error']]
         return self.fit(data, loss, test_frac=test_frac, optim=optim,
                         batch=batch, epoch_offset=epoch_offset, epochs=epochs,
-                        view=view, timer_cache=timer_cache)
+                        hook=hook, timer_cache=timer_cache)
 
     @require_kwargs_after(2)
     def fit_clf(self, data, test_frac=None, optim='sgd', batch=64,
-                epoch_offset=0, epochs=20, view=None, timer_cache=10000):
+                epoch_offset=0, epochs=20, hook=None, timer_cache=10000):
         loss = [['cross_entropy', 'accuracy']]
         return self.fit(data, loss, test_frac=test_frac, optim=optim,
                         batch=batch, epoch_offset=epoch_offset, epochs=epochs,
-                        view=view, timer_cache=timer_cache)
+                        hook=hook, timer_cache=timer_cache)

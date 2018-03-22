@@ -3,10 +3,10 @@ import logging
 import requests
 from threading import Thread
 
-from .base.view import View
+from .base.hook import Hook
 
 
-class Server(View):
+class Server(Hook):
     def __init__(self, host='0.0.0.0', port=31337):
         self.host = host
         self.port = port
@@ -19,7 +19,7 @@ class Server(View):
 
         @app.route('/')
         def serve_root():
-            return open('deepzen/view/server/index.html').read()
+            return open('deepzen/hook/server/index.html').read()
 
         @app.route('/stop', methods=['POST'])
         def server_stop():

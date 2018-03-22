@@ -1,7 +1,7 @@
-from .base.view import View
+from .base.hook import Hook
 
 
-class RowPerEpoch(View):
+class RowPerEpoch(Hook):
     def __init__(self, epoch_cols=10, metric_cols=9, metric_decimal_places=4):
         self.epoch_cols = epoch_cols
         assert metric_decimal_places + 2 <= metric_cols

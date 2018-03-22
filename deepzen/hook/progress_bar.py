@@ -1,9 +1,9 @@
 from tqdm import tqdm
 
-from .base.view import View
+from .base.hook import Hook
 
 
-class ProgressBar(View):
+class ProgressBar(Hook):
     def on_epoch_begin(self, epoch, num_batches):
         self.bar = tqdm(total=num_batches, leave=False)
 

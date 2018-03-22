@@ -1,11 +1,11 @@
-from .base.view import View
+from .base.hook import Hook
 from .progress_bar import ProgressBar
 from .row_per_epoch import RowPerEpoch
 from .server import Server
 
 
-def unpack_view(arg):
-    if isinstance(arg, View):
+def unpack_hook(arg):
+    if isinstance(arg, Hook):
         return arg
     klass = {
         'row_per_epoch': RowPerEpoch,
@@ -15,14 +15,14 @@ def unpack_view(arg):
     return klass()
 
 
-def unpack_views(arg):
+def unpack_hooks(arg):
     if arg is None:
         return []
     if isinstance(arg, str):
         arg = arg.split(',')
     if not isinstance(arg, (list, tuple)):
         arg = [arg]
-    views = []
+    hooks = []
     for item in arg:
-        views.append(unpack_view(item))
-    return views
+        hooks.append(unpack_hook(item))
+    return hooks
