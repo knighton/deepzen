@@ -70,12 +70,6 @@ class Models(object):
             ConvSpec(4, stride=2),
             ReLUSpec(),
 
-            ConvSpec(4, stride=2),
-            ReLUSpec(),
-
-            ConvSpec(4, stride=2),
-            ReLUSpec(),
-
             FlattenSpec(),
 
             DenseSpec(1),
