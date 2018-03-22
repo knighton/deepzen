@@ -1,6 +1,7 @@
 from argparse import ArgumentParser
 
 from deepzen.dataset.imdb import load_imdb
+from deepzen.dataset.quora_dupes import load_quora_dupes
 from deepzen.layer import *  # noqa
 from deepzen.model import Model
 
@@ -34,6 +35,12 @@ class Datasets(object):
         return dataset, class_names
 
     @classmethod
+    def quora(cls):
+        dataset, x_transform = load_quora_dupes()
+        class_names = 'ok', 'dupe'
+        return dataset, class_names
+
+    @classmethod
     def get(cls, dataset_name):
         get_dataset = getattr(cls, dataset_name)
         return get_dataset()
@@ -52,22 +59,22 @@ class Models(object):
             DataSpec((seq_len,), x_dtype),
             EmbedSpec(vocab_size, 16, y_dtype),
 
-            ConvSpec(16, stride=2),
-            ReLUSpec(),
-
-            ConvSpec(12, stride=2),
+            ConvSpec(8, stride=2),
             ReLUSpec(),
 
             ConvSpec(8, stride=2),
             ReLUSpec(),
 
-            ConvSpec(6, stride=2),
+            ConvSpec(8, stride=2),
             ReLUSpec(),
 
-            ConvSpec(4, stride=2),
+            ConvSpec(8, stride=2),
             ReLUSpec(),
 
-            ConvSpec(4, stride=2),
+            ConvSpec(8, stride=2),
+            ReLUSpec(),
+
+            ConvSpec(8, stride=2),
             ReLUSpec(),
 
             FlattenSpec(),
