@@ -99,7 +99,7 @@ class BaseBatchNormSpec(Spec):
         state_shape = list(x_sig.batch_shape(1))
         for axis in axes:
             state_shape[1 + axis] = 1
-        return state_shape, x_sig.dtype()
+        return tuple(state_shape), x_sig.dtype()
 
 
 class InstanceBatchNormSpec(BaseBatchNormSpec):

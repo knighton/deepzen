@@ -91,7 +91,7 @@ class Models(object):
         image = x_train[0]
         num_classes = len(y_train[0])
         get = getattr(cls, name)
-        spec = get(image.shape, image.dtype, num_classes)
+        spec = get(image.shape, image.dtype.name, num_classes)
         return Model(spec)
 
 
