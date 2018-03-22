@@ -1,4 +1,4 @@
-from ...base.metric.loss import BaseLossAPI
+from ...base.score.loss import BaseLossAPI
 
 
 class PyTorchLossAPI(BaseLossAPI):

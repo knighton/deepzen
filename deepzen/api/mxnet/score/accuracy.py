@@ -1,4 +1,4 @@
-from ...base.metric.accuracy import BaseAccuracyAPI
+from ...base.score.accuracy import BaseAccuracyAPI
 
 
 class MXNetAccuracyAPI(BaseAccuracyAPI):
