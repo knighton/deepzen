@@ -25,6 +25,5 @@ class Adagrad(Optimizer):
         }
 
     def step_one(self, data, grad, ctx):
-        ctx.cache *= ctx.decay
-        ctx.cache += Z.square(grad)
+        ctx.cache = ctx.decay * ctx.cache + Z.square(grad)
         Z.assign_sub(data, ctx.lr * grad / Z.sqrt(ctx.cache + ctx.epsilon))
