@@ -36,8 +36,8 @@ class Server(Hook):
               (self.host, self.port))
         app.run(host=self.host, port=self.port)
 
-    def on_fit_begin(self, metric_name_lists, epoch_offset, epochs):
-        self.metric_name_lists = metric_name_lists
+    def on_fit_begin(self, scorer_name_lists, epoch_offset, epochs):
+        self.scorer_name_lists = scorer_name_lists
         self.epoch_offset = epoch_offset
         self.epochs = epochs
         self.thread = Thread(target=self.run)

@@ -6,17 +6,17 @@ from .base.registry import register_hook
 class Rows(Hook):
     name = 'rows'
 
-    def __init__(self, epoch_cols=10, metric_cols=9, metric_decimal_places=4):
+    def __init__(self, epoch_cols=10, score_cols=9, score_decimal_places=4):
         self.epoch_cols = epoch_cols
-        assert metric_decimal_places + 2 <= metric_cols
-        self.metric_cols = metric_cols
-        self.metric_decimal_places = metric_decimal_places
+        assert score_decimal_places + 2 <= score_cols
+        self.score_cols = score_cols
+        self.score_decimal_places = score_decimal_places
 
-    def on_fit_begin(self, metric_name_lists, epoch_offset, epochs):
+    def on_fit_begin(self, scorer_name_lists, epoch_offset, epochs):
         split_cols = 0
-        for metric_names in metric_name_lists:
-            count = len(metric_names)
-            split_cols += count * self.metric_cols + (count - 1)
+        for scorer_names in scorer_name_lists:
+            count = len(scorer_names)
+            split_cols += count * self.score_cols + (count - 1)
 
         self.horizontal_bar = '    +-%s-+-%s-+-%s-+' % \
             ('-' * self.epoch_cols, '-' * split_cols, '-' * split_cols)
@@ -34,22 +34,22 @@ class Rows(Hook):
     def on_epoch_begin(self, epoch, num_batches):
         self.epoch = epoch
 
-    def draw_output(self, metrics):
+    def draw_output(self, scores):
         ss = []
-        for metric in metrics:
-            fmt = '%%%d.%df' % (self.metric_cols, self.metric_decimal_places)
-            ss.append(fmt % metric)
+        for score in scores:
+            fmt = '%%%d.%df' % (self.score_cols, self.score_decimal_places)
+            ss.append(fmt % score)
         return ' '.join(ss)
 
-    def draw_split(self, metric_lists):
+    def draw_split(self, score_lists):
         ss = []
-        for metrics in metric_lists:
-            ss.append(self.draw_output(metrics))
+        for scores in score_lists:
+            ss.append(self.draw_output(scores))
         return ' : '.join(ss)
 
-    def on_epoch_end(self, train_metric_lists, test_metric_lists):
-        train_text = self.draw_split(train_metric_lists)
-        test_text = self.draw_split(test_metric_lists)
+    def on_epoch_end(self, train_score_lists, test_score_lists):
+        train_text = self.draw_split(train_score_lists)
+        test_text = self.draw_split(test_score_lists)
         fmt = '    | %%%dd | %%s | %%s |' % self.epoch_cols
         print(fmt % (self.epoch, train_text, test_text))
 

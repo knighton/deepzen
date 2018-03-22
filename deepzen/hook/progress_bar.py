@@ -17,5 +17,5 @@ class ProgressBar(Hook):
     def on_test_on_batch_begin(self):
         self.bar.update(1)
 
-    def on_epoch_end(self, train_metric_lists, test_metric_lists):
+    def on_epoch_end(self, train_scorer_lists, test_scorer_lists):
         self.bar.close()
