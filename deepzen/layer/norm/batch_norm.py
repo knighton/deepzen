@@ -97,8 +97,9 @@ class BaseBatchNormSpec(Spec):
         else:
             assert False
         state_shape = list(x_sig.batch_shape(1))
-        for axis in axes:
-            state_shape[1 + axis] = 1
+        for axis in range(len(state_shape) - 1):
+            if axis not in axes:
+                state_shape[1 + axis] = 1
         return tuple(state_shape), x_sig.dtype()
 
 
