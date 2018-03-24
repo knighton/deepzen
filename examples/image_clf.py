@@ -63,6 +63,7 @@ class Models(object):
     def mlp(cls, image_shape, dtype, num_classes):
         return SequenceSpec([
             DataSpec(image_shape, dtype),
+
             FlattenSpec(),
 
             DenseSpec(512),
@@ -79,6 +80,37 @@ class Models(object):
             MovAvgBatchNormSpec(),
             ReLUSpec(),
             DropoutSpec(),
+
+            DenseSpec(num_classes),
+            SoftmaxSpec(),
+        ])
+
+    @classmethod
+    def cnn(cls, image_shape, dtype, num_classes):
+        return SequenceSpec([
+            DataSpec(image_shape, dtype),
+
+            ConvSpec(16),
+            MovAvgBatchNormSpec(),
+            ReLUSpec(),
+            MaxPoolSpec(2),
+
+            ConvSpec(16),
+            MovAvgBatchNormSpec(),
+            ReLUSpec(),
+            MaxPoolSpec(2),
+
+            ConvSpec(16),
+            MovAvgBatchNormSpec(),
+            ReLUSpec(),
+            MaxPoolSpec(2),
+
+            ConvSpec(16),
+            MovAvgBatchNormSpec(),
+            ReLUSpec(),
+            MaxPoolSpec(2),
+
+            FlattenSpec(),
 
             DenseSpec(num_classes),
             SoftmaxSpec(),
