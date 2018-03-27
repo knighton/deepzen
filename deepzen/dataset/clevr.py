@@ -4,12 +4,12 @@ import numpy as np
 import os
 from PIL import Image
 import re
-from scipy.misc import toimage
 from time import time
 from tqdm import tqdm
 from zipfile import ZipFile
 
 from ..util.config import get_dataset_root_dir
+from ..util.net import download
 from ..util.py import require_kwargs
 
 
