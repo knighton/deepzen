@@ -16,8 +16,8 @@ class ClipLayer(Layer):
 
 
 class ClipSpec(Spec):
-    def __init__(self, min=-np.inf, max=np.inf, space=None):
-        Spec.__init__(self, space)
+    def __init__(self, min=-np.inf, max=np.inf, xsnd=None):
+        Spec.__init__(self, xsnd)
         self._min = min
         self._max = max
 

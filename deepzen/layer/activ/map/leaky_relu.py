@@ -13,8 +13,8 @@ class LeakyReLULayer(Layer):
 
 
 class LeakyReLUSpec(Spec):
-    def __init__(self, alpha=0.1, space=None):
-        Spec.__init__(self, space)
+    def __init__(self, alpha=0.1, xsnd=None):
+        Spec.__init__(self, xsnd)
         self._alpha = alpha
 
     def checked_build(self, x_sig):

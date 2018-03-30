@@ -16,16 +16,16 @@ class ConvLayer(Layer):
         self._dilation = dilation
 
     def forward(self, x, is_training):
-        space = self._x_sig.spatial_ndim()
+        xsnd = self._x_sig.spatial_ndim()
         return Z.conv(x, self._kernel, self._bias, self._stride, self._padding,
-                      self._dilation, space)
+                      self._dilation, xsnd)
 
 
 class ConvSpec(Spec):
     def __init__(self, channels=None, face=3, stride=1, padding=1, dilation=1,
                  kernel_init='glorot_uniform', bias_init='zero', has_bias=True,
-                 space=None):
-        Spec.__init__(self, space)
+                 xsnd=None):
+        Spec.__init__(self, xsnd)
         self._channels = channels
         self._face = face
         self._stride = stride

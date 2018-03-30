@@ -49,12 +49,12 @@ class MovAvgBatchNormLayer(BaseBatchNormLayer):
         MovAvgBatchNormLayer init.
 
         @params
-            Signature     x_sig       Input signature.
-            scalar        momentum    Momentum of mean and var moving averages.
-            np.ndarray    beta        Beta weights.
-            np.ndarray    gamma       Gamma weights.
-            np.ndarray    mean        Mean moving average weights.
-            np.ndarray    var         Var moving average weights.
+            Signature   x_sig     Input signature.
+            scalar      momentum  Momentum of mean and var moving averages.
+            np.ndarray  beta      Beta weights.
+            np.ndarray  gamma     Gamma weights.
+            np.ndarray  mean      Mean moving average weights.
+            np.ndarray  var       Var moving average weights.
         """
         BaseBatchNormLayer.__init__(self, x_sig)
         self._momentum = momentum
@@ -79,14 +79,14 @@ class MovAvgBatchNormLayer(BaseBatchNormLayer):
 
 
 class BaseBatchNormSpec(Spec):
-    def __init__(self, space):
+    def __init__(self, xsnd):
         """
         BaseBatchNormSpec init.
 
         @params
-            {None, int}  space  Optional x spatial ndim requirement.
+            {None, int}  xsnd  Optional x spatial ndim requirement.
         """
-        Spec.__init__(self, space)
+        Spec.__init__(self, xsnd)
 
     @classmethod
     def _get_state_init_args(cls, axis, x_sig):
@@ -105,7 +105,7 @@ class BaseBatchNormSpec(Spec):
 
 class InstanceBatchNormSpec(BaseBatchNormSpec):
     def __init__(self, axis=0, beta_init='zero', gamma_init='one', center=True,
-                 scale=True, space=None):
+                 scale=True, xsnd=None):
         """
         InstanceBatchNormSpec init.
 
@@ -116,9 +116,9 @@ class InstanceBatchNormSpec(BaseBatchNormSpec):
             {int, shape}  axis        Sample axis/axes to norm over.
             Initializer   beta_init   Beta weight initializer.
             Initializer   gamma_init  Gamma weight initializer.
-            {None, int}   space       Optional x spatial ndim requirement.
+            {None, int}   xsnd        Optional x spatial ndim requirement.
         """
-        BaseBatchNormSpec.__init__(self, space)
+        BaseBatchNormSpec.__init__(self, xsnd)
         self._axis = axis
         self._beta_init = get_initializer(beta_init)
         self._gamma_init = get_initializer(gamma_init)
@@ -150,7 +150,7 @@ class InstanceBatchNormSpec(BaseBatchNormSpec):
 class MovAvgBatchNormSpec(BaseBatchNormSpec):
     def __init__(self, momentum=0.99, axis=0, beta_init='zero',
                  gamma_init='one', mean_init='zero', var_init='one',
-                 center=True, scale=True, space=None):
+                 center=True, scale=True, xsnd=None):
         """
         MovAvgBatchNormSpec init.
 
@@ -167,9 +167,9 @@ class MovAvgBatchNormSpec(BaseBatchNormSpec):
             Initializer   gamma_init  Gamma weight initializer.
             Initializer   mean_init   Mean moving average weight initializer.
             Initializer   var_init    Var moving average weight initializer.
-            {None, int}   space       Optional x spatial ndim requirement.
+            {None, int}   xsnd        Optional x spatial ndim requirement.
         """
-        BaseBatchNormSpec.__init__(self, space)
+        BaseBatchNormSpec.__init__(self, xsnd)
         assert 0 <= momentum <= 1
         self._momentum = momentum
         self._axis = axis

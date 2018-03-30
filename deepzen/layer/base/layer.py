@@ -5,12 +5,12 @@ from .spec import Spec
 class Layer(Spec):
     def __init__(self, x_sig, y_sig=None):
         if x_sig:
-            space = x_sig.spatial_ndim_or_none()
+            xsnd = x_sig.spatial_ndim_or_none()
         else:
-            space = None
+            xsnd = None
         if y_sig is None:
             y_sig = x_sig
-        Spec.__init__(self, space)
+        Spec.__init__(self, xsnd)
         self._x_sig = x_sig
         self._y_sig = y_sig
         self._params = []

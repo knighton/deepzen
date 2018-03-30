@@ -13,8 +13,8 @@ class GlobalPoolLayer(Layer):
 
 
 class GlobalPoolSpec(Spec):
-    def __init__(self, layer_class, space=None):
-        Spec.__init__(self, space)
+    def __init__(self, layer_class, xsnd=None):
+        Spec.__init__(self, xsnd)
         self._layer_class = layer_class
 
     def checked_build(self, x_sig):
@@ -28,8 +28,8 @@ class GlobalAvgPoolLayer(GlobalPoolLayer):
 
 
 class GlobalAvgPoolSpec(GlobalPoolSpec):
-    def __init__(self, space=None):
-        GlobalPoolSpec.__init__(self, GlobalAvgPoolLayer, space)
+    def __init__(self, xsnd=None):
+        GlobalPoolSpec.__init__(self, GlobalAvgPoolLayer, xsnd)
 
 
 class GlobalMaxPoolLayer(GlobalPoolLayer):
@@ -38,5 +38,5 @@ class GlobalMaxPoolLayer(GlobalPoolLayer):
 
 
 class GlobalMaxPoolSpec(GlobalPoolSpec):
-    def __init__(self, space=None):
-        GlobalPoolSpec.__init__(self, GlobalMaxPoolLayer, space)
+    def __init__(self, xsnd=None):
+        GlobalPoolSpec.__init__(self, GlobalMaxPoolLayer, xsnd)

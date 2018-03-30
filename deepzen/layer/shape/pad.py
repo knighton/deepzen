@@ -10,8 +10,8 @@ class PadLayer(Layer):
 
 
 class PadSpec(Spec):
-    def __init__(self, padding, space=None):
-        Spec.__init__(self, space)
+    def __init__(self, padding, xsnd=None):
+        Spec.__init__(self, xsnd)
         self._padding = padding
 
     def make_layer(self, x_sig, y_sig):
@@ -32,8 +32,8 @@ class ConstantPadLayer(PadLayer):
 
 
 class ConstantPadSpec(PadSpec):
-    def __init__(self, padding, value, space=None):
-        PadSpec.__init__(self, padding, space)
+    def __init__(self, padding, value, xsnd=None):
+        PadSpec.__init__(self, padding, xsnd)
         self._value = value
 
     def make_layer(self, x_sig, y_sig):
@@ -49,8 +49,8 @@ class EdgePadLayer(PadLayer):
 
 
 class EdgePadSpec(PadSpec):
-    def __init__(self, padding, space=None):
-        PadSpec.__init__(self, padding, space)
+    def __init__(self, padding, xsnd=None):
+        PadSpec.__init__(self, padding, xsnd)
 
     def make_layer(self, x_sig, y_sig):
         return EdgePadLayer(x_sig, y_sig, self._padding)
@@ -65,8 +65,8 @@ class ReflectPadLayer(PadLayer):
 
 
 class ReflectPadSpec(PadSpec):
-    def __init__(self, padding, space=None):
-        PadSpec.__init__(self, padding, space)
+    def __init__(self, padding, xsnd=None):
+        PadSpec.__init__(self, padding, xsnd)
 
     def make_layer(self, x_sig, y_sig):
         return ReflectPadLayer(x_sig, y_sig, self._padding)

@@ -16,8 +16,8 @@ class PoolLayer(Layer):
 
 
 class PoolSpec(Spec):
-    def __init__(self, layer_class, face=2, stride=None, padding=0, space=None):
-        Spec.__init__(self, space)
+    def __init__(self, layer_class, face=2, stride=None, padding=0, xsnd=None):
+        Spec.__init__(self, xsnd)
         self._layer_class = layer_class
         self._face = face
         self._stride = stride
@@ -36,8 +36,8 @@ class AvgPoolLayer(PoolLayer):
 
 
 class AvgPoolSpec(PoolSpec):
-    def __init__(self, face=2, stride=None, padding=0, space=None):
-        PoolSpec.__init__(self, AvgPoolLayer, face, stride, padding, space)
+    def __init__(self, face=2, stride=None, padding=0, xsnd=None):
+        PoolSpec.__init__(self, AvgPoolLayer, face, stride, padding, xsnd)
 
 
 class MaxPoolLayer(PoolLayer):
@@ -47,5 +47,5 @@ class MaxPoolLayer(PoolLayer):
 
 
 class MaxPoolSpec(PoolSpec):
-    def __init__(self, face=2, stride=None, padding=0, space=None):
-        PoolSpec.__init__(self, MaxPoolLayer, face, stride, padding, space)
+    def __init__(self, face=2, stride=None, padding=0, xsnd=None):
+        PoolSpec.__init__(self, MaxPoolLayer, face, stride, padding, xsnd)

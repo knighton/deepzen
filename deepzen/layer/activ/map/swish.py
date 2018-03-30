@@ -13,8 +13,8 @@ class SwishLayer(Layer):
 
 
 class SwishSpec(Spec):
-    def __init__(self, beta=1, space=None):
-        Spec.__init__(self, space)
+    def __init__(self, beta=1, xsnd=None):
+        Spec.__init__(self, xsnd)
         self._beta = beta
 
     def checked_build(self, x_sig):

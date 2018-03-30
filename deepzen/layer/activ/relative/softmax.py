@@ -12,8 +12,8 @@ class SoftmaxLayer(Layer):
 
 
 class SoftmaxSpec(Spec):
-    def __init__(self, space=None):
-        Spec.__init__(self, space)
+    def __init__(self, xsnd=None):
+        Spec.__init__(self, xsnd)
 
     def checked_build(self, x_sig):
         return SoftmaxLayer(x_sig)

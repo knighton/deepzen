@@ -12,8 +12,8 @@ class FlattenLayer(Layer):
 
 
 class FlattenSpec(Spec):
-    def __init__(self, space=None):
-        Spec.__init__(self, space)
+    def __init__(self, xsnd=None):
+        Spec.__init__(self, xsnd)
 
     def checked_build(self, x_sig):
         y_sig = Z.flatten_batch_signature(x_sig)

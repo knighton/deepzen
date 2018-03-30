@@ -13,8 +13,8 @@ class SoftExponentialLayer(Layer):
 
 
 class SoftExponentialSpec(Spec):
-    def __init__(self, alpha=0.25, space=None):
-        Spec.__init__(self, space)
+    def __init__(self, alpha=0.25, xsnd=None):
+        Spec.__init__(self, xsnd)
         self._alpha = alpha
 
     def checked_build(self, x_sig):

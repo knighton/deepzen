@@ -13,8 +13,8 @@ class ReshapeLayer(Layer):
 
 
 class ReshapeSpec(Spec):
-    def __init__(self, shape, space=None):
-        Spec.__init__(self, space)
+    def __init__(self, shape, xsnd=None):
+        Spec.__init__(self, xsnd)
         self._shape = shape
 
     def checked_build(self, x_sig):

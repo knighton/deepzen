@@ -14,8 +14,8 @@ class GaussianNoiseLayer(Layer):
 
 
 class GaussianNoiseSpec(Spec):
-    def __init__(self, std, axis=None, space=None):
-        Spec.__init__(self, space)
+    def __init__(self, std, axis=None, xsnd=None):
+        Spec.__init__(self, xsnd)
         self._std = std
         self._axis = axis
 

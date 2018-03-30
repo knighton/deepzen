@@ -15,9 +15,8 @@ class EmbedLayer(Layer):
 
 
 class EmbedSpec(Spec):
-    def __init__(self, vocab, dim, dtype=None, table_init='uniform',
-                 space=None):
-        Spec.__init__(self, space)
+    def __init__(self, vocab, dim, dtype=None, table_init='uniform', xsnd=None):
+        Spec.__init__(self, xsnd)
         self._vocab = vocab
         self._dim = dim
         self._dtype = dtype

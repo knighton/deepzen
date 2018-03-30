@@ -14,8 +14,8 @@ class SoftplusLayer(Layer):
 
 
 class SoftplusSpec(Spec):
-    def __init__(self, beta=1, threshold=20, space=None):
-        Spec.__init__(self, space)
+    def __init__(self, beta=1, threshold=20, xsnd=None):
+        Spec.__init__(self, xsnd)
         self._beta = beta
         self._threshold = threshold
 

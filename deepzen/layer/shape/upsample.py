@@ -14,8 +14,8 @@ class UpsampleLayer(Layer):
 
 
 class UpsampleSpec(Spec):
-    def __init__(self, layer_class, scale, space=None):
-        Spec.__init__(self, space)
+    def __init__(self, layer_class, scale, xsnd=None):
+        Spec.__init__(self, xsnd)
         self._layer_class = layer_class
         self._scale = scale
 
@@ -30,8 +30,8 @@ class LinearUpsampleLayer(UpsampleLayer):
 
 
 class LinearUpsampleSpec(UpsampleSpec):
-    def __init__(self, scale, space=None):
-        UpsampleSpec.__init__(self, LinearUpsampleLayer, scale, space)
+    def __init__(self, scale, xsnd=None):
+        UpsampleSpec.__init__(self, LinearUpsampleLayer, scale, xsnd)
 
 
 class NearestUpsampleLayer(UpsampleLayer):
@@ -40,5 +40,5 @@ class NearestUpsampleLayer(UpsampleLayer):
 
 
 class NearestUpsampleSpec(UpsampleSpec):
-    def __init__(self, scale, space=None):
-        UpsampleSpec.__init__(self, NearestUpsampleLayer, scale, space)
+    def __init__(self, scale, xsnd=None):
+        UpsampleSpec.__init__(self, NearestUpsampleLayer, scale, xsnd)

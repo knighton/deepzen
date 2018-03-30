@@ -13,8 +13,8 @@ class HardShrinkLayer(Layer):
 
 
 class HardShrinkSpec(Spec):
-    def __init__(self, lam=0.5, space=None):
-        Spec.__init__(self, space)
+    def __init__(self, lam=0.5, xsnd=None):
+        Spec.__init__(self, xsnd)
         self._lambda = lam
 
     def checked_build(self, x_sig):

@@ -14,8 +14,8 @@ class DropoutLayer(Layer):
 
 
 class DropoutSpec(Spec):
-    def __init__(self, rate=0.5, axis=None, space=None):
-        Spec.__init__(self, space)
+    def __init__(self, rate=0.5, axis=None, xsnd=None):
+        Spec.__init__(self, xsnd)
         self._rate = rate
         self._axis = axis
 
