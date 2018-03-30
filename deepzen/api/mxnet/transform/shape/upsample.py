@@ -6,14 +6,14 @@ from ....base.transform.shape.upsample import \
 
 
 class MXNetLinearUpsampleAPI(BaseLinearUpsampleAPI):
-    def linear_upsample(self, x, scale, space=None):
-        if space is None:
-            space = self.ndim(x) - 2
-        if space == 1:
+    def linear_upsample(self, x, scale, xsnd=None):
+        if xsnd is None:
+            xsnd = self.ndim(x) - 2
+        if xsnd == 1:
             func = self.linear_upsample1d
-        elif space == 2:
+        elif xsnd == 2:
             func = self.linear_upsample2d
-        elif space == 3:
+        elif xsnd == 3:
             func = self.linear_upsample3d
         else:
             assert False

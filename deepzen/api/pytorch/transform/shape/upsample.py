@@ -6,13 +6,13 @@ from ....base.transform.shape.upsample import \
 
 
 class PyTorchLinearUpsampleAPI(BaseLinearUpsampleAPI):
-    def linear_upsample(self, x, scale, space=None):
-        if space is None:
-            space = self.ndim(x) - 2
-        scale = unpack_shape(scale, space)
+    def linear_upsample(self, x, scale, xsnd=None):
+        if xsnd is None:
+            xsnd = self.ndim(x) - 2
+        scale = unpack_shape(scale, xsnd)
         if 1 < len(set(scale)):
             raise 'bummer dude'
-        method = ['linear', 'bilinear', 'trilinear'][space - 1]
+        method = ['linear', 'bilinear', 'trilinear'][xsnd - 1]
         return F.upsample(x, None, scale[0], method)
 
     def linear_upsample1d(self, x, scale):

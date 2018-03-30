@@ -2,7 +2,7 @@ from .....util.unpack import unpack_padding
 
 
 class BaseConstantPadAPI(object):
-    def constant_pad(self, x, padding, value, space=None):
+    def constant_pad(self, x, padding, value, xsnd=None):
         raise NotImplementedError
 
     def constant_pad1d(self, x, padding, value):
@@ -16,7 +16,7 @@ class BaseConstantPadAPI(object):
 
 
 class BaseEdgePadAPI(object):
-    def edge_pad(self, x, padding, space=None):
+    def edge_pad(self, x, padding, xsnd=None):
         raise NotImplementedError
 
     def edge_pad1d(self, x, padding):
@@ -30,7 +30,7 @@ class BaseEdgePadAPI(object):
 
 
 class BaseReflectPadAPI(object):
-    def reflect_pad(self, x, padding, space=None):
+    def reflect_pad(self, x, padding, xsnd=None):
         raise NotImplementedError
 
     def reflect_pad1d(self, x, padding):

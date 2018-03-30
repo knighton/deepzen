@@ -2,9 +2,9 @@ import numpy as np
 
 
 class BaseReshapeAPI(object):
-    def reshape_batch(self, x, shape, space=None):
-        if space is not None:
-            assert self.ndim(x) - 2 == space
+    def reshape_batch(self, x, shape, xsnd=None):
+        if xsnd is not None:
+            assert self.ndim(x) - 2 == xsnd
         batch_size = self.shape(x)[0]
         return self.reshape(x, (batch_size,) + shape)
 
@@ -39,9 +39,9 @@ class BaseReshapeAPI(object):
         y_sample_shape = tuple(y_sample_shape)
         return x_sig.as_shape(y_sample_shape)
 
-    def flatten_batch(self, x, space=None):
-        if space is not None:
-            assert self.ndim(x) - 2 == space
+    def flatten_batch(self, x, xsnd=None):
+        if xsnd is not None:
+            assert self.ndim(x) - 2 == xsnd
         batch_size = self.shape(x)[0]
         sample_size = int(np.prod(self.shape(x)[1:]))
         return self.reshape(x, (batch_size, sample_size))

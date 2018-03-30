@@ -6,10 +6,10 @@ from ....base.transform.shape.pool import \
 
 
 class MXNetAvgPoolAPI(BaseAvgPoolAPI):
-    def avg_pool(self, x, face=2, stride=None, padding=0, space=None):
+    def avg_pool(self, x, face=2, stride=None, padding=0, xsnd=None):
         spatial_ndim = self.spatial_ndim(x)
-        if space is not None:
-            assert space == spatial_ndim
+        if xsnd is not None:
+            assert xsnd == spatial_ndim
         face = unpack_shape(face, spatial_ndim)
         if stride is None:
             stride = face
@@ -30,10 +30,10 @@ class MXNetAvgPoolAPI(BaseAvgPoolAPI):
 
 
 class MXNetMaxPoolAPI(BaseMaxPoolAPI):
-    def max_pool(self, x, face=2, stride=None, padding=0, space=None):
+    def max_pool(self, x, face=2, stride=None, padding=0, xsnd=None):
         spatial_ndim = self.spatial_ndim(x)
-        if space is not None:
-            assert space == spatial_ndim
+        if xsnd is not None:
+            assert xsnd == spatial_ndim
         face = unpack_shape(face, spatial_ndim)
         if stride is None:
             stride = face

@@ -4,7 +4,7 @@ from .....util.unpack import unpack_shape
 
 
 class BaseAvgPoolAPI(object):
-    def avg_pool(self, x, face=2, stride=None, padding=0, space=None):
+    def avg_pool(self, x, face=2, stride=None, padding=0, xsnd=None):
         raise NotImplementedError
 
     def avg_pool1d(self, x, face=2, stride=None, padding=0):
@@ -18,7 +18,7 @@ class BaseAvgPoolAPI(object):
 
 
 class BaseMaxPoolAPI(object):
-    def max_pool(self, x, face=2, stride=None, padding=0, space=None):
+    def max_pool(self, x, face=2, stride=None, padding=0, xsnd=None):
         raise NotImplementedError
 
     def max_pool1d(self, x, face=2, stride=None, padding=0):

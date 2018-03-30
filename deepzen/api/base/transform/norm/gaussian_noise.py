@@ -1,9 +1,9 @@
 class BaseGaussianNoiseAPI(object):
-    def gaussian_noise(self, x, is_training, std, axis=None, space=None):
+    def gaussian_noise(self, x, is_training, std, axis=None, xsnd=None):
         if not is_training:
             return x
-        if space is not None:
-            assert self.spatial_ndim(x) == space
+        if xsnd is not None:
+            assert self.spatial_ndim(x) == xsnd
         add_shape = self._dropout_mask_shape(self.shape(x), axis)
         add = self.random_normal(add_shape, 0, std)
         return x + self.constant(add)

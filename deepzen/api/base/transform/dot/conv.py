@@ -4,7 +4,7 @@ from .....util.unpack import unpack_shape
 
 
 class BaseConvAPI(object):
-    def conv(self, x, kernel, bias, stride, padding, dilation, space=None):
+    def conv(self, x, kernel, bias, stride, padding, dilation, xsnd=None):
         raise NotImplementedError
 
     def conv1d(self, x, kernel, bias, stride, padding, dilation):

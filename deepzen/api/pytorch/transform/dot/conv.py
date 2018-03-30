@@ -5,14 +5,14 @@ from ....base.transform.dot.conv import BaseConvAPI
 
 
 class PyTorchConvAPI(BaseConvAPI):
-    def conv(self, x, kernel, bias, stride, padding, dilation, space=None):
-        if space is None:
-            space = x.dim() - 2
-        if space == 1:
+    def conv(self, x, kernel, bias, stride, padding, dilation, xsnd=None):
+        if xsnd is None:
+            xsnd = x.dim() - 2
+        if xsnd == 1:
             func = self.conv1d
-        elif space == 2:
+        elif xsnd == 2:
             func = self.conv2d
-        elif space == 3:
+        elif xsnd == 3:
             func = self.conv3d
         else:
             assert False

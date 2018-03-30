@@ -15,9 +15,9 @@ class BaseBatchNormAPI(object):
                 axes.append(axis)
         return axes
 
-    def instance_batch_norm(self, x, beta, gamma, space=None):
-        if space is not None:
-            assert self.spatial_ndim(x) == space
+    def instance_batch_norm(self, x, beta, gamma, xsnd=None):
+        if xsnd is not None:
+            assert self.spatial_ndim(x) == xsnd
         reduction_axes = self._batch_norm_reduction_axes(self.shape(beta))
         mean, var = self.moments(x, reduction_axes)
         return self.batch_norm(x, beta, gamma, mean, var)
@@ -35,9 +35,9 @@ class BaseBatchNormAPI(object):
         return self.instance_batch_norm(x, beta, gamma, 3)
 
     def mov_avg_batch_norm(self, x, is_training, momentum, beta, gamma,
-                           mov_avg_mean, mov_avg_var, space=None):
-        if space is not None:
-            assert self.spatial_ndim(x) == space
+                           mov_avg_mean, mov_avg_var, xsnd=None):
+        if xsnd is not None:
+            assert self.spatial_ndim(x) == xsnd
         if not is_training:
             return self.batch_norm(x, beta, gamma, mov_avg_mean, mov_avg_var)
         reduction_axes = self._batch_norm_reduction_axes(self.shape(beta))

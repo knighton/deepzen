@@ -5,15 +5,15 @@ from ....base.transform.dot.conv import BaseConvAPI
 
 
 class MXNetConvAPI(BaseConvAPI):
-    def conv(self, x, kernel, bias, stride, padding, dilation, space=None):
-        if space is None:
-            space = x.ndim - 2
+    def conv(self, x, kernel, bias, stride, padding, dilation, xsnd=None):
+        if xsnd is None:
+            xsnd = x.ndim - 2
         else:
-            assert space == x.ndim - 2
+            assert xsnd == x.ndim - 2
         face = kernel.shape[2:]
-        stride = unpack_shape(stride, space)
-        padding = unpack_shape(padding, space)
-        dilation = unpack_shape(dilation, space)
+        stride = unpack_shape(stride, xsnd)
+        padding = unpack_shape(padding, xsnd)
+        dilation = unpack_shape(dilation, xsnd)
         out_dim = kernel.shape[0]
         return mx.nd.Convolution(x, kernel, bias, face, stride, dilation,
                                  padding, out_dim)

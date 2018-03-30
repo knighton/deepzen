@@ -6,14 +6,14 @@ from ....base.transform.shape.pool import \
 
 
 class PyTorchAvgPoolAPI(BaseAvgPoolAPI):
-    def avg_pool(self, x, face=2, stride=None, padding=0, space=None):
-        if space is None:
-            space = self.ndim(x) - 2
-        if space == 1:
+    def avg_pool(self, x, face=2, stride=None, padding=0, xsnd=None):
+        if xsnd is None:
+            xsnd = self.ndim(x) - 2
+        if xsnd == 1:
             func = self.avg_pool1d
-        elif space == 2:
+        elif xsnd == 2:
             func = self.avg_pool2d
-        elif space == 3:
+        elif xsnd == 3:
             func = self.avg_pool3d
         else:
             assert False
@@ -48,14 +48,14 @@ class PyTorchAvgPoolAPI(BaseAvgPoolAPI):
 
 
 class PyTorchMaxPoolAPI(BaseMaxPoolAPI):
-    def max_pool(self, x, face=2, stride=None, padding=0, space=None):
-        if space is None:
-            space = self.ndim(x) - 2
-        if space == 1:
+    def max_pool(self, x, face=2, stride=None, padding=0, xsnd=None):
+        if xsnd is None:
+            xsnd = self.ndim(x) - 2
+        if xsnd == 1:
             func = self.max_pool1d
-        elif space == 2:
+        elif xsnd == 2:
             func = self.max_pool2d
-        elif space == 3:
+        elif xsnd == 3:
             func = self.max_pool3d
         else:
             assert False

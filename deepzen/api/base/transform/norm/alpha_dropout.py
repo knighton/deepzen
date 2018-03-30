@@ -3,14 +3,14 @@ class BaseAlphaDropoutAPI(object):
     _alpha_dropout_scale = 1.0507009873554804934193349852946
     _alpha_dropout_alpha_p = -_alpha_dropout_alpha * _alpha_dropout_scale
 
-    def alpha_dropout(self, x, is_training, rate=0.5, axis=None, space=None):
+    def alpha_dropout(self, x, is_training, rate=0.5, axis=None, xsnd=None):
         # Only drop out in training mode.
         if not is_training:
             return x
 
         # Apply optional input dimensionality restriction.
-        if space is not None:
-            assert self.spatial_ndim(x) == space
+        if xsnd is not None:
+            assert self.spatial_ndim(x) == xsnd
 
         # Create the mask.
         mask_shape = self._dropout_mask_shape(self.shape(x), axis)

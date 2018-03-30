@@ -6,14 +6,14 @@ from ....base.transform.shape.pad import \
 
 
 class PyTorchConstantPadAPI(BaseConstantPadAPI):
-    def constant_pad(self, x, padding, value, space=None):
-        if space is None:
-            space = self.ndim(x) - 2
-        if space == 1:
+    def constant_pad(self, x, padding, value, xsnd=None):
+        if xsnd is None:
+            xsnd = self.ndim(x) - 2
+        if xsnd == 1:
             func = self.constant_pad1d
-        elif space == 2:
+        elif xsnd == 2:
             func = self.constant_pad2d
-        elif space == 3:
+        elif xsnd == 3:
             func = self.constant_pad3d
         else:
             assert False
@@ -38,14 +38,14 @@ class PyTorchConstantPadAPI(BaseConstantPadAPI):
 
 
 class PyTorchEdgePadAPI(BaseEdgePadAPI):
-    def edge_pad(self, x, padding, space=None):
-        if space is None:
-            space = self.ndim(x) - 2
-        if space == 1:
+    def edge_pad(self, x, padding, xsnd=None):
+        if xsnd is None:
+            xsnd = self.ndim(x) - 2
+        if xsnd == 1:
             func = self.edge_pad1d
-        elif space == 2:
+        elif xsnd == 2:
             func = self.edge_pad2d
-        elif space == 3:
+        elif xsnd == 3:
             func = self.edge_pad3d
         else:
             assert False
@@ -70,14 +70,14 @@ class PyTorchEdgePadAPI(BaseEdgePadAPI):
 
 
 class PyTorchReflectPadAPI(BaseReflectPadAPI):
-    def reflect_pad(self, x, padding, space=None):
-        if space is None:
-            space = self.ndim(x) - 2
-        if space == 1:
+    def reflect_pad(self, x, padding, xsnd=None):
+        if xsnd is None:
+            xsnd = self.ndim(x) - 2
+        if xsnd == 1:
             func = self.reflect_pad1d
-        elif space == 2:
+        elif xsnd == 2:
             func = self.reflect_pad2d
-        elif space == 3:
+        elif xsnd == 3:
             func = self.reflect_pad3d
         else:
             assert False

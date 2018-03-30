@@ -1,6 +1,6 @@
 class BaseGlobalAvgPoolAPI(object):
-    def global_avg_pool(self, x, space=None):
-        return self.global_pool(x, self.mean, space)
+    def global_avg_pool(self, x, xsnd=None):
+        return self.global_pool(x, self.mean, xsnd)
 
     def global_avg_pool1d(self, x):
         return self.global_pool(x, self.mean, 1)
@@ -13,8 +13,8 @@ class BaseGlobalAvgPoolAPI(object):
 
 
 class BaseGlobalMaxPoolAPI(object):
-    def global_max_pool(self, x, space=None):
-        return self.global_pool(x, self.max, space)
+    def global_max_pool(self, x, xsnd=None):
+        return self.global_pool(x, self.max, xsnd)
 
     def global_max_pool1d(self, x):
         return self.global_pool(x, self.max, 1)
@@ -27,8 +27,8 @@ class BaseGlobalMaxPoolAPI(object):
 
 
 class BaseGlobalMinPoolAPI(object):
-    def global_min_pool(self, x, space=None):
-        return self.global_pool(x, self.min, space)
+    def global_min_pool(self, x, xsnd=None):
+        return self.global_pool(x, self.min, xsnd)
 
     def global_min_pool1d(self, x):
         return self.global_pool(x, self.min, 1)
@@ -41,9 +41,9 @@ class BaseGlobalMinPoolAPI(object):
 
 
 class BaseGlobalPoolAPI(object):
-    def global_pool(self, x, func, space=None):
-        if space is not None:
-            assert self.spatial_ndim(x) == space
+    def global_pool(self, x, func, xsnd=None):
+        if xsnd is not None:
+            assert self.spatial_ndim(x) == xsnd
         return func(x, self.spatial_axes(x))
 
     def global_pool1d(self, x, func):

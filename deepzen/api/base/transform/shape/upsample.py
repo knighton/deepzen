@@ -2,7 +2,7 @@ from .....util.unpack import unpack_shape
 
 
 class BaseLinearUpsampleAPI(object):
-    def linear_upsample(self, x, scale, space=None):
+    def linear_upsample(self, x, scale, xsnd=None):
         raise NotImplementedError
 
     def linear_upsample1d(self, x, scale):
@@ -16,12 +16,12 @@ class BaseLinearUpsampleAPI(object):
 
 
 class BaseNearestUpsampleAPI(object):
-    def nearest_upsample(self, x, scale, space=None):
-        if space is None:
-            space = self.ndim(x) - 2
+    def nearest_upsample(self, x, scale, xsnd=None):
+        if xsnd is None:
+            xsnd = self.ndim(x) - 2
         else:
-            assert space == self.ndim(x) - 2
-        scale = unpack_shape(scale, space)
+            assert xsnd == self.ndim(x) - 2
+        scale = unpack_shape(scale, xsnd)
         return self.repeat(x, (1, 1) + scale)
 
     def nearest_upsample1d(self, x, scale):
