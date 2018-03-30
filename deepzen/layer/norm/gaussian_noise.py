@@ -1,23 +1,23 @@
 from ... import api as Z
-from ..base.layer import Layer
-from ..base.spec import Spec
+from ..base.layer import XYLayer
+from ..base.spec import XYSpec
 
 
-class GaussianNoiseLayer(Layer):
+class GaussianNoiseLayer(XYLayer):
     def __init__(self, sig, std, axis):
-        Layer.__init__(self, sig)
+        XYLayer.__init__(self, sig)
         self._std = std
         self._axis = axis
 
-    def forward(self, x, is_training):
+    def forward_x_y(self, x, is_training):
         return Z.gaussian_noise(x, is_training, self._std, self._axis)
 
 
-class GaussianNoiseSpec(Spec):
+class GaussianNoiseSpec(XYSpec):
     def __init__(self, std, axis=None, xsnd=None):
-        Spec.__init__(self, xsnd)
+        XYSpec.__init__(self, xsnd)
         self._std = std
         self._axis = axis
 
-    def checked_build(self, x_sig):
+    def build_x_y(self, x_sig):
         return GaussianNoiseLayer(x_sig, self._std, self._axis)

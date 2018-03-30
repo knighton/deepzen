@@ -1,10 +1,10 @@
 from ... import api as Z
 from ...init import get_initializer
-from ..base.layer import Layer
-from ..base.spec import Spec
+from ..base.layer import XYLayer
+from ..base.spec import XYSpec
 
 
-class BaseBatchNormLayer(Layer):
+class BaseBatchNormLayer(XYLayer):
     def __init__(self, x_sig):
         """
         BaseBatchNormLayer init.
@@ -12,7 +12,7 @@ class BaseBatchNormLayer(Layer):
         @params
             Signature  x_sig  Input signature.
         """
-        Layer.__init__(self, x_sig, x_sig)
+        XYLayer.__init__(self, x_sig, x_sig)
 
 
 class InstanceBatchNormLayer(BaseBatchNormLayer):
@@ -29,7 +29,7 @@ class InstanceBatchNormLayer(BaseBatchNormLayer):
         self._beta = self.param(beta)
         self._gamma = self.param(gamma)
 
-    def forward(self, x, is_training):
+    def forward_x_y(self, x, is_training):
         """
         Forward pass.
 
@@ -63,7 +63,7 @@ class MovAvgBatchNormLayer(BaseBatchNormLayer):
         self._mean = self.param(mean, learned=False)
         self._var = self.param(var, learned=False)
 
-    def forward(self, x, is_training):
+    def forward_x_y(self, x, is_training):
         """
         Forward pass.
 
@@ -78,7 +78,7 @@ class MovAvgBatchNormLayer(BaseBatchNormLayer):
                                     self._gamma, self._mean, self._var)
 
 
-class BaseBatchNormSpec(Spec):
+class BaseBatchNormSpec(XYSpec):
     def __init__(self, xsnd):
         """
         BaseBatchNormSpec init.
@@ -86,7 +86,7 @@ class BaseBatchNormSpec(Spec):
         @params
             {None, int}  xsnd  Optional x spatial ndim requirement.
         """
-        Spec.__init__(self, xsnd)
+        XYSpec.__init__(self, xsnd)
 
     @classmethod
     def _get_state_init_args(cls, axis, x_sig):
@@ -125,7 +125,7 @@ class InstanceBatchNormSpec(BaseBatchNormSpec):
         self._center = center
         self._scale = scale
 
-    def checked_build(self, x_sig):
+    def build_x_y(self, x_sig):
         """
         Create a layer from this spec.
 
@@ -180,7 +180,7 @@ class MovAvgBatchNormSpec(BaseBatchNormSpec):
         self._center = center
         self._scale = scale
 
-    def checked_build(self, x_sig):
+    def build_x_y(self, x_sig):
         """
         Create a layer from this spec.
 

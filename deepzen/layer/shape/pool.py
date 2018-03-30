@@ -1,29 +1,29 @@
 from ... import api as Z
-from ..base.layer import Layer
-from ..base.spec import Spec
+from ..base.layer import XYLayer
+from ..base.spec import XYSpec
 
 
-class PoolLayer(Layer):
+class PoolLayer(XYLayer):
     def __init__(self, x_sig, y_sig, pool, face=2, stride=None, padding=0):
-        Layer.__init__(self, x_sig, y_sig)
+        XYLayer.__init__(self, x_sig, y_sig)
         self._pool = pool
         self._face = face
         self._stride = stride
         self._padding = padding
 
-    def forward(self, x, is_training):
+    def forward_x_y(self, x, is_training):
         return self._pool(x, self._face, self._stride, self._padding)
 
 
-class PoolSpec(Spec):
+class PoolSpec(XYSpec):
     def __init__(self, layer_class, face=2, stride=None, padding=0, xsnd=None):
-        Spec.__init__(self, xsnd)
+        XYSpec.__init__(self, xsnd)
         self._layer_class = layer_class
         self._face = face
         self._stride = stride
         self._padding = padding
 
-    def checked_build(self, x_sig):
+    def build_x_y(self, x_sig):
         y_sig = Z.pool_signature(x_sig, self._face, self._stride, self._padding)
         return self._layer_class(x_sig, y_sig, self._face, self._stride,
                                  self._padding)

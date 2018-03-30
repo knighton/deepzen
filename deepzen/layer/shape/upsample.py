@@ -1,25 +1,25 @@
 from ... import api as Z
-from ..base.layer import Layer
-from ..base.spec import Spec
+from ..base.layer import XYLayer
+from ..base.spec import XYSpec
 
 
-class UpsampleLayer(Layer):
+class UpsampleLayer(XYLayer):
     def __init__(self, x_sig, y_sig, upsample, scale):
-        Layer.__init__(self, x_sig, y_sig)
+        XYLayer.__init__(self, x_sig, y_sig)
         self._upsample = upsample
         self._scale = scale
 
-    def forward(self, x, is_training):
+    def forward_x_y(self, x, is_training):
         return self._upsample(x, self._scale)
 
 
-class UpsampleSpec(Spec):
+class UpsampleSpec(XYSpec):
     def __init__(self, layer_class, scale, xsnd=None):
-        Spec.__init__(self, xsnd)
+        XYSpec.__init__(self, xsnd)
         self._layer_class = layer_class
         self._scale = scale
 
-    def checked_build(self, x_sig):
+    def build_x_y(self, x_sig):
         y_sig = Z.upsample_signature(x_sig, self._scale)
         return self._layer_class(x_sig, y_sig, self._scale)
 

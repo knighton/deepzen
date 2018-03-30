@@ -1,30 +1,30 @@
 from ... import api as Z
 from ...init import get_initializer
-from ..base.layer import Layer
+from ..base.layer import XYLayer
 from ..base.signature import Signature
-from ..base.spec import Spec
+from ..base.spec import XYSpec
 
 
-class DenseLayer(Layer):
+class DenseLayer(XYLayer):
     def __init__(self, x_sig, y_sig, kernel, bias):
-        Layer.__init__(self, x_sig, y_sig)
+        XYLayer.__init__(self, x_sig, y_sig)
         self._kernel = self.param(kernel)
         self._bias = self.param(bias)
 
-    def forward(self, x, is_training):
+    def forward_x_y(self, x, is_training):
         return Z.dense(x, self._kernel, self._bias)
 
 
-class DenseSpec(Spec):
+class DenseSpec(XYSpec):
     def __init__(self, dim=None, has_bias=False, kernel_init='glorot_uniform',
                  bias_init='zero'):
-        Spec.__init__(self, 0)
+        XYSpec.__init__(self, 0)
         self._dim = dim
         self._has_bias = has_bias
         self._kernel_init = get_initializer(kernel_init)
         self._bias_init = get_initializer(bias_init)
 
-    def checked_build(self, x_sig):
+    def build_x_y(self, x_sig):
         assert x_sig.has_channels()
         in_dim, = x_sig.sample_shape()
         if self._dim is None:

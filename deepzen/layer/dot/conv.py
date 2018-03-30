@@ -1,31 +1,32 @@
 from ... import api as Z
 from ...init import get_initializer
 from ...util.unpack import unpack_shape
-from ..base.layer import Layer
+from ..base.layer import XYLayer
 from ..base.signature import Signature
-from ..base.spec import Spec
+from ..base.spec import XYSpec
 
 
-class ConvLayer(Layer):
+class ConvLayer(XYLayer):
     def __init__(self, x_sig, y_sig, kernel, bias, stride, padding, dilation):
-        Layer.__init__(self, x_sig, y_sig)
+        XYLayer.__init__(self, x_sig, y_sig)
         self._kernel = self.param(kernel)
         self._bias = self.param(bias)
         self._stride = stride
         self._padding = padding
         self._dilation = dilation
 
-    def forward(self, x, is_training):
-        xsnd = self._x_sig.spatial_ndim()
+    def forward_x_y(self, x, is_training):
+        x_sig, = self._x_sigs
+        xsnd = x_sig.spatial_ndim()
         return Z.conv(x, self._kernel, self._bias, self._stride, self._padding,
                       self._dilation, xsnd)
 
 
-class ConvSpec(Spec):
+class ConvSpec(XYSpec):
     def __init__(self, channels=None, face=3, stride=1, padding=1, dilation=1,
                  kernel_init='glorot_uniform', bias_init='zero', has_bias=True,
                  xsnd=None):
-        Spec.__init__(self, xsnd)
+        XYSpec.__init__(self, xsnd)
         self._channels = channels
         self._face = face
         self._stride = stride
@@ -35,7 +36,7 @@ class ConvSpec(Spec):
         self._bias_init = get_initializer(bias_init)
         self._has_bias = has_bias
 
-    def checked_build(self, x_sig):
+    def build_x_y(self, x_sig):
         assert x_sig.has_channels()
         x_channels = x_sig.channels()
         if self._channels:

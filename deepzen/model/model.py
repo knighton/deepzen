@@ -72,11 +72,6 @@ class Model(object):
         self.spec = spec
         self.layer = spec.build()
 
-    def forward(self, xx, is_training):
-        x, = xx
-        y_pred = self.layer.forward(x, is_training)
-        return [y_pred]
-
     def train_on_batch(self, xx, yy_true, scorer_lists, optim, hooks, t):
         # Start timing the whole method.
         t.start()
@@ -93,7 +88,7 @@ class Model(object):
         with Z.autograd_record():
             # 2. Forward propagate.
             t.mark()
-            yy_pred = self.forward(xx, True)
+            yy_pred = self.layer.forward(xx, True)
             t.mark()
 
             # 3. Compute the loss of each output.
@@ -161,7 +156,7 @@ class Model(object):
 
         # 2. Forward propagate.
         t.mark()
-        yy_pred = self.forward(xx, False)
+        yy_pred = self.layer.forward(xx, False)
         t.mark()
 
         # 3. Compute the loss of each output.

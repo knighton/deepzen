@@ -1,20 +1,20 @@
 from .... import api as Z
-from ...base.layer import Layer
-from ...base.spec import Spec
+from ...base.layer import XYLayer
+from ...base.spec import XYSpec
 
 
-class FlattenLayer(Layer):
+class FlattenLayer(XYLayer):
     def __init__(self, x_sig, y_sig):
-        Layer.__init__(self, x_sig, y_sig)
+        XYLayer.__init__(self, x_sig, y_sig)
 
-    def forward(self, x, is_training):
+    def forward_x_y(self, x, is_training):
         return Z.flatten_batch(x)
 
 
-class FlattenSpec(Spec):
+class FlattenSpec(XYSpec):
     def __init__(self, xsnd=None):
-        Spec.__init__(self, xsnd)
+        XYSpec.__init__(self, xsnd)
 
-    def checked_build(self, x_sig):
+    def build_x_y(self, x_sig):
         y_sig = Z.flatten_batch_signature(x_sig)
         return FlattenLayer(x_sig, y_sig)

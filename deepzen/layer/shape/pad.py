@@ -1,23 +1,23 @@
 from ... import api as Z
-from ..base.layer import Layer
-from ..base.spec import Spec
+from ..base.layer import XYLayer
+from ..base.spec import XYSpec
 
 
-class PadLayer(Layer):
+class PadLayer(XYLayer):
     def __init__(self, x_sig, y_sig, padding):
-        Layer.__init__(self, x_sig, y_sig, padding)
+        XYLayer.__init__(self, x_sig, y_sig, padding)
         self._padding = padding
 
 
-class PadSpec(Spec):
+class PadSpec(XYSpec):
     def __init__(self, padding, xsnd=None):
-        Spec.__init__(self, xsnd)
+        XYSpec.__init__(self, xsnd)
         self._padding = padding
 
     def make_layer(self, x_sig, y_sig):
         raise NotImplementedError
 
-    def checked_build(self, x_sig):
+    def build_x_y(self, x_sig):
         y_sig = Z.pad_signature(x_sig, self._padding)
         return self.make_layer(x_sig, y_sig)
 
@@ -27,7 +27,7 @@ class ConstantPadLayer(PadLayer):
         PadLayer.__init__(self, x_sig, y_sig, padding)
         self._value = value
 
-    def forward(self, x, is_training):
+    def forward_x_y(self, x, is_training):
         return Z.constant_pad(x, self._padding, self._value)
 
 
@@ -44,7 +44,7 @@ class EdgePadLayer(PadLayer):
     def __init__(self, x_sig, y_sig, padding):
         PadLayer.__init__(self, x_sig, y_sig, padding)
 
-    def forward(self, x, is_training):
+    def forward_x_y(self, x, is_training):
         return Z.edge_pad(x, self._padding)
 
 
@@ -60,7 +60,7 @@ class ReflectPadLayer(PadLayer):
     def __init__(self, x_sig, y_sig, padding):
         PadLayer.__init__(self, x_sig, y_sig, padding)
 
-    def forward(self, x, is_training):
+    def forward_x_y(self, x, is_training):
         return Z.reflect_pad(x, self._padding)
 
 

@@ -1,10 +1,10 @@
-from ..base.layer import Layer
-from ..base.spec import Spec
+from ..base.layer import XXYLayer
+from ..base.spec import XXYSpec
 
 
-class SequenceLayer(Layer):
-    def __init__(self, x_sig, y_sig, layers):
-        Layer.__init__(self, x_sig, y_sig)
+class SequenceLayer(XXYLayer):
+    def __init__(self, x_sigs, y_sigs, layers):
+        XXYLayer.__init__(self, x_sigs, y_sigs)
         self._layers = layers
 
     def params(self):
@@ -13,23 +13,27 @@ class SequenceLayer(Layer):
             params += layer.params()
         return params
 
-    def forward(self, x, is_training):
+    def forward_xx_y(self, xx, is_training):
         for layer in self._layers:
-            x = layer.forward(x, is_training)
+            xx = layer.forward(xx, is_training)
+        assert len(xx) == 1
+        x, = xx
         return x
 
 
-class SequenceSpec(Spec):
+class SequenceSpec(XXYSpec):
     def __init__(self, specs):
-        Spec.__init__(self, None)
+        XXYSpec.__init__(self, None)
         self._specs = specs
 
-    def checked_build(self, x_sig=None):
+    def build_xx_y(self, x_sigs=None):
         layers = []
-        sig = x_sig
+        sigs = x_sigs
         for spec in self._specs:
-            layer = spec.build(sig)
+            layer = spec.build(sigs)
             layers.append(layer)
-            sig = layer.y_sig()
-        y_sig = sig
-        return SequenceLayer(x_sig, y_sig, layers)
+            sigs = layer.y_sigs()
+            assert len(sigs) == 1
+        y_sigs = sigs
+        y_sig, = y_sigs
+        return SequenceLayer(x_sigs, y_sig, layers)

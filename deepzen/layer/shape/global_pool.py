@@ -1,23 +1,23 @@
 from ... import api as Z
-from ..base.layer import Layer
-from ..base.spec import Spec
+from ..base.layer import XYLayer
+from ..base.spec import XYSpec
 
 
-class GlobalPoolLayer(Layer):
+class GlobalPoolLayer(XYLayer):
     def __init__(self, global_pool, x_sig, y_sig):
-        Layer.__init__(self, x_sig, y_sig)
+        XYLayer.__init__(self, x_sig, y_sig)
         self._global_pool = global_pool
 
-    def forward(self, x, is_training):
+    def forward_x_y(self, x, is_training):
         return self._global_pool(x)
 
 
-class GlobalPoolSpec(Spec):
+class GlobalPoolSpec(XYSpec):
     def __init__(self, layer_class, xsnd=None):
-        Spec.__init__(self, xsnd)
+        XYSpec.__init__(self, xsnd)
         self._layer_class = layer_class
 
-    def checked_build(self, x_sig):
+    def build_x_y(self, x_sig):
         y_sig = Z.global_pool_signature(x_sig)
         return self._layer_class(x_sig, y_sig)
 
