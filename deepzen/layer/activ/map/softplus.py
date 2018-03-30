@@ -5,7 +5,7 @@ from ...base.spec import Spec
 
 class SoftplusLayer(Layer):
     def __init__(self, sig, beta=1, threshold=20):
-        Layer.__init__(self, sig, sig)
+        Layer.__init__(self, sig)
         self._beta = beta
         self._threshold = threshold
 

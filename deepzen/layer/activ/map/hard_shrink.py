@@ -5,7 +5,7 @@ from ...base.spec import Spec
 
 class HardShrinkLayer(Layer):
     def __init__(self, sig, lam=0.5):
-        Layer.__init__(self, sig, sig)
+        Layer.__init__(self, sig)
         self._lambda = lam
 
     def forward(self, x, is_training):

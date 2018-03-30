@@ -6,7 +6,7 @@ from ..base.spec import Spec
 
 class DataLayer(Layer):
     def __init__(self, sig):
-        Layer.__init__(self, sig, sig)
+        Layer.__init__(self, sig)
 
     def forward(self, x, is_training):
         self._x_sig.accepts_batch_tensor(x)

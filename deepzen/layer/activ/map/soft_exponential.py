@@ -5,7 +5,7 @@ from ...base.spec import Spec
 
 class SoftExponentialLayer(Layer):
     def __init__(self, sig, alpha=0.25):
-        Layer.__init__(self, sig, sig)
+        Layer.__init__(self, sig)
         self._alpha = alpha
 
     def forward(self, x, is_training):

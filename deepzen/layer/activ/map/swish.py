@@ -5,7 +5,7 @@ from ...base.spec import Spec
 
 class SwishLayer(Layer):
     def __init__(self, sig, beta=1):
-        Layer.__init__(self, sig, sig)
+        Layer.__init__(self, sig)
         self._beta = beta
 
     def forward(self, x, is_training):

@@ -5,7 +5,7 @@ from ...base.spec import Spec
 
 class HardSigmoidLayer(Layer):
     def __init__(self, sig):
-        Layer.__init__(self, sig, sig)
+        Layer.__init__(self, sig)
 
     def forward(self, x, is_training):
         return Z.hard_sigmoid(x)

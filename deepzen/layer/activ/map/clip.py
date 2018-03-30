@@ -7,7 +7,7 @@ from ...base.spec import Spec
 
 class ClipLayer(Layer):
     def __init__(self, sig, min=-np.inf, max=np.inf):
-        Layer.__init__(self, sig, sig)
+        Layer.__init__(self, sig)
         self._min = min
         self._max = max
 

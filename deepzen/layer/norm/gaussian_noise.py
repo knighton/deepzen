@@ -5,7 +5,7 @@ from ..base.spec import Spec
 
 class GaussianNoiseLayer(Layer):
     def __init__(self, sig, std, axis):
-        Layer.__init__(self, sig, sig)
+        Layer.__init__(self, sig)
         self._std = std
         self._axis = axis
 

@@ -5,7 +5,7 @@ from ..base.spec import Spec
 
 class DropoutLayer(Layer):
     def __init__(self, sig, rate, axis):
-        Layer.__init__(self, sig, sig)
+        Layer.__init__(self, sig)
         self._rate = rate
         self._axis = axis
 

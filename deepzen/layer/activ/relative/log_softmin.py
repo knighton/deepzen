@@ -5,7 +5,7 @@ from ...base.spec import Spec
 
 class LogSoftminLayer(Layer):
     def __init__(self, sig):
-        Layer.__init__(self, sig, sig)
+        Layer.__init__(self, sig)
 
     def forward(self, x, is_training):
         return Z.log_softmin(x)
