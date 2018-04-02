@@ -72,6 +72,12 @@ class Model(object):
         self.spec = spec
         self.layer = spec.build()
 
+    def forward(self, xx, is_training):
+        return self.layer.forward(xx, is_training)
+
+    def params(self):
+        return self.layer.params()
+
     def train_on_batch(self, xx, yy_true, scorer_lists, optim, hooks, t):
         # Start timing the whole method.
         t.start()
@@ -88,7 +94,7 @@ class Model(object):
         with Z.autograd_record():
             # 2. Forward propagate.
             t.mark()
-            yy_pred = self.layer.forward(xx, True)
+            yy_pred = self.forward(xx, True)
             t.mark()
 
             # 3. Compute the loss of each output.
@@ -156,7 +162,7 @@ class Model(object):
 
         # 2. Forward propagate.
         t.mark()
-        yy_pred = self.layer.forward(xx, False)
+        yy_pred = self.forward(xx, False)
         t.mark()
 
         # 3. Compute the loss of each output.
@@ -264,7 +270,7 @@ class Model(object):
             scorer_name_lists.append(scorer_names)
         timer = BatchTimer(timer_cache_size, hook_names, scorer_name_lists)
 
-        optim.set_params(self.layer.params())
+        optim.set_params(self.params())
 
         for hook in hooks:
             hook.on_fit_begin(scorer_name_lists, epoch_offset, epochs)
