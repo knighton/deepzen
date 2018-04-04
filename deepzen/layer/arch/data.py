@@ -1,4 +1,5 @@
 from ... import api as Z
+from ..base.keyword import keywordize
 from ..base.layer import XYLayer
 from ..base.signature import Signature
 from ..base.spec import XYSpec
@@ -30,3 +31,6 @@ class DataSpec(XYSpec):
         if x_sig is not None:
             assert self._required_sig == x_sig
         return DataLayer(self._required_sig)
+
+
+Data = keywordize(DataSpec)

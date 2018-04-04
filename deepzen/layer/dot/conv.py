@@ -1,6 +1,7 @@
 from ... import api as Z
 from ...init import get_initializer
 from ...util.unpack import unpack_shape
+from ..base.keyword import keywordize
 from ..base.layer import XYLayer
 from ..base.signature import Signature
 from ..base.spec import XYSpec
@@ -57,3 +58,6 @@ class ConvSpec(XYSpec):
         y_sig = Signature(y_sample_shape, x_sig.dtype(), True)
         return ConvLayer(x_sig, y_sig, kernel, bias, self._stride,
                          self._padding, self._dilation)
+
+
+Conv, Conv1D, Conv2D, Conv3D = keywordize(ConvSpec, [None, 1, 2, 3])

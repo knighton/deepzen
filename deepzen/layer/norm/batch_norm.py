@@ -1,5 +1,6 @@
 from ... import api as Z
 from ...init import get_initializer
+from ..base.keyword import keywordize
 from ..base.layer import XYLayer
 from ..base.spec import XYSpec
 
@@ -203,3 +204,6 @@ class MovAvgBatchNormSpec(BaseBatchNormSpec):
         var = self._var_init(*args)
         return MovAvgBatchNormLayer(x_sig, self._momentum, beta, gamma, mean,
                                     var)
+
+
+BatchNorm = keywordize(MovAvgBatchNormSpec)

@@ -1,5 +1,6 @@
 from ... import api as Z
 from ...init import get_initializer
+from ..base.keyword import keywordize
 from ..base.layer import XYLayer
 from ..base.signature import Signature
 from ..base.spec import XYSpec
@@ -39,3 +40,6 @@ class DenseSpec(XYSpec):
         out_sample_shape = (out_dim,)
         y_sig = Signature(out_sample_shape, x_sig.dtype(), x_sig.has_channels())
         return DenseLayer(x_sig, y_sig, kernel, bias)
+
+
+Dense = keywordize(DenseSpec)

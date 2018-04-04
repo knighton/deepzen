@@ -1,4 +1,5 @@
 from ... import api as Z
+from ..base.keyword import keywordize
 from ..base.layer import XYLayer
 from ..base.spec import XYSpec
 
@@ -49,3 +50,7 @@ class MaxPoolLayer(PoolLayer):
 class MaxPoolSpec(PoolSpec):
     def __init__(self, face=2, stride=None, padding=0, xsnd=None):
         PoolSpec.__init__(self, MaxPoolLayer, face, stride, padding, xsnd)
+
+
+MaxPool, MaxPool1D, MaxPool2D, MaxPool3D = \
+    keywordize(MaxPoolSpec, [None, 1, 2, 3])

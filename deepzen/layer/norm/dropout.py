@@ -1,4 +1,5 @@
 from ... import api as Z
+from ..base.keyword import keywordize
 from ..base.layer import XYLayer
 from ..base.spec import XYSpec
 
@@ -21,3 +22,7 @@ class DropoutSpec(XYSpec):
 
     def build_x_y(self, x_sig):
         return DropoutLayer(x_sig, self._rate, self._axis)
+
+
+Dropout, Dropout0D, Dropout1D, Dropout2D, Dropout3D = \
+    keywordize(DropoutSpec, [None, 0, 1, 2, 3])

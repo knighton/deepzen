@@ -1,14 +1,14 @@
 import numpy as np
 
-from .. import api as Z
-from ..hook import get_hooks
-from ..io.dataset import Dataset
-from ..io.ram_split import RamSplit
-from ..io.split import Split
-from ..scorer.loss import get_loss_scorer
-from ..scorer import get_scorer
-from ..optim import get_optimizer
-from ..util.py import require_kwargs_after
+from ... import api as Z
+from ...hook import get_hooks
+from ...io.dataset import Dataset
+from ...io.ram_split import RamSplit
+from ...io.split import Split
+from ...scorer.loss import get_loss_scorer
+from ...scorer import get_scorer
+from ...optim import get_optimizer
+from ...util.py import require_kwargs_after
 from .batch_timer import BatchTimer
 
 
@@ -68,15 +68,26 @@ class Model(object):
             scorer_lists.append(scorers)
         return scorer_lists
 
-    def __init__(self, spec):
-        self.spec = spec
-        self.layer = spec.build()
+    def __init__(self):
+        self._is_built = False
 
-    def forward(self, xx, is_training):
-        return self.layer.forward(xx, is_training)
+    def is_built(self):
+        return self._is_built
+
+    def build(self):
+        raise NotImplementedError
+
+    def ensure_built(self):
+        if self._is_built:
+            return
+        self.build()
+        self._is_built = True
 
     def params(self):
-        return self.layer.params()
+        raise NotImplementedError
+
+    def forward(self, xx, is_training):
+        raise NotImplementedError
 
     def train_on_batch(self, xx, yy_true, scorer_lists, optim, hooks, t):
         # Start timing the whole method.
@@ -270,6 +281,7 @@ class Model(object):
             scorer_name_lists.append(scorer_names)
         timer = BatchTimer(timer_cache_size, hook_names, scorer_name_lists)
 
+        self.ensure_built()
         optim.set_params(self.params())
 
         for hook in hooks:

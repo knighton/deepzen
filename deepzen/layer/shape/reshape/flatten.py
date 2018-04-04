@@ -1,4 +1,5 @@
 from .... import api as Z
+from ...base.keyword import keywordize
 from ...base.layer import XYLayer
 from ...base.spec import XYSpec
 
@@ -18,3 +19,7 @@ class FlattenSpec(XYSpec):
     def build_x_y(self, x_sig):
         y_sig = Z.flatten_batch_signature(x_sig)
         return FlattenLayer(x_sig, y_sig)
+
+
+Flatten, Flatten1D, Flatten2D, Flatten3D = \
+    keywordize(FlattenSpec, [None, 1, 2, 3])

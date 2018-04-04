@@ -3,8 +3,7 @@ from argparse import ArgumentParser
 from deepzen.dataset.cifar import load_cifar
 from deepzen.dataset.mnist import load_mnist
 from deepzen.dataset.svhn import load_svhn
-from deepzen.layer import *  # noqa
-from deepzen.model import Model
+from deepzen.model import *  # noqa
 
 
 def parse_args():
@@ -50,71 +49,20 @@ class Models(object):
 
     @classmethod
     def simple(cls, image_shape, dtype, num_classes):
-        return SequenceSpec([
-            DataSpec(image_shape, dtype),
-            FlattenSpec(),
-            DenseSpec(128),
-            ReLUSpec(),
-            DenseSpec(num_classes),
-            SoftmaxSpec(),
-        ])
+        return Data(image_shape, dtype) > Flatten > Dense(128) > ReLU > \
+            Dense(num_classes) > Softmax
 
     @classmethod
     def mlp(cls, image_shape, dtype, num_classes):
-        return SequenceSpec([
-            DataSpec(image_shape, dtype),
-
-            FlattenSpec(),
-
-            DenseSpec(512),
-            MovAvgBatchNormSpec(),
-            ReLUSpec(),
-            DropoutSpec(),
-
-            DenseSpec(256),
-            MovAvgBatchNormSpec(),
-            ReLUSpec(),
-            DropoutSpec(),
-
-            DenseSpec(128),
-            MovAvgBatchNormSpec(),
-            ReLUSpec(),
-            DropoutSpec(),
-
-            DenseSpec(num_classes),
-            SoftmaxSpec(),
-        ])
+        block = lambda dim: Dense(dim) > BatchNorm > ReLU > Dropout
+        return Data(image_shape, dtype) > Flatten > block(512) > block(128) > \
+            Dense(num_classes) > Softmax
 
     @classmethod
     def cnn(cls, image_shape, dtype, num_classes):
-        return SequenceSpec([
-            DataSpec(image_shape, dtype),
-
-            ConvSpec(16),
-            MovAvgBatchNormSpec(),
-            ReLUSpec(),
-            MaxPoolSpec(2),
-
-            ConvSpec(16),
-            MovAvgBatchNormSpec(),
-            ReLUSpec(),
-            MaxPoolSpec(2),
-
-            ConvSpec(16),
-            MovAvgBatchNormSpec(),
-            ReLUSpec(),
-            MaxPoolSpec(2),
-
-            ConvSpec(16),
-            MovAvgBatchNormSpec(),
-            ReLUSpec(),
-            MaxPoolSpec(2),
-
-            FlattenSpec(),
-
-            DenseSpec(num_classes),
-            SoftmaxSpec(),
-        ])
+        block = lambda dim: Conv(dim) > BatchNorm > ReLU > MaxPool(2)
+        return Data(image_shape, dtype) > block(16) > block(16) > block(16) > \
+            block(16) > Flatten > Dense(num_classes) > Softmax
 
     @classmethod
     def get(cls, name, dataset):
@@ -122,8 +70,7 @@ class Models(object):
         image = x_train[0]
         num_classes = len(y_train[0])
         get = getattr(cls, name)
-        spec = get(image.shape, image.dtype.name, num_classes)
-        return Model(spec)
+        return get(image.shape, image.dtype.name, num_classes)
 
 
 def run(args):
