@@ -1,3 +1,4 @@
+from ..layer.base.signature import Signature
 from .base.model import Model
 from .base.node import Node
 
@@ -58,7 +59,7 @@ class Network(Model, Node):
 
     @classmethod
     def _assign_tensors_to_nodes(cls, xx, num_inputs):
-        assert isinstance(x, list)
+        assert isinstance(xx, list)
         print('?', type(xx[0]))  # TODO: check type.
         if len(xx) == 1:
             xxx = [xx for i in range(num_inputs)]
