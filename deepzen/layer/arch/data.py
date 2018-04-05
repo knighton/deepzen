@@ -11,7 +11,7 @@ class DataLayer(XYLayer):
 
     def forward_x_y(self, x, is_training):
         x_sig, = self._x_sigs
-        x_sig.accepts_batch_tensor(x)
+        assert x_sig.accepts_batch_tensor(x)
         return x
 
 

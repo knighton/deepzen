@@ -72,8 +72,8 @@ class Signature(object):
         return True
 
     def accepts_batch_tensor(self, x):
-        assert Z.shape(x)[1:] == self._sample_shape
-        assert Z.dtype(x) == self._dtype
+        return Z.shape(x)[1:] == self._sample_shape and \
+            Z.dtype(x) == self._dtype
 
     def as_shape(self, new_sample_shape):
         return Signature(new_sample_shape, self._dtype, self._has_channels)
