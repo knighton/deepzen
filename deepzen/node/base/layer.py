@@ -2,6 +2,10 @@ from ... import api as Z
 
 
 class Layer(object):
+    """
+    Object that pairs a tensor transformation with the state it uses.
+    """
+
     def __init__(self, x_sigs=None, y_sigs=None):
         if x_sigs is None:
             xsnd = None
@@ -44,6 +48,10 @@ class Layer(object):
 
 
 class XYLayer(Layer):
+    """
+    Layer that transforms one input into one output.
+    """
+
     def __init__(self, x_sig, y_sig=None):
         x_sigs = [x_sig]
         if y_sig is None:
@@ -63,6 +71,10 @@ class XYLayer(Layer):
 
 
 class XXYLayer(Layer):
+    """
+    Layer that transforms multiple inputs into one output.
+    """
+
     def __init__(self, x_sigs, y_sig):
         y_sigs = [y_sig]
         Layer.__init__(self, x_sigs, y_sigs)

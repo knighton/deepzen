@@ -1,9 +1,17 @@
 class Spec(object):
+    """
+    Object that configures a Layer.
+    """
+
     def build(self, x_sigs=None):
         raise NotImplementedError
 
 
 class XYSpec(Spec):
+    """
+    Spec that describes transforming one input into one output.
+    """
+
     def __init__(self, xsnd=None):
         assert xsnd in {None, 0, 1, 2, 3}
         self._req_x_spatial_ndim = xsnd
@@ -26,6 +34,10 @@ class XYSpec(Spec):
 
 
 class XXYSpec(Spec):
+    """
+    Spec that describes transforming multiple inputs into one output.
+    """
+
     def __init__(self, xsnd=None):
         assert xsnd in {None, 0, 1, 2, 3}
         self._req_xx_spatial_ndim = xsnd

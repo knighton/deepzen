@@ -4,6 +4,10 @@ from ... import api as Z
 
 
 class Signature(object):
+    """
+    Tensor shape/dtype.
+    """
+
     def __init__(self, sample_shape, dtype, has_channels=True):
         assert isinstance(sample_shape, tuple)
         assert dtype

@@ -3,8 +3,29 @@ from .signature import Signature
 
 
 class Node(PseudoNode):
+    """
+    A vertex of a static computational graph.
+
+    Three types:
+    * Atom (a node that contains a single indivisible transformation)
+    * Network (a graph that connects inputs to outputs; is also a Model)
+    * Sequence (contains a list of steps executed in order; is also a Model)
+
+    Situates an encapsulated piece of work within a neural network.  Complex
+    nodes (Network and Sequence) are recursively composed of other nodes.
+
+    There is only one restriction on what kind of Nodes must go where inside
+    Networks and Sequences: the feed nodes of the top-level, end-to-end network
+    must all be "Data" nodes (at the bottom of that recursivity).  Data nodes
+    are a special type of Atom that requires an exact tensor shape/dtype.  This
+    is used for shape inference so the entire network can be constructed.
+    """
+
     @classmethod
     def _unpack_preds_via_call(cls, x):
+        """
+        Unpack predecessor nodes connected to us via __call__.
+        """
         if x is None:
             xx = []
         else:
@@ -16,6 +37,9 @@ class Node(PseudoNode):
 
     @classmethod
     def _connect(cls, pred, succ):
+        """
+        Connect one node forward to another node.
+        """
         assert isinstance(pred, Node)
         assert isinstance(succ, Node)
         assert pred is not succ
@@ -29,6 +53,9 @@ class Node(PseudoNode):
         succ._pred_succ_indices.append(pred_succ_index)
 
     def __init__(self, preds_via_call=None):
+        """
+        Set up accounting for predecessors, results, and successors.
+        """
         preds_via_call = self._unpack_preds_via_call(preds_via_call)
 
         # Information about inputs:
@@ -53,12 +80,21 @@ class Node(PseudoNode):
             self._connect(pred, self)
 
     def desugar(self):
+        """
+        Inherited from PseudoNode.
+        """
         return self
 
     def sub_build(self, x_sigs):
+        """
+        Build just this node.
+        """
         raise NotImplementedError
 
     def _init_y_sigs(self, y_sigs):
+        """
+        Initialize the output signatures from sub_build() (only once).
+        """
         assert y_sigs
         assert isinstance(y_sigs, list)
         for y_sig in y_sigs:
@@ -67,6 +103,9 @@ class Node(PseudoNode):
         self._y_sigs = y_sigs
 
     def propagate_build(self):
+        """
+        Recursively propagate node building across the network.
+        """
         self._preds_ready_to_build += 1
         if self._preds_ready_to_build < len(self._preds):
             return
@@ -84,9 +123,15 @@ class Node(PseudoNode):
         self._preds_ready_to_build = None
 
     def sub_params(self, nodes_seen, params_seen, params):
+        """
+        Collect the params of just this node.
+        """
         raise NotImplementedError
 
     def propagate_params(self, nodes_seen, params_seen, params):
+        """
+        Recursively propagate collecting node params across the network.
+        """
         if self in nodes_seen:
             return
 
@@ -97,15 +142,24 @@ class Node(PseudoNode):
             succ.propagate_params(params_seen, params)
 
     def sub_forward(self, xx, is_training):
+        """
+        Perform a forward pass across just this node.
+        """
         raise NotImplementedError
 
     def _set_yy(self, yy):
+        """
+        Save the output tensors from sub_forward().
+        """
         assert len(self._y_sigs) == len(yy)
         for y_sig, y in zip(self._y_sigs, yy):
             assert y_sig.accepts_batch_tensor(y)
         self._yy = yy
 
     def propagate_forward(self, is_training):
+        """
+        Recursively propagate performing forward passes across the network.
+        """
         self._preds_ready_to_forward += 1
         if self._preds_ready_to_forward < len(self._preds):
             return
