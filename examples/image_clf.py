@@ -60,7 +60,8 @@ class Models(object):
 
     @classmethod
     def cnn(cls, image_shape, dtype, num_classes):
-        block = lambda dim: Conv(dim) > BatchNorm > ReLU > MaxPool(2)
+        block = lambda dim: \
+            Conv(dim) > BatchNorm > ReLU > Dropout(0.25) > MaxPool(2)
         return Data(image_shape, dtype) > block(16) > block(16) > block(16) > \
             block(16) > Flatten > Dense(num_classes) > Softmax
 
