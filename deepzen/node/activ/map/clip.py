@@ -1,6 +1,7 @@
 import numpy as np
 
 from .... import api as Z
+from ...base.keyword import keywordize
 from ...base.layer import XYLayer
 from ...base.spec import XYSpec
 
@@ -23,3 +24,6 @@ class ClipSpec(XYSpec):
 
     def build_x_y(self, x_sig):
         return ClipLayer(x_sig, self._min, self._max)
+
+
+Clip = keywordize(ClipSpec)

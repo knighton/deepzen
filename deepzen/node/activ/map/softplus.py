@@ -1,4 +1,5 @@
 from .... import api as Z
+from ...base.keyword import keywordize
 from ...base.layer import XYLayer
 from ...base.spec import XYSpec
 
@@ -21,3 +22,6 @@ class SoftplusSpec(XYSpec):
 
     def build_x_y(self, x_sig):
         return SoftplusLayer(x_sig, self._beta, self._threshold)
+
+
+Softplus = keywordize(SoftplusSpec)

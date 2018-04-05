@@ -1,4 +1,5 @@
 from .... import api as Z
+from ...base.keyword import keywordize
 from ...base.layer import XYLayer
 from ...base.spec import XYSpec
 
@@ -19,3 +20,6 @@ class LeakyReLUSpec(XYSpec):
 
     def build_x_y(self, x_sig):
         return LeakyReLULayer(x_sig, self._alpha)
+
+
+LeakyReLU = keywordize(LeakyReLUSpec)

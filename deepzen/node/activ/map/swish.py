@@ -1,4 +1,5 @@
 from .... import api as Z
+from ...base.keyword import keywordize
 from ...base.layer import XYLayer
 from ...base.spec import XYSpec
 
@@ -19,3 +20,6 @@ class SwishSpec(XYSpec):
 
     def build_x_y(self, x_sig):
         return SwishLayer(x_sig, self._beta)
+
+
+Swish = keywordize(SwishSpec)
