@@ -9,7 +9,7 @@ class PseudoNode(object):
         return GT_CACHE.connect(self, right)
 
     def __mul__(self, count):
-        from ..sequence import Sequence
+        from ..arch.sequence import Sequence
         assert isinstance(count, int)
         assert 1 <= count
         steps = [self.copy() for i in range(count)]

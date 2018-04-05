@@ -1,5 +1,5 @@
-from ...layer.base.signature import Signature
 from .pseudo_node import PseudoNode
+from .signature import Signature
 
 
 class Node(PseudoNode):

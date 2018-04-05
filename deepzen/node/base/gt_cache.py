@@ -9,8 +9,8 @@ class GTCache(object):
         self._prev_right = None
 
     def connect(self, left, right):
+        from ..arch.sequence import Sequence
         from .pseudo_node import PseudoNode
-        from ..sequence import Sequence
 
         assert isinstance(left, PseudoNode)
         assert isinstance(right, PseudoNode)

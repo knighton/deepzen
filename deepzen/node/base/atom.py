@@ -1,7 +1,7 @@
 from copy import deepcopy
 
-from ...layer.base.spec import Spec
 from .node import Node
+from .spec import Spec
 
 
 class Atom(Node):

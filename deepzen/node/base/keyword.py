@@ -1,6 +1,6 @@
 from copy import deepcopy
 
-from ...model.base.pseudo_node import PseudoNode
+from .pseudo_node import PseudoNode
 from .spec import Spec
 
 
@@ -24,7 +24,7 @@ class Keyword(PseudoNode):
         return self.__call__()
 
     def __call__(self, *args, **override_kwargs):
-        from ...model.base.atom import Atom
+        from .atom import Atom
         kwargs = deepcopy(self._default_kwargs)
         kwargs.update(deepcopy(override_kwargs))
         spec = self._spec_class(*args, **kwargs)

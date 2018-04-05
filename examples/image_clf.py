@@ -3,7 +3,7 @@ from argparse import ArgumentParser
 from deepzen.dataset.cifar import load_cifar
 from deepzen.dataset.mnist import load_mnist
 from deepzen.dataset.svhn import load_svhn
-from deepzen.model import *  # noqa
+from deepzen.node import *  # noqa
 
 
 def parse_args():
