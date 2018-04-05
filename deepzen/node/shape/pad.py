@@ -1,4 +1,5 @@
 from ... import api as Z
+from ..base.keyword import keywordize
 from ..base.layer import XYLayer
 from ..base.spec import XYSpec
 
@@ -40,6 +41,10 @@ class ConstantPadSpec(PadSpec):
         return ConstantPadLayer(x_sig, y_sig, self._padding, self._value)
 
 
+ConstantPad, ConstantPad1D, ConstantPad2D, ConstantPad3D = \
+    keywordize(ConstantPadSpec, [None, 1, 2, 3])
+
+
 class EdgePadLayer(PadLayer):
     def __init__(self, x_sig, y_sig, padding):
         PadLayer.__init__(self, x_sig, y_sig, padding)
@@ -56,6 +61,10 @@ class EdgePadSpec(PadSpec):
         return EdgePadLayer(x_sig, y_sig, self._padding)
 
 
+EdgePad, EdgePad1D, EdgePad2D, EdgePad3D = \
+    keywordize(EdgePadSpec, [None, 1, 2, 3])
+
+
 class ReflectPadLayer(PadLayer):
     def __init__(self, x_sig, y_sig, padding):
         PadLayer.__init__(self, x_sig, y_sig, padding)
@@ -70,3 +79,7 @@ class ReflectPadSpec(PadSpec):
 
     def make_layer(self, x_sig, y_sig):
         return ReflectPadLayer(x_sig, y_sig, self._padding)
+
+
+ReflectPad, ReflectPad1D, ReflectPad2D, ReflectPad3D = \
+    keywordize(ReflectPadSpec, [None, 1, 2, 3])

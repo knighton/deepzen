@@ -1,4 +1,5 @@
 from ... import api as Z
+from ..base.keyword import keywordize
 from ..base.layer import XYLayer
 from ..base.spec import XYSpec
 
@@ -32,6 +33,10 @@ class GlobalAvgPoolSpec(GlobalPoolSpec):
         GlobalPoolSpec.__init__(self, GlobalAvgPoolLayer, xsnd)
 
 
+GlobalAvgPool, GlobalAvgPool1D, GlobalAvgPool2D, GlobalAvgPool3D = \
+    keywordize(GlobalAvgPoolSpec, [None, 1, 2, 3])
+
+
 class GlobalMaxPoolLayer(GlobalPoolLayer):
     def __init__(self, x_sig, y_sig):
         GlobalPoolLayer.__init__(self, Z.global_max_pool, x_sig, y_sig)
@@ -40,3 +45,7 @@ class GlobalMaxPoolLayer(GlobalPoolLayer):
 class GlobalMaxPoolSpec(GlobalPoolSpec):
     def __init__(self, xsnd=None):
         GlobalPoolSpec.__init__(self, GlobalMaxPoolLayer, xsnd)
+
+
+GlobalMaxPool, GlobalMaxPool1D, GlobalMaxPool2D, GlobalMaxPool3D = \
+    keywordize(GlobalMaxPoolSpec, [None, 1, 2, 3])

@@ -1,4 +1,5 @@
 from ... import api as Z
+from ..base.keyword import keywordize
 from ..base.layer import XYLayer
 from ..base.spec import XYSpec
 
@@ -34,6 +35,10 @@ class LinearUpsampleSpec(UpsampleSpec):
         UpsampleSpec.__init__(self, LinearUpsampleLayer, scale, xsnd)
 
 
+LinearUpsample, LinearUpsample1D, LinearUpsample2D, LinearUpsample3D = \
+    keywordize(LinearUpsampleSpec, [None, 1, 2, 3])
+
+
 class NearestUpsampleLayer(UpsampleLayer):
     def __init__(self, x_sig, y_sig, scale):
         UpsampleLayer.__init__(self, x_sig, y_sig, Z.nearest_upsample, scale)
@@ -42,3 +47,7 @@ class NearestUpsampleLayer(UpsampleLayer):
 class NearestUpsampleSpec(UpsampleSpec):
     def __init__(self, scale, xsnd=None):
         UpsampleSpec.__init__(self, NearestUpsampleLayer, scale, xsnd)
+
+
+NearestUpsample, NearestUpsample1D, NearestUpsample2D, NearestUpsample3D = \
+    keywordize(NearestUpsampleSpec, [None, 1, 2, 3])

@@ -41,6 +41,10 @@ class AvgPoolSpec(PoolSpec):
         PoolSpec.__init__(self, AvgPoolLayer, face, stride, padding, xsnd)
 
 
+AvgPool, AvgPool1D, AvgPool2D, AvgPool3D = \
+    keywordize(AvgPoolSpec, [None, 1, 2, 3])
+
+
 class MaxPoolLayer(PoolLayer):
     def __init__(self, x_sig, y_sig, face=2, stride=None, padding=0):
         PoolLayer.__init__(self, x_sig, y_sig, Z.max_pool, face, stride,
