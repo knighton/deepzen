@@ -1,5 +1,6 @@
 from ... import api as Z
 from ...init import get_initializer
+from ..base.keyword import keywordize
 from ..base.layer import XYLayer
 from ..base.signature import Signature
 from ..base.spec import XYSpec
@@ -30,3 +31,6 @@ class EmbedSpec(XYSpec):
         y_shape = (self._dim,) + x_sig.sample_shape()
         y_sig = Signature(y_shape, y_dtype, True)
         return EmbedLayer(x_sig, y_sig, table)
+
+
+Embed = keywordize(EmbedSpec)

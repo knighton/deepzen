@@ -33,4 +33,5 @@ class DataSpec(XYSpec):
         return DataLayer(self._required_sig)
 
 
-Data = keywordize(DataSpec)
+Data, Data0D, Data1D, Data2D, Data3D = \
+    keywordize(DataSpec, [None, 0, 1, 2, 3])
