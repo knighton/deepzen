@@ -13,7 +13,7 @@ class Layer(object):
                 if xsnd is not None:
                     xsnds.append(xsnd)
             assert len(set(xsnds)) == 1
-            xsnd = xsnds.pop()
+            xsnd = xsnds[0]
         if y_sigs is None:
             y_sigs = x_sigs
         self._x_sigs = x_sigs
@@ -63,11 +63,8 @@ class XYLayer(Layer):
 
 
 class XXYLayer(Layer):
-    def __init__(self, x_sigs, y_sig=None):
-        if y_sig is None:
-            y_sigs = None
-        else:
-            y_sigs = [y_sig]
+    def __init__(self, x_sigs, y_sig):
+        y_sigs = [y_sig]
         Layer.__init__(self, x_sigs, y_sigs)
 
     def forward_xx_y(self, x, is_training):
