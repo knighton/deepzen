@@ -200,8 +200,8 @@ class Model(object):
         return train_metric_lists, test_metric_lists
 
     @require_kwargs_after(3)
-    def fit(self, data, loss, test_frac=None, optim='adam', batch=64,
-            epoch_offset=0, epochs=20, spy=None, timer_cache=10000):
+    def fit(self, data, loss, test_frac=None, optim='adam', batch=64, start=0,
+            stop=20, spy=None, timer_cache=10000):
         dataset = unpack_dataset(data, test_frac)
         y_sample_shapes = dataset.shapes()[1]
         meter_lists = unpack_meter_lists(loss, y_sample_shapes)
@@ -210,10 +210,11 @@ class Model(object):
         assert isinstance(batch, int)
         assert 0 < batch
         batch_size = batch
-        assert isinstance(epoch_offset, int)
-        assert 0 <= epoch_offset
-        assert isinstance(epochs, int)
-        assert 0 <= epochs
+        assert isinstance(start, int)
+        assert isinstance(stop, int)
+        assert 0 <= start <= stop
+        begin_epoch = start
+        end_epoch = stop
         assert isinstance(timer_cache, int)
         assert 0 < timer_cache
         timer_cache_size = timer_cache
@@ -229,9 +230,9 @@ class Model(object):
         optim.set_params(self.params())
 
         for spy in spies:
-            spy.on_fit_begin(meter_name_lists, epoch_offset, epochs)
+            spy.on_fit_begin(meter_name_lists, begin_epoch, end_epoch)
 
-        for epoch in range(epoch_offset, epoch_offset + epochs):
+        for epoch in range(begin_epoch, end_epoch):
             train_metric_lists, test_metric_lists = \
                 self._fit_epoch(meter_lists, dataset, optim, batch_size, spies,
                                 batch_timer, epoch)
@@ -240,17 +241,17 @@ class Model(object):
             spy.on_fit_end()
 
     @require_kwargs_after(2)
-    def fit_reg(self, data, test_frac=None, optim='adam', batch=64,
-                epoch_offset=0, epochs=20, spy=None, timer_cache=10000):
+    def fit_reg(self, data, test_frac=None, optim='adam', batch=64, start=0,
+                stop=20, spy=None, timer_cache=10000):
         loss = [['mean_squared_error']]
         return self.fit(data, loss, test_frac=test_frac, optim=optim,
-                        batch=batch, epoch_offset=epoch_offset, epochs=epochs,
-                        spy=spy, timer_cache=timer_cache)
+                        batch=batch, start=start, stop=stop, spy=spy,
+                        timer_cache=timer_cache)
 
     @require_kwargs_after(2)
-    def fit_clf(self, data, test_frac=None, optim='adam', batch=64,
-                epoch_offset=0, epochs=20, spy=None, timer_cache=10000):
+    def fit_clf(self, data, test_frac=None, optim='adam', batch=64, start=0,
+                stop=20, spy=None, timer_cache=10000):
         loss = [['cross_entropy', 'accuracy']]
         return self.fit(data, loss, test_frac=test_frac, optim=optim,
-                        batch=batch, epoch_offset=epoch_offset, epochs=epochs,
-                        spy=spy, timer_cache=timer_cache)
+                        batch=batch, start=start, stop=stop, spy=spy,
+                        timer_cache=timer_cache)

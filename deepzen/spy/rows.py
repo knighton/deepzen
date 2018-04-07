@@ -12,7 +12,7 @@ class Rows(Spy):
         self.metric_cols = metric_cols
         self.metric_decimal_places = metric_decimal_places
 
-    def on_fit_begin(self, meter_name_lists, epoch_offset, epochs):
+    def on_fit_begin(self, meter_name_lists, begin_epoch, end_epoch):
         split_cols = 0
         for meter_names in meter_name_lists:
             count = len(meter_names)
@@ -21,7 +21,7 @@ class Rows(Spy):
         self.horizontal_bar = '    +-%s-+-%s-+-%s-+' % \
             ('-' * self.epoch_cols, '-' * split_cols, '-' * split_cols)
 
-        from_to_str = '%d->%d' % (epoch_offset, epoch_offset + epochs)
+        from_to_str = '%d->%d' % (begin_epoch, end_epoch)
         print(self.horizontal_bar)
 
         fmt = '    | %%%ds | %%%ds | %%%ds |' % \

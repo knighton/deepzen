@@ -1,5 +1,5 @@
 class Spy(object):
-    def on_fit_begin(self, meter_name_lists, epoch_offset, num_epochs):
+    def on_fit_begin(self, meter_name_lists, begin_epoch, end_epoch):
         pass
 
     def on_fit_end(self):

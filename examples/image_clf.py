@@ -12,8 +12,8 @@ def parse_args():
                     help='The task to train on.')
     ap.add_argument('--model', type=str, default='simple',
                     help='The model architecture to train.')
-    ap.add_argument('--epochs', type=int, default=100,
-                    help='Number of epochs to train for.')
+    ap.add_argument('--start', type=int, default=0, help='Start epoch.')
+    ap.add_argument('--stop', type=int, default=100, help='Stop epoch.')
     ap.add_argument('--batch', type=int, default=128, help='Batch size.')
     ap.add_argument('--optim', type=str, default='adam', help='Optimizer.')
     ap.add_argument('--spy', type=str, default='server,progress_bar,rows',
@@ -77,7 +77,7 @@ class Models(object):
 def run(args):
     dataset, class_names = Datasets.get(args.task)
     model = Models.get(args.model, dataset)
-    model.fit_clf(dataset, epochs=args.epochs, batch=args.batch,
+    model.fit_clf(dataset, start=args.start, stop=args.stop, batch=args.batch,
                   optim=args.optim, spy=args.spy)
 
 

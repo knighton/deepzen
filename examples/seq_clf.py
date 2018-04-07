@@ -12,8 +12,8 @@ def parse_args():
                     help='The dataset to train on.')
     ap.add_argument('--model', type=str, default='cnn',
                     help='The model architecture to train.')
-    ap.add_argument('--epochs', type=int, default=100,
-                    help='Number of epochs to train for.')
+    ap.add_argument('--start', type=int, default=0, help='Start epoch.')
+    ap.add_argument('--stop', type=int, default=100, help='Stop epoch.')
     ap.add_argument('--batch', type=int, default=128, help='Batch size.')
     ap.add_argument('--optim', type=str, default='adam', help='Optimizer.')
     ap.add_argument('--spy', type=str, default='server,progress_bar,rows',
