@@ -4,6 +4,7 @@ from ... import api as Z
 from ...data.dataset import Dataset
 from ...data.ram_split import RamSplit
 from ...data.split import Split
+from ...data import unpack_dataset
 from ...spy import unpack_spies
 from ...optim import unpack_optimizer
 from ...meter import unpack_meter_lists
@@ -12,28 +13,6 @@ from .batch_timer import BatchTimer
 
 
 class Model(object):
-    @classmethod
-    def _unpack_split(cls, split):
-        if isinstance(split, Split):
-            return split
-
-        xx, yy = split
-        return RamSplit(xx, yy)
-
-    @classmethod
-    def _unpack_dataset(cls, dataset, test_frac=None):
-        if isinstance(dataset, Dataset):
-            assert test_frac is None
-            return dataset
-
-        if test_frac is not None:
-            assert False, 'TODO: Perform train/test split.'
-
-        train, test = dataset
-        train = cls._unpack_split(train)
-        test = cls._unpack_split(test)
-        return Dataset(train, test)
-
     def __init__(self):
         self._is_built = False
 
@@ -223,7 +202,7 @@ class Model(object):
     @require_kwargs_after(3)
     def fit(self, data, loss, test_frac=None, optim='sgd', batch=64,
             epoch_offset=0, epochs=20, spies=None, timer_cache=10000):
-        dataset = self._unpack_dataset(data, test_frac)
+        dataset = unpack_dataset(data, test_frac)
         y_sample_shapes = dataset.shapes()[1]
         meter_lists = unpack_meter_lists(loss, y_sample_shapes)
         optim = unpack_optimizer(optim)
