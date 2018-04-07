@@ -1,14 +1,14 @@
 from argparse import ArgumentParser
 
-from deepzen.dataset.imdb import load_imdb
-from deepzen.dataset.quora_dupes import load_quora_dupes
 from deepzen.layer import *  # noqa
 from deepzen.model import Model
+from deepzen.task.imdb import load_imdb
+from deepzen.task.quora_dupes import load_quora_dupes
 
 
 def parse_args():
     ap = ArgumentParser()
-    ap.add_argument('--dataset', type=str, default='imdb',
+    ap.add_argument('--task', type=str, default='imdb',
                     help='The dataset to train on.')
     ap.add_argument('--model', type=str, default='cnn',
                     help='The model architecture to train.')
@@ -21,11 +21,11 @@ def parse_args():
     return ap.parse_args()
 
 
-class Datasets(object):
+class Tasks(object):
     """
-    A collection of image classification datasets.
+    A collection of image classification tasks.
 
-    Select with --dataset.
+    Select with --task.
     """
 
     @classmethod
@@ -96,7 +96,7 @@ class Models(object):
 
 
 def run(args):
-    dataset, class_names = Datasets.get(args.dataset)
+    dataset, class_names = Tasks.get(args.task)
     model = Models.get(args.model, dataset)
     model.fit_clf(dataset, epochs=args.epochs, batch=args.batch,
                   optim=args.optim, hook=args.hook)

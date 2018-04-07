@@ -1,5 +1,5 @@
-from deepzen.dataset.clevr import load_clevr_main
-from deepzen.dataset.nlvr import load_nlvr
+from deepzen.task.clevr import load_clevr_main
+from deepzen.task.nlvr import load_nlvr
 
 
 train, test = load_nlvr()

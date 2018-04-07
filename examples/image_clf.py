@@ -1,15 +1,15 @@
 from argparse import ArgumentParser
 
-from deepzen.dataset.cifar import load_cifar
-from deepzen.dataset.mnist import load_mnist
-from deepzen.dataset.svhn import load_svhn
 from deepzen.node import *  # noqa
+from deepzen.task.cifar import load_cifar
+from deepzen.task.mnist import load_mnist
+from deepzen.task.svhn import load_svhn
 
 
 def parse_args():
     ap = ArgumentParser()
-    ap.add_argument('--dataset', type=str, default='mnist',
-                    help='The dataset to train on.')
+    ap.add_argument('--task', type=str, default='mnist',
+                    help='The task to train on.')
     ap.add_argument('--model', type=str, default='simple',
                     help='The model architecture to train.')
     ap.add_argument('--epochs', type=int, default=100,
@@ -23,9 +23,9 @@ def parse_args():
 
 class Datasets(object):
     """
-    A collection of image classification datasets.
+    A collection of image classification tasks.
 
-    Select with --dataset.
+    Select with --task.
     """
 
     mnist = load_mnist
@@ -75,7 +75,7 @@ class Models(object):
 
 
 def run(args):
-    dataset, class_names = Datasets.get(args.dataset)
+    dataset, class_names = Datasets.get(args.task)
     model = Models.get(args.model, dataset)
     model.fit_clf(dataset, epochs=args.epochs, batch=args.batch,
                   optim=args.optim, hook=args.hook)
