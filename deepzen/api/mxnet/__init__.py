@@ -1,6 +1,6 @@
 from .core import MXNetCoreAPI
+from .layer import MXNetTransformAPI
 from .meter import MXNetMeterAPI
-from .transform import MXNetTransformAPI
 
 
 class MXNetAPI(MXNetCoreAPI, MXNetMeterAPI, MXNetTransformAPI):

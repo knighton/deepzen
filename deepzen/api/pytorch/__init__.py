@@ -1,6 +1,6 @@
 from .core import PyTorchCoreAPI
+from .layer import PyTorchTransformAPI
 from .meter import PyTorchMeterAPI
-from .transform import PyTorchTransformAPI
 
 
 class PyTorchAPI(PyTorchCoreAPI, PyTorchMeterAPI, PyTorchTransformAPI):
