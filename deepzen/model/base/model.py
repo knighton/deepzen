@@ -1,13 +1,13 @@
 import numpy as np
 
 from ... import api as Z
+from ...data.dataset import Dataset
+from ...data.ram_split import RamSplit
+from ...data.split import Split
 from ...hook import get_hooks
-from ...io.dataset import Dataset
-from ...io.ram_split import RamSplit
-from ...io.split import Split
+from ...optim import get_optimizer
 from ...scorer.loss import get_loss_scorer
 from ...scorer import get_scorer
-from ...optim import get_optimizer
 from ...util.py import require_kwargs_after
 from .batch_timer import BatchTimer
 
