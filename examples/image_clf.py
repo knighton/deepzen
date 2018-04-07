@@ -16,7 +16,7 @@ def parse_args():
                     help='Number of epochs to train for.')
     ap.add_argument('--batch', type=int, default=128, help='Batch size.')
     ap.add_argument('--optim', type=str, default='adam', help='Optimizer.')
-    ap.add_argument('--spies', type=str, default='server,progress_bar,rows',
+    ap.add_argument('--spy', type=str, default='server,progress_bar,rows',
                     help='List of training monitors.')
     return ap.parse_args()
 
@@ -78,7 +78,7 @@ def run(args):
     dataset, class_names = Datasets.get(args.task)
     model = Models.get(args.model, dataset)
     model.fit_clf(dataset, epochs=args.epochs, batch=args.batch,
-                  optim=args.optim, spies=args.spies)
+                  optim=args.optim, spy=args.spy)
 
 
 if __name__ == '__main__':
