@@ -9,5 +9,5 @@ def register_optimizer(x):
     return REGISTRY.register(x)
 
 
-def get_optimizer(x):
+def unpack_optimizer(x):
     return REGISTRY.get(x)

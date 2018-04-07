@@ -5,7 +5,7 @@ from ...data.dataset import Dataset
 from ...data.ram_split import RamSplit
 from ...data.split import Split
 from ...spy import unpack_spies
-from ...optim import get_optimizer
+from ...optim import unpack_optimizer
 from ...meter.loss import unpack_loss
 from ...meter import unpack_meter
 from ...util.py import require_kwargs_after
@@ -260,7 +260,7 @@ class Model(object):
         dataset = self._unpack_dataset(data, test_frac)
         y_sample_shapes = dataset.shapes()[1]
         meter_lists = self._unpack_meter_lists(loss, y_sample_shapes)
-        optim = get_optimizer(optim)
+        optim = unpack_optimizer(optim)
         spies = unpack_spies(spies)
         assert isinstance(batch, int)
         assert 0 < batch

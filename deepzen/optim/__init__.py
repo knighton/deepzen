@@ -2,7 +2,7 @@ from .adadelta import Adadelta  # noqa
 from .adagrad import Adagrad  # noqa
 from .adam import Adam  # noqa
 from .adamax import Adamax  # noqa
-from .base.registry import get_optimizer  # noqa
+from .base.registry import unpack_optimizer  # noqa
 from .nag import NAG  # noqa
 from .rmsprop import RMSprop  # noqa
 from .sgd import SGD  # noqa
