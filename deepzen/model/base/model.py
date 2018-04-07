@@ -6,8 +6,7 @@ from ...data.ram_split import RamSplit
 from ...data.split import Split
 from ...spy import unpack_spies
 from ...optim import unpack_optimizer
-from ...meter.loss import unpack_loss
-from ...meter import unpack_meter
+from ...meter import unpack_meter_lists
 from ...util.py import require_kwargs_after
 from .batch_timer import BatchTimer
 
@@ -34,39 +33,6 @@ class Model(object):
         train = cls._unpack_split(train)
         test = cls._unpack_split(test)
         return Dataset(train, test)
-
-    @classmethod
-    def _parse_meter_lists_str(cls, s):
-        ss = s.split(' ')
-        return [s.split(',') for s in ss]
-
-    @classmethod
-    def _unpack_loss_and_extra_meters(cls, x, y_sample_shape):
-        if isinstance(x, (list, tuple)):
-            xx = x
-        else:
-            xx = [x]
-        meters = []
-        meters.append(unpack_loss(xx[0], y_sample_shape))
-        for x in xx[1:]:
-            meters.append(unpack_meter(x, y_sample_shape))
-        return meters
-
-    @classmethod
-    def _unpack_meter_lists(cls, x, y_sample_shapes):
-        if isinstance(x, str):
-            if ' ' in x or ',' in x:
-                xxx = cls._parse_meter_lists_str(x)
-            else:
-                xxx = [x]
-        else:
-            xxx = x
-        meter_lists = []
-        assert len(xxx) == len(y_sample_shapes)
-        for xx, y_sample_shape in zip(xxx, y_sample_shapes):
-            meters = cls._unpack_loss_and_extra_meters(xx, y_sample_shape)
-            meter_lists.append(meters)
-        return meter_lists
 
     def __init__(self):
         self._is_built = False
@@ -259,7 +225,7 @@ class Model(object):
             epoch_offset=0, epochs=20, spies=None, timer_cache=10000):
         dataset = self._unpack_dataset(data, test_frac)
         y_sample_shapes = dataset.shapes()[1]
-        meter_lists = self._unpack_meter_lists(loss, y_sample_shapes)
+        meter_lists = unpack_meter_lists(loss, y_sample_shapes)
         optim = unpack_optimizer(optim)
         spies = unpack_spies(spies)
         assert isinstance(batch, int)
