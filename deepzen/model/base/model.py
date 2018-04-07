@@ -200,7 +200,7 @@ class Model(object):
         return train_metric_lists, test_metric_lists
 
     @require_kwargs_after(3)
-    def fit(self, data, loss, test_frac=None, optim='sgd', batch=64,
+    def fit(self, data, loss, test_frac=None, optim='adam', batch=64,
             epoch_offset=0, epochs=20, spies=None, timer_cache=10000):
         dataset = unpack_dataset(data, test_frac)
         y_sample_shapes = dataset.shapes()[1]
@@ -240,7 +240,7 @@ class Model(object):
             spy.on_fit_end()
 
     @require_kwargs_after(2)
-    def fit_reg(self, data, test_frac=None, optim='sgd', batch=64,
+    def fit_reg(self, data, test_frac=None, optim='adam', batch=64,
                 epoch_offset=0, epochs=20, spies=None, timer_cache=10000):
         loss = [['mean_squared_error']]
         return self.fit(data, loss, test_frac=test_frac, optim=optim,
@@ -248,7 +248,7 @@ class Model(object):
                         spies=spies, timer_cache=timer_cache)
 
     @require_kwargs_after(2)
-    def fit_clf(self, data, test_frac=None, optim='sgd', batch=64,
+    def fit_clf(self, data, test_frac=None, optim='adam', batch=64,
                 epoch_offset=0, epochs=20, spies=None, timer_cache=10000):
         loss = [['cross_entropy', 'accuracy']]
         return self.fit(data, loss, test_frac=test_frac, optim=optim,
