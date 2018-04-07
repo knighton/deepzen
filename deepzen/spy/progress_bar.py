@@ -17,5 +17,5 @@ class ProgressBar(Spy):
     def on_test_on_batch_begin(self):
         self.bar.update(1)
 
-    def on_epoch_end(self, train_scorer_lists, test_scorer_lists):
+    def on_epoch_end(self, train_meter_lists, test_meter_lists):
         self.bar.close()

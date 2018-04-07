@@ -12,7 +12,7 @@ class SplitOnBatchTimer(object):
 
     Shows you where time is being spent during training at a very fine-grained
     level.  Times forward/backward/optim, individual spy callbacks, each loss
-    function and every other scorer, and everything else of note.
+    function and extra metric, and all else of note.
 
     Internally, it is just a cache of time.time() values in a float64 numpy
     ndarray.  Each row is the exact times of one batch's events.  Each column is
@@ -32,22 +32,23 @@ class SplitOnBatchTimer(object):
     def init_middle(self, middle_offset):
         raise NotImplementedError
 
-    def __init__(self, cache_size, spy_names, scorer_name_lists):
+    def __init__(self, cache_size, spy_names, meter_name_lists):
         # During execution, we will fill the rows of the cache in ascending
         # order until full, then start replacing rows at random.
         self.cache_used = 0
         self.cache_size = cache_size
 
-        # The names of the spies and scorers (losses and auxiliary scorers).
+        # The names of the spies and meters (loss + any extra metrics per output
+        # tensor).
         #
         # The names are used for displaying results.  The counts of these
         # different kinds of things are used for computing offsets for where to
         # store the times recorded during each batch.
         self.spy_names = spy_names
-        self.scorer_name_lists = scorer_name_lists
-        self.num_losses = len(scorer_name_lists)
-        self.num_aux_scores = sum(map(len, scorer_name_lists)) - \
-            len(scorer_name_lists)
+        self.meter_name_lists = meter_name_lists
+        self.num_losses = len(meter_name_lists)
+        self.num_extra_metrics = sum(map(len, meter_name_lists)) - \
+            len(meter_name_lists)
 
         # Offsets of different events that we track while running a batch.
         #
@@ -64,7 +65,7 @@ class SplitOnBatchTimer(object):
         # - On begin: 1 + 2 * num spies + 1.
         # - Forward: 1 + 1.
         # - Losses: 1 + 2 * num losses + 1.
-        # - Aux scorers: 1 + 2 * num auxiliary scorers + 1.
+        # - Aux meters: 1 + 2 * num extra meters + 1.
         #   (train_on_batch() does additional work here...)
         # - On end: 1 + 2 * num spies + 1.
         # - Stop: 1.
@@ -73,9 +74,10 @@ class SplitOnBatchTimer(object):
         self.forward_offset = \
             self.on_begin_offset + 1 + 2 * len(self.spy_names) + 1
         self.losses_offset = self.forward_offset + 2
-        self.aux_scores_offset = \
+        self.extra_metrics_offset = \
             self.losses_offset + 1 + 2 * self.num_losses + 1
-        middle_offset = self.aux_scores_offset + 1 + 2 * self.num_aux_scores + 1
+        middle_offset = \
+            self.extra_metrics_offset + 1 + 2 * self.num_extra_metrics + 1
         self.on_end_offset = self.init_middle(middle_offset)
         self.stop_offset = \
             self.on_end_offset + 1 + 2 * len(self.spy_names) + 1
@@ -169,17 +171,17 @@ class SplitOnBatchTimer(object):
             t_loss = self.duration_stats(tt, start, stop, num_quantiles)
             tt_loss.append(t_loss)
 
-        # Auxiliary scores.
-        start = self.aux_scores_offset
-        stop = self.aux_scores_offset + 1 * self.num_aux_scores * 2
-        t_aux_score = self.duration_stats(tt, start, stop, num_quantiles)
+        # Auxiliary metrics.
+        start = self.extra_metrics_offset
+        stop = self.extra_metrics_offset + 1 * self.num_extra_metrics * 2
+        t_extra_metric = self.duration_stats(tt, start, stop, num_quantiles)
 
-        tt_aux_score = []
-        for i in range(self.num_aux_scores):
-            start = self.aux_scores_offset + 1 + i * 2
-            stop = self.aux_scores_offset + 1 + i * 2 + 1
-            t_aux_score = self.duration_stats(tt, start, stop, num_quantiles)
-            tt_aux_score.append(t_aux_score)
+        tt_extra_metric = []
+        for i in range(self.num_extra_metrics):
+            start = self.extra_metrics_offset + 1 + i * 2
+            stop = self.extra_metrics_offset + 1 + i * 2 + 1
+            stats = self.duration_stats(tt, start, stop, num_quantiles)
+            tt_extra_metric.append(stats)
 
         # Handle the middle steps that are different between train and test
         # batches.
@@ -194,25 +196,25 @@ class SplitOnBatchTimer(object):
         for i in range(len(self.spy_names)):
             start = self.on_end_offset + 1 + i * 2
             stop = self.on_end_offset + 1 + i * 2 + 1
-            t_on_end = self.duration_stats(tt, start, stop, num_quantiles)
-            tt_on_end.append(t_on_end)
+            stats = self.duration_stats(tt, start, stop, num_quantiles)
+            tt_on_end.append(stats)
 
         # End-to-end times.
         start = self.start_offset
         stop = self.stop_offset
         t_all = self.duration_stats(tt, start, stop, num_quantiles)
 
-        # Gather the loss/aux scorer timings into a scorer timing stats list of
-        # lists corresponding to the scorer name lists.
-        ttt_score = []
-        aux_score_index = 0
-        for y_index, scorer_names in enumerate(self.scorer_name_lists):
-            tt_score = [tt_loss[y_index]]
-            for name in scorer_names[1:]:
-                tt_score.append(tt_aux_score[aux_score_index])
-                aux_score_index += 1
-            ttt_score.append(tt_score)
-        assert aux_score_index == len(tt_aux_score)
+        # Gather the loss/extra meter timings into a meter timing stats list of
+        # lists corresponding to the meter name lists.
+        ttt_metric = []
+        extra_metric_index = 0
+        for y_index, meter_names in enumerate(self.meter_name_lists):
+            tt_metric = [tt_loss[y_index]]
+            for name in meter_names[1:]:
+                tt_metric.append(tt_extra_metric[extra_metric_index])
+                extra_metric_index += 1
+            ttt_metric.append(tt_metric)
+        assert extra_metric_index == len(tt_extra_metric)
 
         # Gather the computed stats into a dict, including the stats for the
         # custom middle steps.
@@ -221,10 +223,10 @@ class SplitOnBatchTimer(object):
 
             'forward': t_forward,
 
-            'scorer_names': self.scorer_name_lists,
-            'scorer_loss': t_loss,
-            'scorer_aux': t_aux_score,
-            'scorer_each': ttt_score,
+            'meter_names': self.meter_name_lists,
+            'meter_loss': t_loss,
+            'meter_extra': t_extra_metric,
+            'meter_each': ttt_metric,
 
             'spy_names': self.spy_names,
             'spy_on_begin': t_on_begin,
@@ -288,7 +290,6 @@ class BatchTimer(object):
     Contains two collections of timing statistics: train and test.
     """
 
-    def __init__(self, cache_size, spy_names, scorer_name_lists):
-        self.train = TrainOnBatchTimer(
-            cache_size, spy_names, scorer_name_lists)
-        self.test = TestOnBatchTimer(cache_size, spy_names, scorer_name_lists)
+    def __init__(self, cache_size, spy_names, meter_name_lists):
+        self.train = TrainOnBatchTimer(cache_size, spy_names, meter_name_lists)
+        self.test = TestOnBatchTimer(cache_size, spy_names, meter_name_lists)

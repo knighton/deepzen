@@ -2,5 +2,5 @@ from .accuracy import BaseAccuracyAPI
 from .loss import BaseLossAPI
 
 
-class BaseScoreAPI(BaseAccuracyAPI, BaseLossAPI):
+class BaseMeterAPI(BaseAccuracyAPI, BaseLossAPI):
     pass

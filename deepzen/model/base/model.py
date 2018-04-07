@@ -6,8 +6,8 @@ from ...data.ram_split import RamSplit
 from ...data.split import Split
 from ...spy import unpack_spies
 from ...optim import get_optimizer
-from ...scorer.loss import get_loss_scorer
-from ...scorer import get_scorer
+from ...meter.loss import unpack_loss
+from ...meter import unpack_meter
 from ...util.py import require_kwargs_after
 from .batch_timer import BatchTimer
 
@@ -36,37 +36,37 @@ class Model(object):
         return Dataset(train, test)
 
     @classmethod
-    def _parse_scorer_lists_str(cls, s):
+    def _parse_meter_lists_str(cls, s):
         ss = s.split(' ')
         return [s.split(',') for s in ss]
 
     @classmethod
-    def _get_loss_and_aux_scorers(cls, x, y_sample_shape):
+    def _unpack_loss_and_extra_meters(cls, x, y_sample_shape):
         if isinstance(x, (list, tuple)):
             xx = x
         else:
             xx = [x]
-        scorers = []
-        scorers.append(get_loss_scorer(xx[0], y_sample_shape))
+        meters = []
+        meters.append(unpack_loss(xx[0], y_sample_shape))
         for x in xx[1:]:
-            scorers.append(get_scorer(x, y_sample_shape))
-        return scorers
+            meters.append(unpack_meter(x, y_sample_shape))
+        return meters
 
     @classmethod
-    def _get_scorer_lists(cls, x, y_sample_shapes):
+    def _unpack_meter_lists(cls, x, y_sample_shapes):
         if isinstance(x, str):
             if ' ' in x or ',' in x:
-                xxx = cls._parse_scorer_lists_str(x)
+                xxx = cls._parse_meter_lists_str(x)
             else:
                 xxx = [x]
         else:
             xxx = x
-        scorer_lists = []
+        meter_lists = []
         assert len(xxx) == len(y_sample_shapes)
         for xx, y_sample_shape in zip(xxx, y_sample_shapes):
-            scorers = cls._get_loss_and_aux_scorers(xx, y_sample_shape)
-            scorer_lists.append(scorers)
-        return scorer_lists
+            meters = cls._unpack_loss_and_extra_meters(xx, y_sample_shape)
+            meter_lists.append(meters)
+        return meter_lists
 
     def __init__(self):
         self._is_built = False
@@ -89,7 +89,7 @@ class Model(object):
     def forward(self, xx, is_training):
         raise NotImplementedError
 
-    def train_on_batch(self, xx, yy_true, scorer_lists, optim, spies, t):
+    def train_on_batch(self, xx, yy_true, meter_lists, optim, spies, t):
         # Start timing the whole method.
         t.start()
 
@@ -110,29 +110,28 @@ class Model(object):
 
             # 3. Compute the loss of each output.
             t.mark()
-            for scorers, y_true, y_pred in \
-                    zip(scorer_lists, yy_true, yy_pred):
-                get_loss = scorers[0]
+            for meters, y_true, y_pred in zip(meter_lists, yy_true, yy_pred):
+                get_loss = meters[0]
                 t.mark()
                 loss = Z.mean(get_loss(y_true, y_pred))
                 t.mark()
                 losses.append(loss)
             t.mark()
 
-        # 4. Compute any additional scores of each output.
-        score_lists = []
+        # 4. Compute any additional metrics of each output.
+        metric_lists = []
         t.mark()
-        for i, (scorers, y_true, y_pred) in \
-                enumerate(zip(scorer_lists, yy_true, yy_pred)):
+        for i, (meters, y_true, y_pred) in \
+                enumerate(zip(meter_lists, yy_true, yy_pred)):
             loss = Z.scalar(losses[i])
-            scores = [loss]
-            for aux_scorer in scorers[1:]:
+            metrics = [loss]
+            for extra_meter in meters[1:]:
                 t.mark()
-                score = Z.mean(aux_scorer(y_true, y_pred))
+                metric = Z.mean(extra_meter(y_true, y_pred))
                 t.mark()
-                score = Z.scalar(score)
-                scores.append(score)
-            score_lists.append(scores)
+                metric = Z.scalar(metric)
+                metrics.append(metric)
+            metric_lists.append(metrics)
         t.mark()
 
         # 5. Backpropagate gradients.
@@ -157,9 +156,9 @@ class Model(object):
         # Stop timing the whole method.
         t.stop()
 
-        return score_lists
+        return metric_lists
 
-    def test_on_batch(self, xx, yy_true, scorer_lists, spies, t):
+    def test_on_batch(self, xx, yy_true, meter_lists, spies, t):
         # Start timing the whole method.
         t.start()
 
@@ -179,31 +178,31 @@ class Model(object):
         # 3. Compute the loss of each output.
         losses = []
         t.mark()
-        for i, (scorers, y_true, y_pred) in \
-                enumerate(zip(scorer_lists, yy_true, yy_pred)):
-            get_loss = scorers[0]
+        for i, (meters, y_true, y_pred) in \
+                enumerate(zip(meter_lists, yy_true, yy_pred)):
+            get_loss = meters[0]
             t.mark()
             loss = Z.mean(get_loss(y_true, y_pred))
             t.mark()
             losses.append(loss)
         t.mark()
 
-        # 3. Compute any additional scores of each output.  (This could be done
+        # 3. Compute any additional metrics of each output.  (This could be done
         #    in the same loop as computing losses, but is done separately so
         #    timings can be compared directly.)
-        score_lists = []
+        metric_lists = []
         t.mark()
-        for i, (scorers, y_true, y_pred) in \
-                enumerate(zip(scorer_lists, yy_true, yy_pred)):
+        for i, (meters, y_true, y_pred) in \
+                enumerate(zip(meter_lists, yy_true, yy_pred)):
             loss = Z.scalar(losses[i])
-            scores = [loss]
-            for aux_scorer in scorers[1:]:
+            metrics = [loss]
+            for extra_meter in meters[1:]:
                 t.mark()
-                score = Z.mean(aux_scorer(y_true, y_pred))
+                metric = Z.mean(extra_meter(y_true, y_pred))
                 t.mark()
-                score = Z.scalar(score)
-                scores.append(score)
-            score_lists.append(scores)
+                metric = Z.scalar(metric)
+                metrics.append(metric)
+            metric_lists.append(metrics)
         t.mark()
 
         # 4. Execute "on end" callbacks.
@@ -217,50 +216,50 @@ class Model(object):
         # Stop timing the whole method.
         t.stop()
 
-        return score_lists
+        return metric_lists
 
-    def _fit_epoch(self, scorer_lists, dataset, optim, batch_size, spies, timer,
+    def _fit_epoch(self, meter_lists, dataset, optim, batch_size, spies, timer,
                    epoch):
         for spy in spies:
             spy.on_epoch_begin(epoch, dataset.num_batches(batch_size))
 
-        train_score_lists = []
-        test_score_lists = []
-        for scorers in scorer_lists:
-            train_score_lists.append([[] for x in scorers])
-            test_score_lists.append([[] for x in scorers])
+        train_metric_lists = []
+        test_metric_lists = []
+        for meters in meter_lists:
+            train_metric_lists.append([[] for x in meters])
+            test_metric_lists.append([[] for x in meters])
 
         for (xx, yy), is_training in dataset.each_batch(batch_size):
             xx = [Z.constant(x) for x in xx]
             yy = [Z.constant(y) for y in yy]
             if is_training:
-                batch_score_lists = self.train_on_batch(
-                    xx, yy, scorer_lists, optim, spies, timer.train)
-                split_score_lists = train_score_lists
+                batch_metric_lists = self.train_on_batch(
+                    xx, yy, meter_lists, optim, spies, timer.train)
+                split_metric_lists = train_metric_lists
             else:
-                batch_score_lists = self.test_on_batch(
-                    xx, yy, scorer_lists, spies, timer.test)
-                split_score_lists = test_score_lists
-            for i, batch_scores in enumerate(batch_score_lists):
-                for j, batch_score in enumerate(batch_scores):
-                    split_score_lists[i][j].append(batch_score)
+                batch_metric_lists = self.test_on_batch(
+                    xx, yy, meter_lists, spies, timer.test)
+                split_metric_lists = test_metric_lists
+            for i, batch_metrics in enumerate(batch_metric_lists):
+                for j, batch_metric in enumerate(batch_metrics):
+                    split_metric_lists[i][j].append(batch_metric)
 
-        for split_score_lists in [train_score_lists, test_score_lists]:
-            for i, column in enumerate(split_score_lists):
+        for split_metric_lists in [train_metric_lists, test_metric_lists]:
+            for i, column in enumerate(split_metric_lists):
                 for j, values in enumerate(column):
-                    split_score_lists[i][j] = float(np.mean(values))
+                    split_metric_lists[i][j] = float(np.mean(values))
 
         for spy in spies:
-            spy.on_epoch_end(train_score_lists, test_score_lists)
+            spy.on_epoch_end(train_metric_lists, test_metric_lists)
 
-        return train_score_lists, test_score_lists
+        return train_metric_lists, test_metric_lists
 
     @require_kwargs_after(3)
     def fit(self, data, loss, test_frac=None, optim='sgd', batch=64,
             epoch_offset=0, epochs=20, spies=None, timer_cache=10000):
         dataset = self._unpack_dataset(data, test_frac)
         y_sample_shapes = dataset.shapes()[1]
-        scorer_lists = self._get_scorer_lists(loss, y_sample_shapes)
+        meter_lists = self._unpack_meter_lists(loss, y_sample_shapes)
         optim = get_optimizer(optim)
         spies = unpack_spies(spies)
         assert isinstance(batch, int)
@@ -275,21 +274,21 @@ class Model(object):
         timer_cache_size = timer_cache
 
         spy_names = [x.__class__.__name__ for x in spies]
-        scorer_name_lists = []
-        for scorers in scorer_lists:
-            scorer_names = [x.__class__.__name__ for x in scorers]
-            scorer_name_lists.append(scorer_names)
-        timer = BatchTimer(timer_cache_size, spy_names, scorer_name_lists)
+        meter_name_lists = []
+        for meters in meter_lists:
+            meter_names = [x.__class__.__name__ for x in meters]
+            meter_name_lists.append(meter_names)
+        timer = BatchTimer(timer_cache_size, spy_names, meter_name_lists)
 
         self.ensure_built()
         optim.set_params(self.params())
 
         for spy in spies:
-            spy.on_fit_begin(scorer_name_lists, epoch_offset, epochs)
+            spy.on_fit_begin(meter_name_lists, epoch_offset, epochs)
 
         for epoch in range(epoch_offset, epoch_offset + epochs):
-            train_score_lists, test_score_lists = \
-                self._fit_epoch(scorer_lists, dataset, optim, batch_size, spies,
+            train_metric_lists, test_metric_lists = \
+                self._fit_epoch(meter_lists, dataset, optim, batch_size, spies,
                                 timer, epoch)
 
         for spy in spies:

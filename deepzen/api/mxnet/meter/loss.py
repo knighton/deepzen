@@ -1,4 +1,4 @@
-from ...base.score.loss import BaseLossAPI
+from ...base.meter.loss import BaseLossAPI
 
 
 class MXNetLossAPI(BaseLossAPI):

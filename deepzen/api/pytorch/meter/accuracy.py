@@ -1,4 +1,4 @@
-from ...base.score.accuracy import BaseAccuracyAPI
+from ...base.meter.accuracy import BaseAccuracyAPI
 
 
 class PyTorchAccuracyAPI(BaseAccuracyAPI):

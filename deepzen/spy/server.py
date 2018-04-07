@@ -36,8 +36,8 @@ class Server(Spy):
               (self.host, self.port))
         app.run(host=self.host, port=self.port)
 
-    def on_fit_begin(self, scorer_name_lists, epoch_offset, epochs):
-        self.scorer_name_lists = scorer_name_lists
+    def on_fit_begin(self, meter_name_lists, epoch_offset, epochs):
+        self.meter_name_lists = meter_name_lists
         self.epoch_offset = epoch_offset
         self.epochs = epochs
         self.thread = Thread(target=self.run)
