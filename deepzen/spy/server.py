@@ -3,12 +3,12 @@ import logging
 import requests
 from threading import Thread
 
-from .base.hook import Hook
-from .base.registry import register_hook
+from .base.registry import register_spy
+from .base.spy import Spy
 
 
-@register_hook
-class Server(Hook):
+@register_spy
+class Server(Spy):
     name = 'server'
 
     def __init__(self, host='0.0.0.0', port=31337):
@@ -23,7 +23,7 @@ class Server(Hook):
 
         @app.route('/')
         def serve_root():
-            return open('deepzen/hook/server/index.html').read()
+            return open('deepzen/spy/server/index.html').read()
 
         @app.route('/stop', methods=['POST'])
         def server_stop():

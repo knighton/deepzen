@@ -1,11 +1,11 @@
 from tqdm import tqdm
 
-from .base.hook import Hook
-from .base.registry import register_hook
+from .base.registry import register_spy
+from .base.spy import Spy
 
 
-@register_hook
-class ProgressBar(Hook):
+@register_spy
+class ProgressBar(Spy):
     name = 'progress_bar'
 
     def on_epoch_begin(self, epoch, num_batches):

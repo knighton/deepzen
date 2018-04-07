@@ -1,4 +1,4 @@
-class Hook(object):
+class Spy(object):
     def on_fit_begin(self, scorer_name_lists, epoch_offset, num_epochs):
         pass
 

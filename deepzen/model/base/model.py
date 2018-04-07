@@ -4,7 +4,7 @@ from ... import api as Z
 from ...data.dataset import Dataset
 from ...data.ram_split import RamSplit
 from ...data.split import Split
-from ...hook import get_hooks
+from ...spy import unpack_spies
 from ...optim import get_optimizer
 from ...scorer.loss import get_loss_scorer
 from ...scorer import get_scorer
@@ -89,15 +89,15 @@ class Model(object):
     def forward(self, xx, is_training):
         raise NotImplementedError
 
-    def train_on_batch(self, xx, yy_true, scorer_lists, optim, hooks, t):
+    def train_on_batch(self, xx, yy_true, scorer_lists, optim, spies, t):
         # Start timing the whole method.
         t.start()
 
-        # 1. Execute "on begin" hooks.
+        # 1. Execute "on begin" callbacks.
         t.mark()
-        for hook in hooks:
+        for spy in spies:
             t.mark()
-            hook.on_train_on_batch_begin()
+            spy.on_train_on_batch_begin()
             t.mark()
         t.mark()
 
@@ -146,11 +146,11 @@ class Model(object):
         optim.step()
         t.mark()
 
-        # 7. Execute "on end" hooks.
+        # 7. Execute "on end" callbacks.
         t.mark()
-        for hook in hooks:
+        for spy in spies:
             t.mark()
-            hook.on_train_on_batch_end()
+            spy.on_train_on_batch_end()
             t.mark()
         t.mark()
 
@@ -159,15 +159,15 @@ class Model(object):
 
         return score_lists
 
-    def test_on_batch(self, xx, yy_true, scorer_lists, hooks, t):
+    def test_on_batch(self, xx, yy_true, scorer_lists, spies, t):
         # Start timing the whole method.
         t.start()
 
-        # 1. Execute "before" hooks.
+        # 1. Execute "on begin" callbacks.
         t.mark()
-        for hook in hooks:
+        for spy in spies:
             t.mark()
-            hook.on_test_on_batch_begin()
+            spy.on_test_on_batch_begin()
             t.mark()
         t.mark()
 
@@ -206,11 +206,11 @@ class Model(object):
             score_lists.append(scores)
         t.mark()
 
-        # 4. Execute "after" hooks.
+        # 4. Execute "on end" callbacks.
         t.mark()
-        for hook in hooks:
+        for spy in spies:
             t.mark()
-            hook.on_test_on_batch_end()
+            spy.on_test_on_batch_end()
             t.mark()
         t.mark()
 
@@ -219,10 +219,10 @@ class Model(object):
 
         return score_lists
 
-    def _fit_epoch(self, scorer_lists, dataset, optim, batch_size, hooks, timer,
+    def _fit_epoch(self, scorer_lists, dataset, optim, batch_size, spies, timer,
                    epoch):
-        for hook in hooks:
-            hook.on_epoch_begin(epoch, dataset.num_batches(batch_size))
+        for spy in spies:
+            spy.on_epoch_begin(epoch, dataset.num_batches(batch_size))
 
         train_score_lists = []
         test_score_lists = []
@@ -235,11 +235,11 @@ class Model(object):
             yy = [Z.constant(y) for y in yy]
             if is_training:
                 batch_score_lists = self.train_on_batch(
-                    xx, yy, scorer_lists, optim, hooks, timer.train)
+                    xx, yy, scorer_lists, optim, spies, timer.train)
                 split_score_lists = train_score_lists
             else:
                 batch_score_lists = self.test_on_batch(
-                    xx, yy, scorer_lists, hooks, timer.test)
+                    xx, yy, scorer_lists, spies, timer.test)
                 split_score_lists = test_score_lists
             for i, batch_scores in enumerate(batch_score_lists):
                 for j, batch_score in enumerate(batch_scores):
@@ -250,19 +250,19 @@ class Model(object):
                 for j, values in enumerate(column):
                     split_score_lists[i][j] = float(np.mean(values))
 
-        for hook in hooks:
-            hook.on_epoch_end(train_score_lists, test_score_lists)
+        for spy in spies:
+            spy.on_epoch_end(train_score_lists, test_score_lists)
 
         return train_score_lists, test_score_lists
 
     @require_kwargs_after(3)
     def fit(self, data, loss, test_frac=None, optim='sgd', batch=64,
-            epoch_offset=0, epochs=20, hook=None, timer_cache=10000):
+            epoch_offset=0, epochs=20, spies=None, timer_cache=10000):
         dataset = self._unpack_dataset(data, test_frac)
         y_sample_shapes = dataset.shapes()[1]
         scorer_lists = self._get_scorer_lists(loss, y_sample_shapes)
         optim = get_optimizer(optim)
-        hooks = get_hooks(hook)
+        spies = unpack_spies(spies)
         assert isinstance(batch, int)
         assert 0 < batch
         batch_size = batch
@@ -274,39 +274,39 @@ class Model(object):
         assert 0 < timer_cache
         timer_cache_size = timer_cache
 
-        hook_names = [x.__class__.__name__ for x in hooks]
+        spy_names = [x.__class__.__name__ for x in spies]
         scorer_name_lists = []
         for scorers in scorer_lists:
             scorer_names = [x.__class__.__name__ for x in scorers]
             scorer_name_lists.append(scorer_names)
-        timer = BatchTimer(timer_cache_size, hook_names, scorer_name_lists)
+        timer = BatchTimer(timer_cache_size, spy_names, scorer_name_lists)
 
         self.ensure_built()
         optim.set_params(self.params())
 
-        for hook in hooks:
-            hook.on_fit_begin(scorer_name_lists, epoch_offset, epochs)
+        for spy in spies:
+            spy.on_fit_begin(scorer_name_lists, epoch_offset, epochs)
 
         for epoch in range(epoch_offset, epoch_offset + epochs):
             train_score_lists, test_score_lists = \
-                self._fit_epoch(scorer_lists, dataset, optim, batch_size, hooks,
+                self._fit_epoch(scorer_lists, dataset, optim, batch_size, spies,
                                 timer, epoch)
 
-        for hook in hooks:
-            hook.on_fit_end()
+        for spy in spies:
+            spy.on_fit_end()
 
     @require_kwargs_after(2)
     def fit_reg(self, data, test_frac=None, optim='sgd', batch=64,
-                epoch_offset=0, epochs=20, hook=None, timer_cache=10000):
+                epoch_offset=0, epochs=20, spies=None, timer_cache=10000):
         loss = [['mean_squared_error']]
         return self.fit(data, loss, test_frac=test_frac, optim=optim,
                         batch=batch, epoch_offset=epoch_offset, epochs=epochs,
-                        hook=hook, timer_cache=timer_cache)
+                        spies=spies, timer_cache=timer_cache)
 
     @require_kwargs_after(2)
     def fit_clf(self, data, test_frac=None, optim='sgd', batch=64,
-                epoch_offset=0, epochs=20, hook=None, timer_cache=10000):
+                epoch_offset=0, epochs=20, spies=None, timer_cache=10000):
         loss = [['cross_entropy', 'accuracy']]
         return self.fit(data, loss, test_frac=test_frac, optim=optim,
                         batch=batch, epoch_offset=epoch_offset, epochs=epochs,
-                        hook=hook, timer_cache=timer_cache)
+                        spies=spies, timer_cache=timer_cache)

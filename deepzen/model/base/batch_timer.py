@@ -11,7 +11,7 @@ class SplitOnBatchTimer(object):
     * TestOnBatchTimer for test_on_batch().
 
     Shows you where time is being spent during training at a very fine-grained
-    level.  Times forward/backward/optim, individual hook callbacks, each loss
+    level.  Times forward/backward/optim, individual spy callbacks, each loss
     function and every other scorer, and everything else of note.
 
     Internally, it is just a cache of time.time() values in a float64 numpy
@@ -25,25 +25,25 @@ class SplitOnBatchTimer(object):
 
     When requested, it pairs up the columns gathering how long each event took,
     then returns timing summary statistics and quantiles for each event.  You
-    should call fit() with the 'server' hook to visualize this data in real time
+    should call fit() with the 'server' Spy to visualize this data in real time
     with human-friendly charts, otherwise the granularity can be unwieldy.
     """
 
     def init_middle(self, middle_offset):
         raise NotImplementedError
 
-    def __init__(self, cache_size, hook_names, scorer_name_lists):
+    def __init__(self, cache_size, spy_names, scorer_name_lists):
         # During execution, we will fill the rows of the cache in ascending
         # order until full, then start replacing rows at random.
         self.cache_used = 0
         self.cache_size = cache_size
 
-        # The names of the hooks and scorers (losses and auxiliary scorers).
+        # The names of the spies and scorers (losses and auxiliary scorers).
         #
         # The names are used for displaying results.  The counts of these
         # different kinds of things are used for computing offsets for where to
         # store the times recorded during each batch.
-        self.hook_names = hook_names
+        self.spy_names = spy_names
         self.scorer_name_lists = scorer_name_lists
         self.num_losses = len(scorer_name_lists)
         self.num_aux_scores = sum(map(len, scorer_name_lists)) - \
@@ -61,24 +61,24 @@ class SplitOnBatchTimer(object):
         #
         # Lengths of each section:
         # - Start: 1.
-        # - On begin: 1 + 2 * num hooks + 1.
+        # - On begin: 1 + 2 * num spies + 1.
         # - Forward: 1 + 1.
         # - Losses: 1 + 2 * num losses + 1.
         # - Aux scorers: 1 + 2 * num auxiliary scorers + 1.
         #   (train_on_batch() does additional work here...)
-        # - On end: 1 + 2 * num hooks + 1.
+        # - On end: 1 + 2 * num spies + 1.
         # - Stop: 1.
         self.start_offset = 0
         self.on_begin_offset = self.start_offset + 1
         self.forward_offset = \
-            self.on_begin_offset + 1 + 2 * len(self.hook_names) + 1
+            self.on_begin_offset + 1 + 2 * len(self.spy_names) + 1
         self.losses_offset = self.forward_offset + 2
         self.aux_scores_offset = \
             self.losses_offset + 1 + 2 * self.num_losses + 1
         middle_offset = self.aux_scores_offset + 1 + 2 * self.num_aux_scores + 1
         self.on_end_offset = self.init_middle(middle_offset)
         self.stop_offset = \
-            self.on_end_offset + 1 + 2 * len(self.hook_names) + 1
+            self.on_end_offset + 1 + 2 * len(self.spy_names) + 1
 
         # The number of times we record the time per batch (row width).
         self.marks_per_batch = self.stop_offset + 1
@@ -140,13 +140,13 @@ class SplitOnBatchTimer(object):
         tt = self.marks - np.expand_dims(self.marks[:, 0], 1)
         tt *= 1e9
 
-        # "On begin" hook callbacks.
+        # "On begin" callbacks.
         start = self.on_begin_offset
-        stop = self.on_begin_offset + 1 + len(self.hook_names) * 2
+        stop = self.on_begin_offset + 1 + len(self.spy_names) * 2
         t_on_begin = self.duration_stats(tt, start, stop, num_quantiles)
 
         tt_on_begin = []
-        for i in range(len(self.hook_names)):
+        for i in range(len(self.spy_names)):
             start = self.on_begin_offset + 1 + i * 2
             stop = self.on_begin_offset + 1 + i * 2 + 1
             t_on_begin = self.duration_stats(tt, start, stop, num_quantiles)
@@ -185,13 +185,13 @@ class SplitOnBatchTimer(object):
         # batches.
         middle_name2stats = self.middle_steps_stats(tt, num_quantiles)
 
-        # "On end" hook callbacks.
+        # "On end" callbacks.
         start = self.on_end_offset
         stop = self.on_end_offset + 1
         t_on_end = self.duration_stats(tt, start, stop, num_quantiles)
 
         tt_on_end = []
-        for i in range(len(self.hook_names)):
+        for i in range(len(self.spy_names)):
             start = self.on_end_offset + 1 + i * 2
             stop = self.on_end_offset + 1 + i * 2 + 1
             t_on_end = self.duration_stats(tt, start, stop, num_quantiles)
@@ -226,11 +226,11 @@ class SplitOnBatchTimer(object):
             'scorer_aux': t_aux_score,
             'scorer_each': ttt_score,
 
-            'hook_names': self.hook_names,
-            'hook_on_begin': t_on_begin,
-            'hook_on_begin_each': tt_on_begin,
-            'hook_on_end': t_on_end,
-            'hook_on_end_each': tt_on_end,
+            'spy_names': self.spy_names,
+            'spy_on_begin': t_on_begin,
+            'spy_on_begin_each': tt_on_begin,
+            'spy_on_end': t_on_end,
+            'spy_on_end_each': tt_on_end,
         }
         for name in middle_name2stats:
             assert name not in ret
@@ -288,7 +288,7 @@ class BatchTimer(object):
     Contains two collections of timing statistics: train and test.
     """
 
-    def __init__(self, cache_size, hook_names, scorer_name_lists):
+    def __init__(self, cache_size, spy_names, scorer_name_lists):
         self.train = TrainOnBatchTimer(
-            cache_size, hook_names, scorer_name_lists)
-        self.test = TestOnBatchTimer(cache_size, hook_names, scorer_name_lists)
+            cache_size, spy_names, scorer_name_lists)
+        self.test = TestOnBatchTimer(cache_size, spy_names, scorer_name_lists)

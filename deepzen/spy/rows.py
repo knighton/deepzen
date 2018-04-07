@@ -1,9 +1,9 @@
-from .base.hook import Hook
-from .base.registry import register_hook
+from .base.registry import register_spy
+from .base.spy import Spy
 
 
-@register_hook
-class Rows(Hook):
+@register_spy
+class Rows(Spy):
     name = 'rows'
 
     def __init__(self, epoch_cols=10, score_cols=9, score_decimal_places=4):
