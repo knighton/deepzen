@@ -290,6 +290,15 @@ class BatchTimer(object):
     Contains two collections of timing statistics: train and test.
     """
 
+    @classmethod
+    def init_getting_names(cls, cache_size, spies, meter_lists):
+        spy_names = [x.__class__.__name__ for x in spies]
+        meter_name_lists = []
+        for meters in meter_lists:
+            meter_names = [x.__class__.__name__ for x in meters]
+            meter_name_lists.append(meter_names)
+        return cls(cache_size, spy_names, meter_name_lists)
+
     def __init__(self, cache_size, spy_names, meter_name_lists):
         self.train = TrainOnBatchTimer(cache_size, spy_names, meter_name_lists)
         self.test = TestOnBatchTimer(cache_size, spy_names, meter_name_lists)

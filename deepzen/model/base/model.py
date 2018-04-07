@@ -218,19 +218,15 @@ class Model(object):
         assert isinstance(timer_cache, int)
         assert 0 < timer_cache
         timer_cache_size = timer_cache
-
-        spy_names = [x.__class__.__name__ for x in spies]
-        meter_name_lists = []
-        for meters in meter_lists:
-            meter_names = [x.__class__.__name__ for x in meters]
-            meter_name_lists.append(meter_names)
-        batch_timer = BatchTimer(timer_cache_size, spy_names, meter_name_lists)
+        batch_timer = BatchTimer.init_getting_names(
+            timer_cache_size, spies, meter_lists)
 
         self.ensure_built()
         optim.set_params(self.params())
 
         for spy in spies:
-            spy.on_fit_begin(meter_name_lists, begin_epoch, end_epoch)
+            spy.on_fit_begin(batch_timer.train.meter_name_lists, begin_epoch,
+                             end_epoch)
 
         for epoch in range(begin_epoch, end_epoch):
             train_metric_lists, test_metric_lists = \
