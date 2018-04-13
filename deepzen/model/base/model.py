@@ -211,6 +211,20 @@ class Model(object):
 
         return train_metric_lists, test_metric_lists
 
+    def resume_fit(self, dataset, trainer, progress):
+        for spy in trainer.spies:
+            spy.on_fit_begin(trainer.batch_timer.meter_name_lists,
+                             progress.begin_epoch, progress.end_epoch)
+
+        for epoch in range(progress.begin_epoch, progress.end_epoch):
+            train_metric_lists, test_metric_lists = \
+                self._fit_epoch(dataset, trainer, progress)
+
+        for spy in trainer.spies:
+            spy.on_fit_end()
+
+        return dataset, trainer, progress
+
     @require_kwargs_after(3)
     def fit(self, data, loss, test_frac=None, optim='adam', batch=64, start=0,
             stop=20, spy=None, timer_cache=10000):
@@ -238,18 +252,9 @@ class Model(object):
         trainer = Trainer(meter_lists, optimizer, spies, batch_timer)
 
         self.ensure_built()
-        optimizer.set_params(self.params())
+        trainer.optimizer.set_params(self.params())
 
-        for spy in spies:
-            spy.on_fit_begin(batch_timer.meter_name_lists, begin_epoch,
-                             end_epoch)
-
-        for epoch in range(begin_epoch, end_epoch):
-            train_metric_lists, test_metric_lists = \
-                self._fit_epoch(dataset, trainer, progress)
-
-        for spy in spies:
-            spy.on_fit_end()
+        return self.resume_fit(dataset, trainer, progress)
 
     @require_kwargs_after(2)
     def fit_reg(self, data, test_frac=None, optim='adam', batch=64, start=0,
