@@ -10,6 +10,7 @@ from ...optim import unpack_optimizer
 from ...meter import unpack_meter_lists
 from ...util.py import require_kwargs_after
 from .batch_timer import BatchTimer
+from .metric_collector import MetricCollector
 from .training_cursor import TrainingCursor
 from .trainer import Trainer
 
@@ -168,52 +169,37 @@ class Model(object):
 
         return metric_lists
 
-    def _fit_on_batch(self, trainer, cursor, is_training, xx, yy,
-                      train_metric_lists, test_metric_lists):
+    def fit_one_batch(self, cursor, collector, trainer, is_training, xx, yy):
+        if not cursor.batch:
+            for spy in trainer.spies:
+                spy.on_epoch_begin(cursor.epoch, cursor.batches_per_epoch)
+
         xx = [Z.constant(x) for x in xx]
         yy = [Z.constant(y) for y in yy]
 
         if is_training:
             batch_metric_lists = self.train_on_batch(trainer, xx, yy)
-            split_metric_lists = train_metric_lists
         else:
             batch_metric_lists = self.test_on_batch(trainer, xx, yy)
-            split_metric_lists = test_metric_lists
 
-        for i, batch_metrics in enumerate(batch_metric_lists):
-            for j, batch_metric in enumerate(batch_metrics):
-                split_metric_lists[i][j].append(batch_metric)
+        completed_epoch = cursor.completed_batch(is_training)
+        if completed_epoch:
+            raws, means = collector.harvest()
+            train_metric_lists, test_metric_lists = means
+            for spy in trainer.spies:
+                spy.on_epoch_end(train_metric_lists, test_metric_lists)
+        else:
+            collector.add(is_training, batch_metric_lists)
 
-        cursor.completed_batch(is_training)
-
-    def _fit_epoch(self, dataset, trainer, cursor):
-        for spy in trainer.spies:
-            spy.on_epoch_begin(cursor.epoch, cursor.batches_per_epoch)
-
-        train_metric_lists = []
-        test_metric_lists = []
-        for meters in trainer.meter_lists:
-            train_metric_lists.append([[] for x in meters])
-            test_metric_lists.append([[] for x in meters])
-
-        for (xx, yy), is_training in dataset.each_batch(cursor.batch_size):
-            self._fit_on_batch(trainer, cursor, is_training, xx, yy,
-                               train_metric_lists, test_metric_lists)
-
-        for split_metric_lists in [train_metric_lists, test_metric_lists]:
-            for i, column in enumerate(split_metric_lists):
-                for j, values in enumerate(column):
-                    split_metric_lists[i][j] = float(np.mean(values))
-
-        for spy in trainer.spies:
-            spy.on_epoch_end(train_metric_lists, test_metric_lists)
-
-        return train_metric_lists, test_metric_lists
-
-    def resume_fit(self, dataset, trainer, cursor):
+    def resume_fit(self, dataset, cursor, collector, trainer):
         for spy in trainer.spies:
             spy.on_fit_begin(trainer.batch_timer.meter_name_lists,
                              cursor.begin_epoch, cursor.end_epoch)
+
+        for epoch in range(cursor.epoch, cursor.end_epoch):
+            for (xx, yy), is_training in dataset.each_batch(cursor.batch_size):
+                self.fit_one_batch(cursor, collector, trainer, is_training, xx,
+                                   yy)
 
         for epoch in range(cursor.begin_epoch, cursor.end_epoch):
             train_metric_lists, test_metric_lists = \
@@ -248,12 +234,13 @@ class Model(object):
 
         cursor = TrainingCursor.start_from_dataset(
             dataset, begin_epoch, end_epoch, batch_size)
+        collector = MetricCollector.start_from_meter_lists(meter_lists)
         trainer = Trainer(meter_lists, optimizer, spies, batch_timer)
 
         self.ensure_built()
         trainer.optimizer.set_params(self.params())
 
-        return self.resume_fit(dataset, trainer, cursor)
+        return self.resume_fit(dataset, cursor, collector, trainer)
 
     @require_kwargs_after(2)
     def fit_reg(self, data, test_frac=None, optim='adam', batch=64, start=0,
