@@ -10,7 +10,7 @@ from ...optim import unpack_optimizer
 from ...meter import unpack_meter_lists
 from ...util.py import require_kwargs_after
 from .batch_timer import BatchTimer
-from .progress import Progress
+from .training_cursor import TrainingCursor
 from .trainer import Trainer
 
 
@@ -168,7 +168,7 @@ class Model(object):
 
         return metric_lists
 
-    def _fit_on_batch(self, trainer, progress, is_training, xx, yy,
+    def _fit_on_batch(self, trainer, cursor, is_training, xx, yy,
                       train_metric_lists, test_metric_lists):
         xx = [Z.constant(x) for x in xx]
         yy = [Z.constant(y) for y in yy]
@@ -184,12 +184,11 @@ class Model(object):
             for j, batch_metric in enumerate(batch_metrics):
                 split_metric_lists[i][j].append(batch_metric)
 
-        progress.did_batch(is_training)
+        cursor.completed_batch(is_training)
 
-    def _fit_epoch(self, dataset, trainer, progress):
+    def _fit_epoch(self, dataset, trainer, cursor):
         for spy in trainer.spies:
-            spy.on_epoch_begin(progress.current_epoch,
-                               progress.batches_per_epoch)
+            spy.on_epoch_begin(cursor.epoch, cursor.batches_per_epoch)
 
         train_metric_lists = []
         test_metric_lists = []
@@ -197,8 +196,8 @@ class Model(object):
             train_metric_lists.append([[] for x in meters])
             test_metric_lists.append([[] for x in meters])
 
-        for (xx, yy), is_training in dataset.each_batch(progress.batch_size):
-            self._fit_on_batch(trainer, progress, is_training, xx, yy,
+        for (xx, yy), is_training in dataset.each_batch(cursor.batch_size):
+            self._fit_on_batch(trainer, cursor, is_training, xx, yy,
                                train_metric_lists, test_metric_lists)
 
         for split_metric_lists in [train_metric_lists, test_metric_lists]:
@@ -211,19 +210,19 @@ class Model(object):
 
         return train_metric_lists, test_metric_lists
 
-    def resume_fit(self, dataset, trainer, progress):
+    def resume_fit(self, dataset, trainer, cursor):
         for spy in trainer.spies:
             spy.on_fit_begin(trainer.batch_timer.meter_name_lists,
-                             progress.begin_epoch, progress.end_epoch)
+                             cursor.begin_epoch, cursor.end_epoch)
 
-        for epoch in range(progress.begin_epoch, progress.end_epoch):
+        for epoch in range(cursor.begin_epoch, cursor.end_epoch):
             train_metric_lists, test_metric_lists = \
-                self._fit_epoch(dataset, trainer, progress)
+                self._fit_epoch(dataset, trainer, cursor)
 
         for spy in trainer.spies:
             spy.on_fit_end()
 
-        return dataset, trainer, progress
+        return dataset, trainer, cursor
 
     @require_kwargs_after(3)
     def fit(self, data, loss, test_frac=None, optim='adam', batch=64, start=0,
@@ -247,14 +246,14 @@ class Model(object):
         batch_timer = BatchTimer.init_getting_names(
             timer_cache_size, spies, meter_lists)
 
-        progress = Progress.init_from_dataset(
+        cursor = TrainingCursor.start_from_dataset(
             dataset, begin_epoch, end_epoch, batch_size)
         trainer = Trainer(meter_lists, optimizer, spies, batch_timer)
 
         self.ensure_built()
         trainer.optimizer.set_params(self.params())
 
-        return self.resume_fit(dataset, trainer, progress)
+        return self.resume_fit(dataset, trainer, cursor)
 
     @require_kwargs_after(2)
     def fit_reg(self, data, test_frac=None, optim='adam', batch=64, start=0,
