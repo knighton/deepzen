@@ -189,7 +189,7 @@ class Model(object):
                    progress):
         for spy in spies:
             spy.on_epoch_begin(progress.current_epoch,
-                               dataset.num_batches(progress.batch_size))
+                               progress.batches_per_epoch)
 
         train_metric_lists = []
         test_metric_lists = []
