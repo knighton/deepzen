@@ -196,21 +196,19 @@ class Model(object):
     def fit_batch(self, cursor, collector, trainer, is_training, xx, yy):
         if not cursor.batch:
             self.on_epoch_begin(cursor, trainer)
-
         xx = [Z.constant(x) for x in xx]
         yy = [Z.constant(y) for y in yy]
-
         if is_training:
             batch_metric_lists = self.train_on_batch(trainer, xx, yy)
         else:
             batch_metric_lists = self.test_on_batch(trainer, xx, yy)
-
         collector.add(is_training, batch_metric_lists)
-
-        if cursor.completed_batch(is_training):
+        is_epoch_done, is_fit_done = cursor.note_completed_batch(is_training)
+        if is_epoch_done:
             raws, means = collector.harvest()
             train_metric_lists, test_metric_lists = means
             self.on_epoch_end(trainer, train_metric_lists, test_metric_lists)
+        return is_fit_done
 
     def on_fit_begin(self, cursor, trainer):
         for spy in trainer.spies:

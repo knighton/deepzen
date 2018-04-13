@@ -39,7 +39,7 @@ class TrainingCursor(object):
         return cls.start(begin_epoch, end_epoch, batch_size, batches_per_epoch,
                          train_batches_per_epoch, test_batches_per_epoch)
 
-    def _roll_over_epoch(self):
+    def _note_completed_epoch(self):
         assert self.batch == self.batches_per_epoch
         assert self.train_batches_done == self.train_batches_per_epoch
         assert self.test_batches_done == self.test_batches_per_epoch
@@ -47,16 +47,18 @@ class TrainingCursor(object):
         self.batch = 0
         self.train_batches_done = 0
         self.test_batches_done = 0
+        return self.epoch == self.end_epoch
 
-    def completed_batch(self, is_training):
+    def note_completed_batch(self, is_training):
         if is_training:
             self.train_batches_done += 1
         else:
             self.test_batches_done += 1
         self.batch += 1
         if self.batch == self.batches_per_epoch:
-            self._roll_over_epoch()
-            completed_epoch = True
+            is_epoch_done = True
+            is_fit_done = self._note_completed_epoch()
         else:
-            completed_epoch = False
-        return completed_epoch
+            is_epoch_done = False
+            is_fit_done = False
+        return is_epoch_done, is_fit_done
