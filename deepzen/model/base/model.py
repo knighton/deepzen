@@ -196,8 +196,9 @@ class Model(object):
         else:
             batch_metric_lists = self.test_on_batch(session, xx, yy)
 
-        is_epoch_done, is_fit_done = session.note_batch_results(
-            is_training, batch_metric_lists)
+        session.collector.add(is_training, batch_metric_lists)
+        is_epoch_done, is_fit_done = \
+            session.cursor.note_completed_batch(is_training)
 
         if is_epoch_done:
             epoch_results = session.collector.harvest()
@@ -210,13 +211,18 @@ class Model(object):
             spy.on_fit_begin(session.batch_timer.meter_name_lists,
                              session.cursor.epoch, session.cursor.end_epoch)
 
+    def each_batch_forever(self, session):
+        while True:
+            for batch in session.dataset.each_batch(session.cursor.batch_size):
+                yield batch
+
     def on_fit_end(self, session):
         for spy in session.spies:
             spy.on_fit_end()
 
     def fit_session(self, session):
         self.on_fit_begin(session)
-        for (xx, yy), is_training in session.each_batch():
+        for (xx, yy), is_training in self.each_batch_forever(session):
             if self._fit_batch(session, is_training, xx, yy):
                 break
         self.on_fit_end(session)

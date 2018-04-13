@@ -49,13 +49,3 @@ class TrainingSession(object):
 
         return cls(dataset, cursor, collector, meter_lists, optimizer, spies,
                    batch_timer)
-
-    def each_batch(self):
-        while True:
-            for (xx, yy), is_training in \
-                    self.dataset.each_batch(self.cursor.batch_size):
-                yield (xx, yy), is_training
-
-    def note_batch_results(self, is_training, batch_metric_lists):
-        self.collector.add(is_training, batch_metric_lists)
-        return self.cursor.note_completed_batch(is_training)
