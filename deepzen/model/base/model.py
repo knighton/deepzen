@@ -10,6 +10,7 @@ from ...optim import unpack_optimizer
 from ...meter import unpack_meter_lists
 from ...util.py import require_kwargs_after
 from .batch_timer import BatchTimer
+from .progress import Progress
 
 
 class Model(object):
@@ -164,7 +165,8 @@ class Model(object):
         return metric_lists
 
     def _fit_on_batch(self, is_training, xx, yy, meter_lists, optimizer, spies,
-                      batch_timer, train_metric_lists, test_metric_lists):
+                      batch_timer, train_metric_lists, test_metric_lists,
+                      progress):
         xx = [Z.constant(x) for x in xx]
         yy = [Z.constant(y) for y in yy]
 
@@ -181,10 +183,13 @@ class Model(object):
             for j, batch_metric in enumerate(batch_metrics):
                 split_metric_lists[i][j].append(batch_metric)
 
-    def _fit_epoch(self, meter_lists, dataset, optimizer, batch_size, spies,
-                   batch_timer, epoch):
+        progress.did_batch(is_training)
+
+    def _fit_epoch(self, meter_lists, dataset, optimizer, spies, batch_timer,
+                   progress):
         for spy in spies:
-            spy.on_epoch_begin(epoch, dataset.num_batches(batch_size))
+            spy.on_epoch_begin(progress.current_epoch,
+                               dataset.num_batches(progress.batch_size))
 
         train_metric_lists = []
         test_metric_lists = []
@@ -192,10 +197,10 @@ class Model(object):
             train_metric_lists.append([[] for x in meters])
             test_metric_lists.append([[] for x in meters])
 
-        for (xx, yy), is_training in dataset.each_batch(batch_size):
+        for (xx, yy), is_training in dataset.each_batch(progress.batch_size):
             self._fit_on_batch(is_training, xx, yy, meter_lists, optimizer,
                                spies, batch_timer, train_metric_lists,
-                               test_metric_lists)
+                               test_metric_lists, progress)
 
         for split_metric_lists in [train_metric_lists, test_metric_lists]:
             for i, column in enumerate(split_metric_lists):
@@ -229,6 +234,9 @@ class Model(object):
         batch_timer = BatchTimer.init_getting_names(
             timer_cache_size, spies, meter_lists)
 
+        progress = Progress.init_from_dataset(
+            dataset, begin_epoch, end_epoch, batch_size)
+
         self.ensure_built()
         optimizer.set_params(self.params())
 
@@ -238,8 +246,8 @@ class Model(object):
 
         for epoch in range(begin_epoch, end_epoch):
             train_metric_lists, test_metric_lists = \
-                self._fit_epoch(meter_lists, dataset, optimizer, batch_size,
-                                spies, batch_timer, epoch)
+                self._fit_epoch(meter_lists, dataset, optimizer, spies,
+                                batch_timer, progress)
 
         for spy in spies:
             spy.on_fit_end()
