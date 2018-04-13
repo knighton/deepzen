@@ -37,18 +37,31 @@ class Model(object):
     def forward(self, xx, is_training):
         raise NotImplementedError
 
-    def train_on_batch(self, trainer, xx, yy_true):
-        # Start timing the whole method.
+    def on_train_on_batch_begin(self, trainer):
         t = trainer.batch_timer.train
-        t.start()
-
-        # 1. Execute "on begin" callbacks.
         t.mark()
         for spy in trainer.spies:
             t.mark()
             spy.on_train_on_batch_begin()
             t.mark()
         t.mark()
+
+    def on_train_on_batch_end(self, trainer):
+        t = trainer.batch_timer.train
+        t.mark()
+        for spy in trainer.spies:
+            t.mark()
+            spy.on_train_on_batch_end()
+            t.mark()
+        t.mark()
+
+    def train_on_batch(self, trainer, xx, yy_true):
+        # Start timing the whole method.
+        t = trainer.batch_timer.train
+        t.start()
+
+        # 1. Execute "on begin" callbacks.
+        self.on_train_on_batch_begin(trainer)
 
         losses = []
         with Z.autograd_record():
@@ -96,17 +109,30 @@ class Model(object):
         t.mark()
 
         # 7. Execute "on end" callbacks.
-        t.mark()
-        for spy in trainer.spies:
-            t.mark()
-            spy.on_train_on_batch_end()
-            t.mark()
-        t.mark()
+        self.on_train_on_batch_end(trainer)
 
         # Stop timing the whole method.
         t.stop()
 
         return metric_lists
+
+    def on_test_on_batch_begin(self, trainer):
+        t = trainer.batch_timer.test
+        t.mark()
+        for spy in trainer.spies:
+            t.mark()
+            spy.on_test_on_batch_begin()
+            t.mark()
+        t.mark()
+
+    def on_test_on_batch_end(self, trainer):
+        t = trainer.batch_timer.test
+        t.mark()
+        for spy in trainer.spies:
+            t.mark()
+            spy.on_test_on_batch_end()
+            t.mark()
+        t.mark()
 
     def test_on_batch(self, trainer, xx, yy_true):
         # Start timing the whole method.
@@ -114,12 +140,7 @@ class Model(object):
         t.start()
 
         # 1. Execute "on begin" callbacks.
-        t.mark()
-        for spy in trainer.spies:
-            t.mark()
-            spy.on_test_on_batch_begin()
-            t.mark()
-        t.mark()
+        self.on_test_on_batch_begin(trainer)
 
         # 2. Forward propagate.
         t.mark()
@@ -138,7 +159,7 @@ class Model(object):
             losses.append(loss)
         t.mark()
 
-        # 3. Compute any additional metrics of each output.  (This could be done
+        # 4. Compute any additional metrics of each output.  (This could be done
         #    in the same loop as computing losses, but is done separately so
         #    timings can be compared directly.)
         metric_lists = []
@@ -156,23 +177,13 @@ class Model(object):
             metric_lists.append(metrics)
         t.mark()
 
-        # 4. Execute "on end" callbacks.
-        t.mark()
-        for spy in trainer.spies:
-            t.mark()
-            spy.on_test_on_batch_end()
-            t.mark()
-        t.mark()
+        # 5. Execute "on end" callbacks.
+        self.on_test_on_batch_end(trainer)
 
         # Stop timing the whole method.
         t.stop()
 
         return metric_lists
-
-    def on_fit_begin(self, cursor, trainer):
-        for spy in trainer.spies:
-            spy.on_fit_begin(trainer.batch_timer.meter_name_lists,
-                             cursor.begin_epoch, cursor.end_epoch)
 
     def on_epoch_begin(self, cursor, trainer):
         for spy in trainer.spies:
@@ -181,10 +192,6 @@ class Model(object):
     def on_epoch_end(self, trainer, train_metric_lists, test_metric_lists):
             for spy in trainer.spies:
                 spy.on_epoch_end(train_metric_lists, test_metric_lists)
-
-    def on_fit_end(self, trainer):
-        for spy in trainer.spies:
-            spy.on_fit_end()
 
     def fit_batch(self, cursor, collector, trainer, is_training, xx, yy):
         if not cursor.batch:
@@ -204,6 +211,15 @@ class Model(object):
             raws, means = collector.harvest()
             train_metric_lists, test_metric_lists = means
             self.on_epoch_end(trainer, train_metric_lists, test_metric_lists)
+
+    def on_fit_begin(self, cursor, trainer):
+        for spy in trainer.spies:
+            spy.on_fit_begin(trainer.batch_timer.meter_name_lists,
+                             cursor.begin_epoch, cursor.end_epoch)
+
+    def on_fit_end(self, trainer):
+        for spy in trainer.spies:
+            spy.on_fit_end()
 
     def fit_session(self, dataset, cursor, collector, trainer):
         self.on_fit_begin(cursor, trainer)
