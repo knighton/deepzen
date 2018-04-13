@@ -212,10 +212,6 @@ class Model(object):
             for (xx, yy), is_training in dataset.each_batch(cursor.batch_size):
                 self.fit_batch(cursor, collector, trainer, is_training, xx, yy)
 
-        for epoch in range(cursor.begin_epoch, cursor.end_epoch):
-            train_metric_lists, test_metric_lists = \
-                self._fit_epoch(dataset, trainer, cursor)
-
         self.on_fit_end(trainer)
 
         return dataset, cursor, collector, trainer
