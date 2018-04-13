@@ -221,13 +221,16 @@ class Model(object):
 
     def fit_session(self, dataset, cursor, collector, trainer):
         self.on_fit_begin(cursor, trainer)
-
-        for epoch in range(cursor.epoch, cursor.end_epoch):
+        done = False
+        while True:
             for (xx, yy), is_training in dataset.each_batch(cursor.batch_size):
-                self.fit_batch(cursor, collector, trainer, is_training, xx, yy)
-
+                if self.fit_batch(cursor, collector, trainer, is_training, xx,
+                                  yy):
+                    done = True
+                    break
+            if done:
+                break
         self.on_fit_end(trainer)
-
         return dataset, cursor, collector, trainer
 
     @require_kwargs_after(3)
