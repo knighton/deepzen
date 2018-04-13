@@ -34,7 +34,7 @@ class Model(object):
     def forward(self, xx, is_training):
         raise NotImplementedError
 
-    def train_on_batch(self, xx, yy_true, meter_lists, optim, spies, t):
+    def train_on_batch(self, xx, yy_true, meter_lists, optimizer, spies, t):
         # Start timing the whole method.
         t.start()
 
@@ -87,7 +87,7 @@ class Model(object):
 
         # 6. Perform one step of the optimizer.
         t.mark()
-        optim.step()
+        optimizer.step()
         t.mark()
 
         # 7. Execute "on end" callbacks.
@@ -163,14 +163,14 @@ class Model(object):
 
         return metric_lists
 
-    def _fit_on_batch(self, is_training, xx, yy, meter_lists, optim, spies,
+    def _fit_on_batch(self, is_training, xx, yy, meter_lists, optimizer, spies,
                       batch_timer, train_metric_lists, test_metric_lists):
         xx = [Z.constant(x) for x in xx]
         yy = [Z.constant(y) for y in yy]
 
         if is_training:
             batch_metric_lists = self.train_on_batch(
-                xx, yy, meter_lists, optim, spies, batch_timer.train)
+                xx, yy, meter_lists, optimizer, spies, batch_timer.train)
             split_metric_lists = train_metric_lists
         else:
             batch_metric_lists = self.test_on_batch(
@@ -181,7 +181,7 @@ class Model(object):
             for j, batch_metric in enumerate(batch_metrics):
                 split_metric_lists[i][j].append(batch_metric)
 
-    def _fit_epoch(self, meter_lists, dataset, optim, batch_size, spies,
+    def _fit_epoch(self, meter_lists, dataset, optimizer, batch_size, spies,
                    batch_timer, epoch):
         for spy in spies:
             spy.on_epoch_begin(epoch, dataset.num_batches(batch_size))
@@ -193,8 +193,8 @@ class Model(object):
             test_metric_lists.append([[] for x in meters])
 
         for (xx, yy), is_training in dataset.each_batch(batch_size):
-            self._fit_on_batch(is_training, xx, yy, meter_lists, optim, spies,
-                               batch_timer, train_metric_lists,
+            self._fit_on_batch(is_training, xx, yy, meter_lists, optimizer,
+                               spies, batch_timer, train_metric_lists,
                                test_metric_lists)
 
         for split_metric_lists in [train_metric_lists, test_metric_lists]:
@@ -213,7 +213,7 @@ class Model(object):
         dataset = unpack_dataset(data, test_frac)
         y_sample_shapes = dataset.shapes()[1]
         meter_lists = unpack_meter_lists(loss, y_sample_shapes)
-        optim = unpack_optimizer(optim)
+        optimizer = unpack_optimizer(optim)
         spies = unpack_spies(spy)
         assert isinstance(batch, int)
         assert 0 < batch
@@ -230,7 +230,7 @@ class Model(object):
             timer_cache_size, spies, meter_lists)
 
         self.ensure_built()
-        optim.set_params(self.params())
+        optimizer.set_params(self.params())
 
         for spy in spies:
             spy.on_fit_begin(batch_timer.meter_name_lists, begin_epoch,
@@ -238,8 +238,8 @@ class Model(object):
 
         for epoch in range(begin_epoch, end_epoch):
             train_metric_lists, test_metric_lists = \
-                self._fit_epoch(meter_lists, dataset, optim, batch_size, spies,
-                                batch_timer, epoch)
+                self._fit_epoch(meter_lists, dataset, optimizer, batch_size,
+                                spies, batch_timer, epoch)
 
         for spy in spies:
             spy.on_fit_end()
