@@ -225,7 +225,7 @@ class Model(object):
         optim.set_params(self.params())
 
         for spy in spies:
-            spy.on_fit_begin(batch_timer.train.meter_name_lists, begin_epoch,
+            spy.on_fit_begin(batch_timer.meter_name_lists, begin_epoch,
                              end_epoch)
 
         for epoch in range(begin_epoch, end_epoch):

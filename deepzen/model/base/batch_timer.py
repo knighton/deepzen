@@ -300,5 +300,8 @@ class BatchTimer(object):
         return cls(cache_size, spy_names, meter_name_lists)
 
     def __init__(self, cache_size, spy_names, meter_name_lists):
+        self.cache_size = cache_size
+        self.spy_names = spy_names
+        self.meter_name_lists = meter_name_lists
         self.train = TrainOnBatchTimer(cache_size, spy_names, meter_name_lists)
         self.test = TestOnBatchTimer(cache_size, spy_names, meter_name_lists)
