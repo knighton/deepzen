@@ -163,6 +163,24 @@ class Model(object):
 
         return metric_lists
 
+    def _fit_on_batch(self, is_training, xx, yy, meter_lists, optim, spies,
+                      batch_timer, train_metric_lists, test_metric_lists):
+        xx = [Z.constant(x) for x in xx]
+        yy = [Z.constant(y) for y in yy]
+
+        if is_training:
+            batch_metric_lists = self.train_on_batch(
+                xx, yy, meter_lists, optim, spies, batch_timer.train)
+            split_metric_lists = train_metric_lists
+        else:
+            batch_metric_lists = self.test_on_batch(
+                xx, yy, meter_lists, spies, batch_timer.test)
+            split_metric_lists = test_metric_lists
+
+        for i, batch_metrics in enumerate(batch_metric_lists):
+            for j, batch_metric in enumerate(batch_metrics):
+                split_metric_lists[i][j].append(batch_metric)
+
     def _fit_epoch(self, meter_lists, dataset, optim, batch_size, spies,
                    batch_timer, epoch):
         for spy in spies:
@@ -175,19 +193,9 @@ class Model(object):
             test_metric_lists.append([[] for x in meters])
 
         for (xx, yy), is_training in dataset.each_batch(batch_size):
-            xx = [Z.constant(x) for x in xx]
-            yy = [Z.constant(y) for y in yy]
-            if is_training:
-                batch_metric_lists = self.train_on_batch(
-                    xx, yy, meter_lists, optim, spies, batch_timer.train)
-                split_metric_lists = train_metric_lists
-            else:
-                batch_metric_lists = self.test_on_batch(
-                    xx, yy, meter_lists, spies, batch_timer.test)
-                split_metric_lists = test_metric_lists
-            for i, batch_metrics in enumerate(batch_metric_lists):
-                for j, batch_metric in enumerate(batch_metrics):
-                    split_metric_lists[i][j].append(batch_metric)
+            self._fit_on_batch(is_training, xx, yy, meter_lists, optim, spies,
+                               batch_timer, train_metric_lists,
+                               test_metric_lists)
 
         for split_metric_lists in [train_metric_lists, test_metric_lists]:
             for i, column in enumerate(split_metric_lists):
