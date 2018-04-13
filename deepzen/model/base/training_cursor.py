@@ -55,8 +55,8 @@ class TrainingCursor(object):
             self.test_batches_done += 1
         self.batch += 1
         if self.batch == self.batches_per_epoch:
-            completed_epoch = True
             self._roll_over_epoch()
+            completed_epoch = True
         else:
             completed_epoch = False
         return completed_epoch

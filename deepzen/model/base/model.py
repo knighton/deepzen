@@ -182,14 +182,13 @@ class Model(object):
         else:
             batch_metric_lists = self.test_on_batch(trainer, xx, yy)
 
-        completed_epoch = cursor.completed_batch(is_training)
-        if completed_epoch:
+        collector.add(is_training, batch_metric_lists)
+
+        if cursor.completed_batch(is_training):
             raws, means = collector.harvest()
             train_metric_lists, test_metric_lists = means
             for spy in trainer.spies:
                 spy.on_epoch_end(train_metric_lists, test_metric_lists)
-        else:
-            collector.add(is_training, batch_metric_lists)
 
     def resume_fit(self, dataset, cursor, collector, trainer):
         for spy in trainer.spies:
