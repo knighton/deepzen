@@ -11,6 +11,7 @@ from ...meter import unpack_meter_lists
 from ...util.py import require_kwargs_after
 from .batch_timer import BatchTimer
 from .progress import Progress
+from .trainer import Trainer
 
 
 class Model(object):
@@ -35,13 +36,14 @@ class Model(object):
     def forward(self, xx, is_training):
         raise NotImplementedError
 
-    def train_on_batch(self, xx, yy_true, meter_lists, optimizer, spies, t):
+    def train_on_batch(self, trainer, xx, yy_true):
         # Start timing the whole method.
+        t = trainer.batch_timer.train
         t.start()
 
         # 1. Execute "on begin" callbacks.
         t.mark()
-        for spy in spies:
+        for spy in trainer.spies:
             t.mark()
             spy.on_train_on_batch_begin()
             t.mark()
@@ -56,7 +58,8 @@ class Model(object):
 
             # 3. Compute the loss of each output.
             t.mark()
-            for meters, y_true, y_pred in zip(meter_lists, yy_true, yy_pred):
+            for meters, y_true, y_pred in \
+                    zip(trainer.meter_lists, yy_true, yy_pred):
                 get_loss = meters[0]
                 t.mark()
                 loss = Z.mean(get_loss(y_true, y_pred))
@@ -68,7 +71,7 @@ class Model(object):
         metric_lists = []
         t.mark()
         for i, (meters, y_true, y_pred) in \
-                enumerate(zip(meter_lists, yy_true, yy_pred)):
+                enumerate(zip(trainer.meter_lists, yy_true, yy_pred)):
             loss = Z.scalar(losses[i])
             metrics = [loss]
             for extra_meter in meters[1:]:
@@ -88,12 +91,12 @@ class Model(object):
 
         # 6. Perform one step of the optimizer.
         t.mark()
-        optimizer.step()
+        trainer.optimizer.step()
         t.mark()
 
         # 7. Execute "on end" callbacks.
         t.mark()
-        for spy in spies:
+        for spy in trainer.spies:
             t.mark()
             spy.on_train_on_batch_end()
             t.mark()
@@ -104,13 +107,14 @@ class Model(object):
 
         return metric_lists
 
-    def test_on_batch(self, xx, yy_true, meter_lists, spies, t):
+    def test_on_batch(self, trainer, xx, yy_true):
         # Start timing the whole method.
+        t = trainer.batch_timer.test
         t.start()
 
         # 1. Execute "on begin" callbacks.
         t.mark()
-        for spy in spies:
+        for spy in trainer.spies:
             t.mark()
             spy.on_test_on_batch_begin()
             t.mark()
@@ -125,7 +129,7 @@ class Model(object):
         losses = []
         t.mark()
         for i, (meters, y_true, y_pred) in \
-                enumerate(zip(meter_lists, yy_true, yy_pred)):
+                enumerate(zip(trainer.meter_lists, yy_true, yy_pred)):
             get_loss = meters[0]
             t.mark()
             loss = Z.mean(get_loss(y_true, y_pred))
@@ -139,7 +143,7 @@ class Model(object):
         metric_lists = []
         t.mark()
         for i, (meters, y_true, y_pred) in \
-                enumerate(zip(meter_lists, yy_true, yy_pred)):
+                enumerate(zip(trainer.meter_lists, yy_true, yy_pred)):
             loss = Z.scalar(losses[i])
             metrics = [loss]
             for extra_meter in meters[1:]:
@@ -153,7 +157,7 @@ class Model(object):
 
         # 4. Execute "on end" callbacks.
         t.mark()
-        for spy in spies:
+        for spy in trainer.spies:
             t.mark()
             spy.on_test_on_batch_end()
             t.mark()
@@ -164,19 +168,16 @@ class Model(object):
 
         return metric_lists
 
-    def _fit_on_batch(self, is_training, xx, yy, meter_lists, optimizer, spies,
-                      batch_timer, train_metric_lists, test_metric_lists,
-                      progress):
+    def _fit_on_batch(self, trainer, progress, is_training, xx, yy,
+                      train_metric_lists, test_metric_lists):
         xx = [Z.constant(x) for x in xx]
         yy = [Z.constant(y) for y in yy]
 
         if is_training:
-            batch_metric_lists = self.train_on_batch(
-                xx, yy, meter_lists, optimizer, spies, batch_timer.train)
+            batch_metric_lists = self.train_on_batch(trainer, xx, yy)
             split_metric_lists = train_metric_lists
         else:
-            batch_metric_lists = self.test_on_batch(
-                xx, yy, meter_lists, spies, batch_timer.test)
+            batch_metric_lists = self.test_on_batch(trainer, xx, yy)
             split_metric_lists = test_metric_lists
 
         for i, batch_metrics in enumerate(batch_metric_lists):
@@ -185,29 +186,27 @@ class Model(object):
 
         progress.did_batch(is_training)
 
-    def _fit_epoch(self, meter_lists, dataset, optimizer, spies, batch_timer,
-                   progress):
-        for spy in spies:
+    def _fit_epoch(self, dataset, trainer, progress):
+        for spy in trainer.spies:
             spy.on_epoch_begin(progress.current_epoch,
                                progress.batches_per_epoch)
 
         train_metric_lists = []
         test_metric_lists = []
-        for meters in meter_lists:
+        for meters in trainer.meter_lists:
             train_metric_lists.append([[] for x in meters])
             test_metric_lists.append([[] for x in meters])
 
         for (xx, yy), is_training in dataset.each_batch(progress.batch_size):
-            self._fit_on_batch(is_training, xx, yy, meter_lists, optimizer,
-                               spies, batch_timer, train_metric_lists,
-                               test_metric_lists, progress)
+            self._fit_on_batch(trainer, progress, is_training, xx, yy,
+                               train_metric_lists, test_metric_lists)
 
         for split_metric_lists in [train_metric_lists, test_metric_lists]:
             for i, column in enumerate(split_metric_lists):
                 for j, values in enumerate(column):
                     split_metric_lists[i][j] = float(np.mean(values))
 
-        for spy in spies:
+        for spy in trainer.spies:
             spy.on_epoch_end(train_metric_lists, test_metric_lists)
 
         return train_metric_lists, test_metric_lists
@@ -236,6 +235,7 @@ class Model(object):
 
         progress = Progress.init_from_dataset(
             dataset, begin_epoch, end_epoch, batch_size)
+        trainer = Trainer(meter_lists, optimizer, spies, batch_timer)
 
         self.ensure_built()
         optimizer.set_params(self.params())
@@ -246,8 +246,7 @@ class Model(object):
 
         for epoch in range(begin_epoch, end_epoch):
             train_metric_lists, test_metric_lists = \
-                self._fit_epoch(meter_lists, dataset, optimizer, spies,
-                                batch_timer, progress)
+                self._fit_epoch(dataset, trainer, progress)
 
         for spy in spies:
             spy.on_fit_end()
