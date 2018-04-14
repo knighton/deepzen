@@ -6,7 +6,7 @@ from ...base.spec import XYSpec
 
 class ReshapeLayer(XYLayer):
     def __init__(self, x_sig, y_sig, shape):
-        XYLayer.__init__(x_sig, y_sig)
+        XYLayer.__init__(self, x_sig, y_sig)
         self._shape = shape
 
     def forward_x_y(self, x, is_training):
