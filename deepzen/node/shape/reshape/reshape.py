@@ -1,4 +1,5 @@
 from .... import api as Z
+from ...base.keyword import keywordize
 from ...base.layer import XYLayer
 from ...base.spec import XYSpec
 
@@ -20,3 +21,7 @@ class ReshapeSpec(XYSpec):
     def build_x_y(self, x_sig):
         y_sig = Z.reshape_batch_signature(x_sig, self._shape)
         return ReshapeLayer(x_sig, y_sig, self._shape)
+
+
+Reshape, Reshape1D, Reshape2D, Reshape3D = \
+    keywordize(ReshapeSpec, [None, 1, 2, 3])
