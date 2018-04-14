@@ -187,59 +187,58 @@ class Model(object):
     # --------------------------------------------------------------------------
     # Fit on batch, calling batch train/test (notes epochs when appropriate).
 
-    def _fit_epoch_before(self, trainer):
+    def _fit_on_epoch_before(self, trainer):
         """
         Internally, note that we've begun a training epoch.
         """
         for spy in trainer.spies:
             spy.on_epoch_begin()
 
-    def _fit_epoch_after(self, trainer, epoch_results):
+    def _fit_on_epoch_after(self, trainer, epoch_results):
         """
         Internally, note that we've ended a training epoch.
         """
         for spy in trainer.spies:
             spy.on_epoch_end(epoch_results)
 
-    def fit_batch_before(self, trainer):
+    def fit_on_batch_before(self, trainer):
         """
-        The pre-work we need to run before the body of fit_batch.
+        The pre-work we need to run before the body of fit_on_batch.
         """
         if not trainer.cursor.batch:
-            self._fit_epoch_before(trainer)
+            self._fit_on_epoch_before(trainer)
 
-    def fit_batch_body(self, trainer, is_training, xx, yy):
+    def fit_on_batch_body(self, trainer, is_training, xx, yy):
         """
-        The work of fit_batch, bookended by pre/post callbacks.
+        The work of fit_on_batch, bookended by pre/post callbacks.
         """
         xx = [Z.constant(x) for x in xx]
         yy = [Z.constant(y) for y in yy]
         if is_training:
-            batch_metric_lists = self.train_on_batch(trainer, xx, yy)
+            results = self.train_on_batch(trainer, xx, yy)
         else:
-            batch_metric_lists = self.test_on_batch(trainer, xx, yy)
-        return batch_metric_lists
+            results = self.test_on_batch(trainer, xx, yy)
+        return results
 
-    def fit_batch_after(self, trainer, is_training, xx, yy, batch_metric_lists):
+    def fit_on_batch_after(self, trainer, is_training, xx, yy, results):
         """
-        The post-work we need to run after the body of fit_batch.
+        The post-work we need to run after the body of fit_on_batch.
         """
-        trainer.epoch_results.add(is_training, batch_metric_lists)
+        trainer.epoch_results.add(is_training, results)
         is_epoch_done, is_fit_done = \
             trainer.cursor.note_completed_batch(is_training)
         if is_epoch_done:
             epoch_results = trainer.epoch_results.harvest()
-            self._fit_epoch_after(trainer, epoch_results)
+            self._fit_on_epoch_after(trainer, epoch_results)
         return is_fit_done
 
-    def fit_batch(self, trainer, is_training, xx, yy):
+    def fit_on_batch(self, trainer, is_training, xx, yy):
         """
         Fit (train or test) on one batch.
         """
-        self.fit_batch_before(trainer)
-        batch_metric_lists = self.fit_batch_body(trainer, is_training, xx, yy)
-        return self.fit_batch_after(trainer, is_training, xx, yy,
-                                    batch_metric_lists)
+        self.fit_on_batch_before(trainer)
+        results = self.fit_on_batch_body(trainer, is_training, xx, yy)
+        return self.fit_on_batch_after(trainer, is_training, xx, yy, results)
 
     # --------------------------------------------------------------------------
     # Fit given a training state.
@@ -259,7 +258,7 @@ class Model(object):
         each_batch_forever = trainer.dataset.each_batch_forever
         batch_size = trainer.cursor.batch_size
         for (xx, yy), is_training in each_batch_forever(batch_size):
-            if self.fit_batch(trainer, is_training, xx, yy):
+            if self.fit_on_batch(trainer, is_training, xx, yy):
                 break
 
     def fit_after(self, trainer):
