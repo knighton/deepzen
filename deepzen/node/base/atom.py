@@ -36,6 +36,7 @@ class Atom(Node):
         """
         if self in nodes_seen:
             return
+        nodes_seen.add(self)
         for param in self._layer.params():
             if param in params_seen:
                 continue
