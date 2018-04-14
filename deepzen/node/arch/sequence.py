@@ -8,10 +8,11 @@ class Sequence(Model, Node):
     def _unpack_steps(cls, steps):
         assert isinstance(steps, tuple)
         rets = []
-        for step in steps:
+        for i, step in enumerate(steps):
             assert isinstance(step, PseudoNode)
             ret = step.desugar()
-            assert not ret._preds
+            if i:
+                assert not ret._preds
             assert not ret._succs
             rets.append(ret)
         return rets

@@ -4,6 +4,28 @@ from ..base.signature import Signature
 
 
 class Network(Model, Node):
+    @classmethod
+    def _unpack_inputs(cls, x):
+        if isinstance(x, Node):
+            xx = [x]
+        else:
+            assert isinstance(x, (list, tuple))
+            xx = x
+            for x in xx:
+                assert isinstance(x, Node)
+        return xx
+
+    @classmethod
+    def _unpack_outputs(cls, x):
+        if isinstance(x, Node):
+            xx = [x]
+        else:
+            assert isinstance(x, (list, tuple))
+            xx = x
+            for x in xx:
+                assert isinstance(x, Node)
+        return xx
+
     def __init__(self, inputs, outputs, preds_via_call=None):
         inputs = self._unpack_inputs(inputs)
         outputs = self._unpack_outputs(outputs)
