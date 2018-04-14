@@ -49,20 +49,20 @@ class Models(object):
 
     @classmethod
     def simple(cls, image_shape, dtype, num_classes):
-        return Data(image_shape, dtype) > Flatten > Dense(128) > ReLU > \
+        return Input(image_shape, dtype) > Flatten > Dense(128) > ReLU > \
             Dense(num_classes) > Softmax
 
     @classmethod
     def mlp(cls, image_shape, dtype, num_classes):
         block = lambda dim: Dense(dim) > BatchNorm > ReLU > Dropout
-        return Data(image_shape, dtype) > Flatten > block(512) > block(128) > \
+        return Input(image_shape, dtype) > Flatten > block(512) > block(128) > \
             Dense(num_classes) > Softmax
 
     @classmethod
     def cnn(cls, image_shape, dtype, num_classes):
         block = lambda dim: \
             Conv(dim) > BatchNorm > ReLU > Dropout(0.25) > MaxPool(2)
-        return Data(image_shape, dtype) > block(16) > block(16) > block(16) > \
+        return Input(image_shape, dtype) > block(16) > block(16) > block(16) > \
             block(16) > Flatten > Dense(num_classes) > Softmax
 
     @classmethod

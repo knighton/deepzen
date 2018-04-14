@@ -16,8 +16,8 @@ class Node(PseudoNode):
 
     There is only one restriction on what kind of Nodes must go where inside
     Networks and Sequences: the feed nodes of the top-level, end-to-end network
-    must all be "Data" nodes (at the bottom of that recursivity).  Data nodes
-    are a special type of Atom that requires an exact tensor shape/dtype.  This
+    must all be Inputs (at the bottom of that recursivity).  Input nodes are a
+    are a special type of Node that requires an exact tensor shape/dtype.  This
     is used for shape inference so the entire network can be constructed.
     """
 
@@ -175,3 +175,13 @@ class Node(PseudoNode):
             succ.propagate_forward(is_training)
 
         self._preds_ready_to_forward = 0
+
+    def feed(self, x, is_training):
+        """
+        Feed an input tensor into the network at this node.
+        """
+        yy = self.sub_forward([x], is_training)
+        self._set_yy(yy)
+
+        for succ in self._succs:
+            succ.propagate_forward(is_training)
