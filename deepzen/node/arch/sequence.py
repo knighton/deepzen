@@ -8,6 +8,7 @@ from ..base.pseudo_node import PseudoNode
 class Sequence(Model, Node):
     @classmethod
     def _unpack_steps(cls, steps):
+        assert steps
         assert isinstance(steps, tuple)
         rets = []
         for i, step in enumerate(steps):
@@ -20,9 +21,32 @@ class Sequence(Model, Node):
         return rets
 
     def __init__(self, *steps, preds_via_call=None):
-        steps = self._unpack_steps(steps)
         Model.__init__(self)
-        Node.__init__(self, preds_via_call)
+        Node.__init__(self, None)
+        steps = self._unpack_steps(steps)
+        head = steps[0]
+        if preds_via_call:
+            # If this node was created via __call__ with a list of predecessor
+            # nodes, the head node of the sequence must unconnected.
+            assert not head._preds
+            for pred in preds_via_call:
+                assert isinstance(pred, Node)
+                self._connect(pred, self)
+        else:
+            if head._preds:
+                # Given a sequence where there are other nodes that are
+                # connected forward to the head node, rewire the connections so
+                # that they point us (the containing sequence) instead.
+                assert 2 <= len(steps)
+                for pred, index in zip(head._preds, head._pred_succ_indices):
+                    pred._succs[index] = self
+                    self._preds.append(pred)
+                    self._pred_succ_indices.append(index)
+                head._preds = []
+                head._pred_succ_indices = []
+            else:
+                # The simple case: the head node lacks predecessors.
+                pass
         self._steps = steps
 
     def __call__(self, *preds):
