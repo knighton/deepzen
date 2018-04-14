@@ -47,7 +47,7 @@ class Input(Node):
         """
         Inherited from Node.
         """
-        if x_sigs is not None:
+        if x_sigs:
             assert len(x_sigs) == 1
             x_sig, = x_sigs
             assert self._required_sig == x_sig
