@@ -23,13 +23,13 @@ def unpack_loss_and_extra_meters(x, y_sample_shape):
 
 
 def parse_meter_lists_str(s):
-    ss = s.split(' ')
+    ss = s.split(';')
     return [s.split(',') for s in ss]
 
 
 def unpack_meter_lists(x, y_sample_shapes):
     if isinstance(x, str):
-        if ' ' in x or ',' in x:
+        if ';' in x or ',' in x:
             xxx = parse_meter_lists_str(x)
         else:
             xxx = [x]
