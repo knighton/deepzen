@@ -12,6 +12,12 @@ class Dataset(object):
         self.train = train
         self.test = test
 
+    def num_samples(self):
+        num_samples = self.train.num_samples()
+        if self.test:
+            num_samples += self.test.num_samples()
+        return num_samples
+
     def num_batches(self, batch_size):
         num_batches = self.train.num_batches(batch_size)
         if self.test:
