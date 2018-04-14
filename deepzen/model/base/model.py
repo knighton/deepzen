@@ -227,11 +227,11 @@ class Model(object):
         """
         The post-work we need to run after the body of fit_batch.
         """
-        session.collector.add(is_training, batch_metric_lists)
+        session.epoch_results.add(is_training, batch_metric_lists)
         is_epoch_done, is_fit_done = \
             session.cursor.note_completed_batch(is_training)
         if is_epoch_done:
-            epoch_results = session.collector.harvest()
+            epoch_results = session.epoch_results.harvest()
             self._fit_epoch_after(session, epoch_results)
         return is_fit_done
 
