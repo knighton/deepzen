@@ -39,26 +39,29 @@ class Network(Model, Node):
 
     @classmethod
     def _assign_signatures_to_nodes(cls, x_sigs, num_inputs):
-        if x_sigs is None:
-            x_sigs_per_input = [None] * num_inputs
+        assert isinstance(x_sigs, list)
+        for x_sig in x_sigs:
+            assert isinstance(x_sig, Signature)
+        if len(x_sigs) == 1:
+            x_sigs_per_input = [x_sigs] * num_inputs
+        elif num_inputs == 1:
+            x_sigs_per_input = [x_sigs]
         else:
-            assert isinstance(x_sigs, list)
-            for x_sig in x_sigs:
-                assert isinstance(x_sig, Signature)
-            if len(x_sigs) == 1:
-                x_sigs_per_input = [x_sigs] * num_inputs
-            elif num_inputs == 1:
-                x_sigs_per_input = [x_sigs]
-            else:
-                assert num_inputs == len(x_sigs)
-                x_sigs_per_input = [[x_sig] for x_sig in x_sigs]
+            assert num_inputs == len(x_sigs)
+            x_sigs_per_input = [[x_sig] for x_sig in x_sigs]
         return x_sigs_per_input
 
     def sub_build(self, x_sigs=None):
-        num_inputs = len(self._inputs)
-        x_sigs_per_input = self._assign_signatures_to_nodes(x_sigs, num_inputs)
-        for input, x_sigs in zip(self._inputs, x_sigs_per_input):
-            input.propagate_build(x_sigs)
+        if x_sigs is not None:
+            num_inputs = len(self._inputs)
+            x_sigs_per_input = self._assign_signatures_to_nodes(
+                x_sigs, num_inputs)
+            for input, x_sigs in zip(self._inputs, x_sigs_per_input):
+                assert len(x_sigs) == 1
+                x_sig, = x_sigs
+                assert input.layer._required_sig == x_sig
+        for input in self._inputs:
+            input.propagate_build()
         y_sigs = []
         for output in self._outputs:
             assert output._y_sigs
@@ -95,7 +98,7 @@ class Network(Model, Node):
     def sub_forward(self, xx, is_training):
         xxx = self._assign_tensors_to_nodes(xx, len(self._inputs))
         for input, xx in zip(self._inputs, xxx):
-            input.propagate_forward(xx, is_training)
+            input.propagate_forward(is_training)
         y_sigs = []
         for output in self._outputs:
             assert output._y_sigs
