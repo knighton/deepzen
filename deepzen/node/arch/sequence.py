@@ -1,3 +1,5 @@
+from copy import deepcopy
+
 from ...model.base.model import Model
 from ..base.node import Node
 from ..base.pseudo_node import PseudoNode
@@ -24,7 +26,9 @@ class Sequence(Model, Node):
         self._steps = steps
 
     def __call__(self, *preds):
-        assert False  # TODO
+        assert preds
+        nodes = deepcopy(self._steps)
+        return Sequence(*nodes, preds_via_call=preds)
 
     def sub_build(self, x_sigs=None):
         for step in self._steps:
