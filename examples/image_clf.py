@@ -1,5 +1,6 @@
 from argparse import ArgumentParser
 
+from deepzen.app import *  # noqa
 from deepzen.node import *  # noqa
 from deepzen.task.cifar import load_cifar
 from deepzen.task.mnist import load_mnist
@@ -64,6 +65,16 @@ class Models(object):
             Conv(dim) > BatchNorm > ReLU > Dropout(0.25) > MaxPool(2)
         return Input(image_shape, dtype) > block(16) > block(16) > block(16) > \
             block(16) > Flatten > Dense(num_classes) > Softmax
+
+    @classmethod
+    def vgg16(cls, image_shape, dtype, num_classes):
+        return Input(image_shape, dtype) > \
+            VGG16(include_top=True, classes=num_classes)
+
+    @classmethod
+    def vgg19(cls, image_shape, dtype, num_classes):
+        return Input(image_shape, dtype) > \
+            VGG19(include_top=True, classes=num_classes)
 
     @classmethod
     def get(cls, name, dataset):
