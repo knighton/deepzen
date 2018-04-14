@@ -25,6 +25,9 @@ class Model(object):
     def forward(self, xx, is_training):
         raise NotImplementedError
 
+    # --------------------------------------------------------------------------
+    # Train on batch.
+
     def train_on_batch(self, session, xx, yy_true):
         # Start timing the whole method.
         t = session.batch_timer.train
@@ -96,6 +99,9 @@ class Model(object):
 
         return metric_lists
 
+    # --------------------------------------------------------------------------
+    # Test on batch.
+
     def test_on_batch(self, session, xx, yy_true):
         # Start timing the whole method.
         t = session.batch_timer.test
@@ -157,22 +163,25 @@ class Model(object):
 
         return metric_lists
 
-    def begin_fit_epoch(self, session):
+    # --------------------------------------------------------------------------
+    # Fit on batch, calling batch train/test (bookends epochs when appropriate).
+
+    def _fit_epoch_before(self, session):
         for spy in session.spies:
             spy.on_epoch_begin(session.cursor.epoch,
                                session.cursor.batches_per_epoch)
 
-    def end_fit_epoch(self, session, results):
+    def _fit_epoch_after(self, session, results):
         raws, means = results
         train_metric_lists, test_metric_lists = means
         for spy in session.spies:
             spy.on_epoch_end(train_metric_lists, test_metric_lists)
 
-    def begin_fit_batch(self, session):
+    def fit_batch_before(self, session):
         if not session.cursor.batch:
-            self.begin_fit_epoch(session)
+            self._fit_epoch_before(session)
 
-    def do_fit_batch(self, session, is_training, xx, yy):
+    def fit_batch_main(self, session, is_training, xx, yy):
         xx = [Z.constant(x) for x in xx]
         yy = [Z.constant(y) for y in yy]
         if is_training:
@@ -181,45 +190,50 @@ class Model(object):
             batch_metric_lists = self.test_on_batch(session, xx, yy)
         return batch_metric_lists
 
-    def end_fit_batch(self, session, is_training, xx, yy, batch_metric_lists):
+    def fit_batch_after(self, session, is_training, xx, yy, batch_metric_lists):
         session.collector.add(is_training, batch_metric_lists)
         is_epoch_done, is_fit_done = \
             session.cursor.note_completed_batch(is_training)
         if is_epoch_done:
             epoch_results = session.collector.harvest()
-            self.end_fit_epoch(session, epoch_results)
+            self._fit_epoch_after(session, epoch_results)
         return is_fit_done
 
     def fit_batch(self, session, is_training, xx, yy):
-        self.begin_fit_batch(session)
-        batch_metric_lists = self.do_fit_batch(session, is_training, xx, yy)
-        return self.end_fit_batch(session, is_training, xx, yy,
-                                  batch_metric_lists)
+        self.fit_batch_before(session)
+        batch_metric_lists = self.fit_batch_main(session, is_training, xx, yy)
+        return self.fit_batch_after(session, is_training, xx, yy,
+                                    batch_metric_lists)
 
-    def begin_fit(self, session):
+    # --------------------------------------------------------------------------
+    # Fit given a training session.
+
+    def fit_before(self, session):
         for spy in session.spies:
             spy.on_fit_begin(session.batch_timer.meter_name_lists,
                              session.cursor.epoch, session.cursor.end_epoch)
 
-    def each_batch_forever(self, session):
+    def _each_batch_forever(self, session):
         while True:
             for batch in session.dataset.each_batch(session.cursor.batch_size):
                 yield batch
 
-    def do_fit(self, session):
-        for (xx, yy), is_training in self.each_batch_forever(session):
+    def fit_main(self, session):
+        for (xx, yy), is_training in self._each_batch_forever(session):
             if self.fit_batch(session, is_training, xx, yy):
                 break
 
-    def end_fit(self, session):
+    def fit_after(self, session):
         for spy in session.spies:
             spy.on_fit_end()
 
     def fit_session(self, session):
-        self.begin_fit(session)
-        self.do_fit(session)
-        self.end_fit(session)
-        return session
+        self.fit_before(session)
+        self.fit_main(session)
+        self.fit_after(session)
+
+    # --------------------------------------------------------------------------
+    # Fit with smart arguments.
 
     @require_kwargs_after(3)
     def fit(self, data, loss, test_frac=None, optim='adam', batch=64, start=0,
@@ -228,7 +242,8 @@ class Model(object):
             data, loss, test_frac, optim, batch, start, stop, spy, timer_cache)
         self.ensure_built()
         session.optimizer.set_params(self.params())  # TODO: fix this.
-        return self.fit_session(session)
+        self.fit_session(session)
+        return session
 
     @require_kwargs_after(2)
     def fit_reg(self, data, test_frac=None, optim='adam', batch=64, start=0,
