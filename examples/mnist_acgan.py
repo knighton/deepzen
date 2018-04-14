@@ -22,12 +22,13 @@ def parse_flags():
 
     ap.add_argument('--d_metrics', type=str, default='xe,acc;xe,acc')
     ap.add_argument('--d_optim', type=str, default='adam')
-    ap.add_argument('--d_spy', type=str, default='rows,server:1337')
+    ap.add_argument('--d_spy', type=str,
+                    default='server:1337,progress_bar,rows')
     ap.add_argument('--d_timer_cache', type=int, default=10000)
 
     ap.add_argument('--gd_metrics', type=str, default='xe,acc;xe,acc')
     ap.add_argument('--gd_optim', type=str, default='adam')
-    ap.add_argument('--gd_spy', type=str, default='progress_bar,server:1338')
+    ap.add_argument('--gd_spy', type=str, default='server:1338')
     ap.add_argument('--gd_timer_cache', type=int, default=10000)
 
     return ap.parse_args()
