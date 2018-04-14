@@ -139,7 +139,7 @@ class Node(PseudoNode):
         nodes_seen.add(self)
 
         for succ in self._succs:
-            succ.propagate_params(params_seen, params)
+            succ.propagate_params(nodes_seen, params_seen, params)
 
     def sub_forward(self, xx, is_training):
         """
