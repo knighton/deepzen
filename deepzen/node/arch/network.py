@@ -59,7 +59,7 @@ class Network(Model, Node):
             for input, x_sigs in zip(self._inputs, x_sigs_per_input):
                 assert len(x_sigs) == 1
                 x_sig, = x_sigs
-                assert input.layer._required_sig == x_sig
+                # assert input._required_sig == x_sig  TODO
         for input in self._inputs:
             input.propagate_build()
         y_sigs = []
@@ -85,7 +85,6 @@ class Network(Model, Node):
     @classmethod
     def _assign_tensors_to_nodes(cls, xx, num_inputs):
         assert isinstance(xx, list)
-        print('?', type(xx[0]))  # TODO: check type.
         if len(xx) == 1:
             xxx = [xx for i in range(num_inputs)]
         elif num_inputs == 1:
@@ -98,12 +97,14 @@ class Network(Model, Node):
     def sub_forward(self, xx, is_training):
         xxx = self._assign_tensors_to_nodes(xx, len(self._inputs))
         for input, xx in zip(self._inputs, xxx):
-            input.propagate_forward(is_training)
-        y_sigs = []
+            assert len(xx) == 1
+            x, = xx
+            input.feed(x, is_training)
+        yy = []
         for output in self._outputs:
-            assert output._y_sigs
-            y_sigs += output._y_sigs
-        return y_sigs
+            assert output._yy is not None
+            yy += output._yy
+        return yy
 
     def forward(self, xx, is_training):
         return self.sub_forward(xx, is_training)
