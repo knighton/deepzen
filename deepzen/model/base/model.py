@@ -1,6 +1,6 @@
 from ... import api as Z
 from ...util.py import require_kwargs_after
-from .training_session import TrainingSession
+from .trainer import Trainer
 
 
 class Model(object):
@@ -43,17 +43,17 @@ class Model(object):
     # --------------------------------------------------------------------------
     # Train on batch.
 
-    def train_on_batch(self, session, xx, yy_true):
+    def train_on_batch(self, trainer, xx, yy_true):
         """
         Train on one batch.
         """
         # Start timing the whole method.
-        t = session.batch_timer.train
+        t = trainer.batch_timer.train
         t.start()
 
         # 1. Execute "on begin" callbacks.
         t.mark()
-        for spy in session.spies:
+        for spy in trainer.spies:
             t.mark()
             spy.on_train_on_batch_begin()
             t.mark()
@@ -69,7 +69,7 @@ class Model(object):
             # 3. Compute the loss of each output.
             t.mark()
             for meters, y_true, y_pred in \
-                    zip(session.meter_lists, yy_true, yy_pred):
+                    zip(trainer.meter_lists, yy_true, yy_pred):
                 get_loss = meters[0]
                 t.mark()
                 loss = Z.mean(get_loss(y_true, y_pred))
@@ -81,7 +81,7 @@ class Model(object):
         metric_lists = []
         t.mark()
         for i, (meters, y_true, y_pred) in \
-                enumerate(zip(session.meter_lists, yy_true, yy_pred)):
+                enumerate(zip(trainer.meter_lists, yy_true, yy_pred)):
             loss = Z.scalar(losses[i])
             metrics = [loss]
             for extra_meter in meters[1:]:
@@ -101,12 +101,12 @@ class Model(object):
 
         # 6. Perform one step of the optimizer.
         t.mark()
-        session.optimizer.step()
+        trainer.optimizer.step()
         t.mark()
 
         # 7. Execute "on end" callbacks.
         t.mark()
-        for spy in session.spies:
+        for spy in trainer.spies:
             t.mark()
             spy.on_train_on_batch_end()
             t.mark()
@@ -120,17 +120,17 @@ class Model(object):
     # --------------------------------------------------------------------------
     # Test on batch.
 
-    def test_on_batch(self, session, xx, yy_true):
+    def test_on_batch(self, trainer, xx, yy_true):
         """
         Test on one batch.
         """
         # Start timing the whole method.
-        t = session.batch_timer.test
+        t = trainer.batch_timer.test
         t.start()
 
         # 1. Execute "on begin" callbacks.
         t.mark()
-        for spy in session.spies:
+        for spy in trainer.spies:
             t.mark()
             spy.on_test_on_batch_begin()
             t.mark()
@@ -145,7 +145,7 @@ class Model(object):
         losses = []
         t.mark()
         for i, (meters, y_true, y_pred) in \
-                enumerate(zip(session.meter_lists, yy_true, yy_pred)):
+                enumerate(zip(trainer.meter_lists, yy_true, yy_pred)):
             get_loss = meters[0]
             t.mark()
             loss = Z.mean(get_loss(y_true, y_pred))
@@ -159,7 +159,7 @@ class Model(object):
         metric_lists = []
         t.mark()
         for i, (meters, y_true, y_pred) in \
-                enumerate(zip(session.meter_lists, yy_true, yy_pred)):
+                enumerate(zip(trainer.meter_lists, yy_true, yy_pred)):
             loss = Z.scalar(losses[i])
             metrics = [loss]
             for extra_meter in meters[1:]:
@@ -173,7 +173,7 @@ class Model(object):
 
         # 5. Execute "on end" callbacks.
         t.mark()
-        for spy in session.spies:
+        for spy in trainer.spies:
             t.mark()
             spy.on_test_on_batch_end()
             t.mark()
@@ -187,98 +187,98 @@ class Model(object):
     # --------------------------------------------------------------------------
     # Fit on batch, calling batch train/test (notes epochs when appropriate).
 
-    def _fit_epoch_before(self, session):
+    def _fit_epoch_before(self, trainer):
         """
         Internally, note that we've begun a training epoch.
         """
-        for spy in session.spies:
-            spy.on_epoch_begin(session.cursor.epoch,
-                               session.cursor.batches_per_epoch)
+        for spy in trainer.spies:
+            spy.on_epoch_begin(trainer.cursor.epoch,
+                               trainer.cursor.batches_per_epoch)
 
-    def _fit_epoch_after(self, session, results):
+    def _fit_epoch_after(self, trainer, results):
         """
         Internally, note that we've ended a training epoch.
         """
         raws, means = results
         train_metric_lists, test_metric_lists = means
-        for spy in session.spies:
+        for spy in trainer.spies:
             spy.on_epoch_end(train_metric_lists, test_metric_lists)
 
-    def fit_batch_before(self, session):
+    def fit_batch_before(self, trainer):
         """
         The pre-work we need to run before the body of fit_batch.
         """
-        if not session.cursor.batch:
-            self._fit_epoch_before(session)
+        if not trainer.cursor.batch:
+            self._fit_epoch_before(trainer)
 
-    def fit_batch_body(self, session, is_training, xx, yy):
+    def fit_batch_body(self, trainer, is_training, xx, yy):
         """
         The work of fit_batch, bookended by pre/post callbacks.
         """
         xx = [Z.constant(x) for x in xx]
         yy = [Z.constant(y) for y in yy]
         if is_training:
-            batch_metric_lists = self.train_on_batch(session, xx, yy)
+            batch_metric_lists = self.train_on_batch(trainer, xx, yy)
         else:
-            batch_metric_lists = self.test_on_batch(session, xx, yy)
+            batch_metric_lists = self.test_on_batch(trainer, xx, yy)
         return batch_metric_lists
 
-    def fit_batch_after(self, session, is_training, xx, yy, batch_metric_lists):
+    def fit_batch_after(self, trainer, is_training, xx, yy, batch_metric_lists):
         """
         The post-work we need to run after the body of fit_batch.
         """
-        session.epoch_results.add(is_training, batch_metric_lists)
+        trainer.epoch_results.add(is_training, batch_metric_lists)
         is_epoch_done, is_fit_done = \
-            session.cursor.note_completed_batch(is_training)
+            trainer.cursor.note_completed_batch(is_training)
         if is_epoch_done:
-            epoch_results = session.epoch_results.harvest()
-            self._fit_epoch_after(session, epoch_results)
+            epoch_results = trainer.epoch_results.harvest()
+            self._fit_epoch_after(trainer, epoch_results)
         return is_fit_done
 
-    def fit_batch(self, session, is_training, xx, yy):
+    def fit_batch(self, trainer, is_training, xx, yy):
         """
         Fit (train or test) on one batch.
         """
-        self.fit_batch_before(session)
-        batch_metric_lists = self.fit_batch_body(session, is_training, xx, yy)
-        return self.fit_batch_after(session, is_training, xx, yy,
+        self.fit_batch_before(trainer)
+        batch_metric_lists = self.fit_batch_body(trainer, is_training, xx, yy)
+        return self.fit_batch_after(trainer, is_training, xx, yy,
                                     batch_metric_lists)
 
     # --------------------------------------------------------------------------
-    # Fit given a training session.
+    # Fit given a training trainer.
 
-    def fit_before(self, session):
+    def fit_before(self, trainer):
         """
-        The pre-work we need to run before the body of fit_session.
+        The pre-work we need to run before the body of fit_trainer.
         """
-        for spy in session.spies:
-            spy.on_fit_begin(session.batch_timer.meter_name_lists,
-                             session.cursor.epoch, session.cursor.end_epoch)
+        for spy in trainer.spies:
+            spy.on_fit_begin(trainer.batch_timer.meter_name_lists,
+                             trainer.cursor.epoch, trainer.cursor.end_epoch)
 
-    def fit_body(self, session):
+    def fit_body(self, trainer):
         """
-        The work of fit_session, bookended by pre/post callbacks.
+        The work of fit_trainer, bookended by pre/post callbacks.
         """
-        each_batch_forever = session.dataset.each_batch_forever
-        batch_size = session.cursor.batch_size
+        each_batch_forever = trainer.dataset.each_batch_forever
+        batch_size = trainer.cursor.batch_size
         for (xx, yy), is_training in each_batch_forever(batch_size):
-            if self.fit_batch(session, is_training, xx, yy):
+            if self.fit_batch(trainer, is_training, xx, yy):
                 break
 
-    def fit_after(self, session):
+    def fit_after(self, trainer):
         """
-        The post-work we need to run after the body of fit_session.
+        The post-work we need to run after the body of fit_trainer.
         """
-        for spy in session.spies:
+        for spy in trainer.spies:
             spy.on_fit_end()
 
-    def fit_session(self, session):
+    def fit_trainer(self, trainer):
         """
-        Fit the model, according to the training session.
+        Fit the model, according to the training trainer.
         """
-        self.fit_before(session)
-        self.fit_body(session)
-        self.fit_after(session)
+        self.fit_before(trainer)
+        self.fit_body(trainer)
+        self.fit_after(trainer)
 
     # --------------------------------------------------------------------------
     # Fit with smart arguments.
@@ -287,14 +287,14 @@ class Model(object):
     def fit(self, data, loss, test_frac=None, optim='adam', batch=64, start=0,
             stop=20, spy=None, timer_cache=10000):
         """
-        Fit the model, according to the smart arguments (creates a session).
+        Fit the model, according to the smart arguments (creates a trainer).
         """
-        session = TrainingSession.init_from_args(
+        trainer = Trainer.init_from_args(
             data, loss, test_frac, optim, batch, start, stop, spy, timer_cache)
         self.ensure_built()
-        session.optimizer.set_params(self.params())  # TODO: fix this.
-        self.fit_session(session)
-        return session
+        trainer.optimizer.set_params(self.params())  # TODO: fix this.
+        self.fit_trainer(trainer)
+        return trainer
 
     @require_kwargs_after(2)
     def fit_reg(self, data, test_frac=None, optim='adam', batch=64, start=0,

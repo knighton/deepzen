@@ -10,7 +10,7 @@ from .metric_collector import MetricCollector
 from .training_cursor import TrainingCursor
 
 
-class TrainingSession(object):
+class Trainer(object):
     def __init__(self, dataset, cursor, epoch_results, meter_lists, optimizer,
                  spies, batch_timer):
         self.dataset = dataset
