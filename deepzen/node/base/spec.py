@@ -23,7 +23,7 @@ class XYSpec(Spec):
         raise NotImplementedError
 
     def build(self, x_sigs=None):
-        if x_sigs is None:
+        if not x_sigs:
             x_sig = None
         else:
             assert len(x_sigs) == 1
