@@ -249,7 +249,7 @@ class Model(object):
 
     def fit_before(self, trainer):
         """
-        The pre-work we need to run before the body of fit_trainer.
+        The pre-work we need to run before the body of resume_fit.
         """
         for spy in trainer.spies:
             spy.on_fit_begin(trainer.batch_timer.meter_name_lists,
@@ -257,7 +257,7 @@ class Model(object):
 
     def fit_body(self, trainer):
         """
-        The work of fit_trainer, bookended by pre/post callbacks.
+        The work of resume_fit, bookended by pre/post callbacks.
         """
         each_batch_forever = trainer.dataset.each_batch_forever
         batch_size = trainer.cursor.batch_size
@@ -267,12 +267,12 @@ class Model(object):
 
     def fit_after(self, trainer):
         """
-        The post-work we need to run after the body of fit_trainer.
+        The post-work we need to run after the body of resume_fit.
         """
         for spy in trainer.spies:
             spy.on_fit_end()
 
-    def fit_trainer(self, trainer):
+    def resume_fit(self, trainer):
         """
         Fit the model, according to the training state.
         """
@@ -293,7 +293,7 @@ class Model(object):
             data, loss, test_frac, optim, batch, start, stop, spy, timer_cache)
         self.ensure_built()
         trainer.optimizer.set_params(self.params())  # TODO: fix this.
-        self.fit_trainer(trainer)
+        self.resume_fit(trainer)
         return trainer
 
     @require_kwargs_after(2)
