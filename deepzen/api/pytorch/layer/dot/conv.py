@@ -30,8 +30,8 @@ class PyTorchConvAPI(BaseConvAPI):
     def conv3d(self, x, kernel, bias, stride, padding, dilation):
         return F.conv3d(x, kernel, bias, stride, padding, dilation)
 
-    def conv_transpose(self, x, kernel, bias, stride, padding, dilation,
-                       xsnd=None):
+    def conv_transpose(self, x, kernel, bias, stride, padding, out_padding,
+                       dilation, xsnd=None):
         if xsnd is None:
             xsnd = x.dim() - 2
         if xsnd == 1:
@@ -42,25 +42,26 @@ class PyTorchConvAPI(BaseConvAPI):
             func = self.conv_transpose3d
         else:
             assert False
-        return func(x, kernel, bias, stride, padding, dilation)
+        return func(x, kernel, bias, stride, padding, out_padding, dilation)
 
-    def conv_transpose1d(self, x, kernel, bias, stride, padding, dilation):
+    def conv_transpose1d(self, x, kernel, bias, stride, padding, out_padding,
+                         dilation):
         stride = unpack_dim(stride)
         padding = unpack_dim(padding)
-        out_padding = 0
+        out_padding = unpack_dim(out_padding)
         groups = 1
         dilation = unpack_dim(dilation)
         return F.conv_transpose1d(x, kernel, bias, stride, padding, out_padding,
                                   groups, dilation)
 
-    def conv_transpose2d(self, x, kernel, bias, stride, padding, dilation):
-        out_padding = 0
+    def conv_transpose2d(self, x, kernel, bias, stride, padding, out_padding,
+                         dilation):
         groups = 1
         return F.conv_transpose2d(x, kernel, bias, stride, padding, out_padding,
                                   groups, dilation)
 
-    def conv_transpose3d(self, x, kernel, bias, stride, padding, dilation):
-        out_padding = 0
+    def conv_transpose3d(self, x, kernel, bias, stride, padding, out_padding,
+                         dilation):
         groups = 1
         return F.conv_transpose3d(x, kernel, bias, stride, padding, out_padding,
                                   groups, dilation)

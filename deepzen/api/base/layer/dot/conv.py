@@ -30,30 +30,34 @@ class BaseConvAPI(object):
             y_sample_shape[1 + i] = floor(numerator // stride[i] + 1)
         return tuple(y_sample_shape)
 
-    def conv_transpose(self, x, kernel, bias, stride, padding, dilation,
-                       xsnd=None):
+    def conv_transpose(self, x, kernel, bias, stride, padding, out_padding,
+                       dilation, xsnd=None):
         raise NotImplementedError
 
-    def conv_transpose1d(self, x, kernel, bias, stride, padding, dilation):
+    def conv_transpose1d(self, x, kernel, bias, stride, padding, out_padding,
+                         dilation):
         raise NotImplementedError
 
-    def conv_transpose2d(self, x, kernel, bias, stride, padding, dilation):
+    def conv_transpose2d(self, x, kernel, bias, stride, padding, out_padding,
+                         dilation):
         raise NotImplementedError
 
-    def conv_transpose3d(self, x, kernel, bias, stride, padding, dilation):
+    def conv_transpose3d(self, x, kernel, bias, stride, padding, out_padding,
+                         dilation):
         raise NotImplementedError
 
     def conv_transpose_y_sample_shape(self, x_sample_shape, out_channels, face,
-                                      stride, padding, dilation):
+                                      stride, padding, out_padding, dilation):
         x_spatial_ndim = len(x_sample_shape) - 1
         face = unpack_shape(face, x_spatial_ndim)
         stride = unpack_shape(stride, x_spatial_ndim)
         padding = unpack_shape(padding, x_spatial_ndim)
+        out_padding = unpack_shape(out_padding, x_spatial_ndim)
         dilation = unpack_shape(dilation, x_spatial_ndim)
         y_sample_shape = [None] * len(x_sample_shape)
         y_sample_shape[0] = out_channels
         for i in range(x_spatial_ndim):
             y_sample_shape[i + 1] = \
                 (x_sample_shape[i + 1] - 1) * stride[i] - 2 * padding[i] + \
-                window[i]
+                face[i] + out_padding[i]
         return tuple(y_sample_shape)

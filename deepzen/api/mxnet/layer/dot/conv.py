@@ -36,19 +36,22 @@ class MXNetConvAPI(BaseConvAPI):
         face = kernel.shape[2:]
         stride = unpack_shape(stride, xsnd)
         padding = unpack_shape(padding, xsnd)
+        out_padding = unpack_shape(out_padding, xsnd)
         dilation = unpack_shape(dilation, xsnd)
-        out_dim = kernel.shape[0]
         return mx.nd.Deconvolution(x, kernel, bias, face, stride, dilation,
-                                   padding, out_dim)
+                                   padding, out_padding)
 
-    def conv_transpose1d(self, x, kernel, bias, stride, padding, dilation):
+    def conv_transpose1d(self, x, kernel, bias, stride, padding, out_padding,
+                         dilation):
         return self.conv_transpose(
-            x, kernel, bias, stride, padding, dilation, 1)
+            x, kernel, bias, stride, padding, out_padding, dilation, 1)
 
-    def conv_transpose2d(self, x, kernel, bias, stride, padding, dilation):
+    def conv_transpose2d(self, x, kernel, bias, stride, padding, out_padding,
+                         dilation):
         return self.conv_transpose(
-            x, kernel, bias, stride, padding, dilation, 2)
+            x, kernel, bias, stride, padding, out_padding, dilation, 2)
 
-    def conv_transpose3d(self, x, kernel, bias, stride, padding, dilation):
+    def conv_transpose3d(self, x, kernel, bias, stride, padding, out_padding,
+                         dilation):
         return self.conv_transpose(
-            x, kernel, bias, stride, padding, dilation, 3)
+            x, kernel, bias, stride, padding, out_padding, dilation, 3)
