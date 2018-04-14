@@ -79,6 +79,9 @@ class ConvSpec(BaseConvSpec):
         return ConvLayer(x_sig, y_sig, kernel, bias, stride, padding, dilation)
 
 
+Conv, Conv1D, Conv2D, Conv3D = keywordize(ConvSpec, [None, 1, 2, 3])
+
+
 class ConvTransposeLayer(BaseConvLayer):
     def forward(self, x, is_training):
         x_sig, = self._x_sigs
