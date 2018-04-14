@@ -245,7 +245,7 @@ class Model(object):
                                     batch_metric_lists)
 
     # --------------------------------------------------------------------------
-    # Fit given a training trainer.
+    # Fit given a training state.
 
     def fit_before(self, trainer):
         """
@@ -274,7 +274,7 @@ class Model(object):
 
     def fit_trainer(self, trainer):
         """
-        Fit the model, according to the training trainer.
+        Fit the model, according to the training state.
         """
         self.fit_before(trainer)
         self.fit_body(trainer)
