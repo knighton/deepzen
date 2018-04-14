@@ -8,27 +8,45 @@ class Model(object):
         self._is_built = False
 
     def is_built(self):
+        """
+        Get whether the model is built.
+        """
         return self._is_built
 
     def build(self):
+        """
+        Build the model.
+        """
         raise NotImplementedError
 
     def ensure_built(self):
+        """
+        Ensure that the model is built.
+        """
         if self._is_built:
             return
         self.build()
         self._is_built = True
 
     def params(self):
+        """
+        Get all the model's parameters.
+        """
         raise NotImplementedError
 
     def forward(self, xx, is_training):
+        """
+        Forward pass.
+        """
         raise NotImplementedError
 
     # --------------------------------------------------------------------------
     # Train on batch.
 
     def train_on_batch(self, session, xx, yy_true):
+        """
+        Train on one batch.
+        """
         # Start timing the whole method.
         t = session.batch_timer.train
         t.start()
@@ -103,6 +121,9 @@ class Model(object):
     # Test on batch.
 
     def test_on_batch(self, session, xx, yy_true):
+        """
+        Test on one batch.
+        """
         # Start timing the whole method.
         t = session.batch_timer.test
         t.start()
@@ -164,24 +185,36 @@ class Model(object):
         return metric_lists
 
     # --------------------------------------------------------------------------
-    # Fit on batch, calling batch train/test (bookends epochs when appropriate).
+    # Fit on batch, calling batch train/test (notes epochs when appropriate).
 
     def _fit_epoch_before(self, session):
+        """
+        Internally, note that we've begun a training epoch.
+        """
         for spy in session.spies:
             spy.on_epoch_begin(session.cursor.epoch,
                                session.cursor.batches_per_epoch)
 
     def _fit_epoch_after(self, session, results):
+        """
+        Internally, note that we've ended a training epoch.
+        """
         raws, means = results
         train_metric_lists, test_metric_lists = means
         for spy in session.spies:
             spy.on_epoch_end(train_metric_lists, test_metric_lists)
 
     def fit_batch_before(self, session):
+        """
+        The pre-work we need to run before the body of fit_batch.
+        """
         if not session.cursor.batch:
             self._fit_epoch_before(session)
 
-    def fit_batch_main(self, session, is_training, xx, yy):
+    def fit_batch_body(self, session, is_training, xx, yy):
+        """
+        The work of fit_batch, bookended by pre/post callbacks.
+        """
         xx = [Z.constant(x) for x in xx]
         yy = [Z.constant(y) for y in yy]
         if is_training:
@@ -191,6 +224,9 @@ class Model(object):
         return batch_metric_lists
 
     def fit_batch_after(self, session, is_training, xx, yy, batch_metric_lists):
+        """
+        The post-work we need to run after the body of fit_batch.
+        """
         session.collector.add(is_training, batch_metric_lists)
         is_epoch_done, is_fit_done = \
             session.cursor.note_completed_batch(is_training)
@@ -200,8 +236,11 @@ class Model(object):
         return is_fit_done
 
     def fit_batch(self, session, is_training, xx, yy):
+        """
+        Fit (train or test) on one batch.
+        """
         self.fit_batch_before(session)
-        batch_metric_lists = self.fit_batch_main(session, is_training, xx, yy)
+        batch_metric_lists = self.fit_batch_body(session, is_training, xx, yy)
         return self.fit_batch_after(session, is_training, xx, yy,
                                     batch_metric_lists)
 
@@ -209,27 +248,36 @@ class Model(object):
     # Fit given a training session.
 
     def fit_before(self, session):
+        """
+        The pre-work we need to run before the body of fit_session.
+        """
         for spy in session.spies:
             spy.on_fit_begin(session.batch_timer.meter_name_lists,
                              session.cursor.epoch, session.cursor.end_epoch)
 
-    def _each_batch_forever(self, session):
-        while True:
-            for batch in session.dataset.each_batch(session.cursor.batch_size):
-                yield batch
-
-    def fit_main(self, session):
-        for (xx, yy), is_training in self._each_batch_forever(session):
+    def fit_body(self, session):
+        """
+        The work of fit_session, bookended by pre/post callbacks.
+        """
+        each_batch_forever = session.dataset.each_batch_forever
+        batch_size = session.cursor.batch_size
+        for (xx, yy), is_training in each_batch_forever(batch_size):
             if self.fit_batch(session, is_training, xx, yy):
                 break
 
     def fit_after(self, session):
+        """
+        The post-work we need to run after the body of fit_session.
+        """
         for spy in session.spies:
             spy.on_fit_end()
 
     def fit_session(self, session):
+        """
+        Fit the model, according to the training session.
+        """
         self.fit_before(session)
-        self.fit_main(session)
+        self.fit_body(session)
         self.fit_after(session)
 
     # --------------------------------------------------------------------------
@@ -238,6 +286,9 @@ class Model(object):
     @require_kwargs_after(3)
     def fit(self, data, loss, test_frac=None, optim='adam', batch=64, start=0,
             stop=20, spy=None, timer_cache=10000):
+        """
+        Fit the model, according to the smart arguments (creates a session).
+        """
         session = TrainingSession.init_from_args(
             data, loss, test_frac, optim, batch, start, stop, spy, timer_cache)
         self.ensure_built()
@@ -248,6 +299,9 @@ class Model(object):
     @require_kwargs_after(2)
     def fit_reg(self, data, test_frac=None, optim='adam', batch=64, start=0,
                 stop=20, spy=None, timer_cache=10000):
+        """
+        Fit the model as a regressor with one output.
+        """
         loss = [['mean_squared_error']]
         return self.fit(data, loss, test_frac=test_frac, optim=optim,
                         batch=batch, start=start, stop=stop, spy=spy,
@@ -256,6 +310,9 @@ class Model(object):
     @require_kwargs_after(2)
     def fit_clf(self, data, test_frac=None, optim='adam', batch=64, start=0,
                 stop=20, spy=None, timer_cache=10000):
+        """
+        Fit the model as a classifier with one output.
+        """
         loss = [['cross_entropy', 'accuracy']]
         return self.fit(data, loss, test_frac=test_frac, optim=optim,
                         batch=batch, start=start, stop=stop, spy=spy,

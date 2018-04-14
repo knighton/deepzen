@@ -36,3 +36,8 @@ class Dataset(object):
                 yield next(each_train), True
             else:
                 yield next(each_test), False
+
+    def each_batch_forever(self, batch_size):
+        while True:
+            for batch in self.each_batch(batch_size):
+                yield batch
