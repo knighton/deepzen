@@ -1,3 +1,5 @@
+import numpy as np
+
 from ... import api as Z
 from ...util.py import require_kwargs_after
 from .trainer import Trainer
@@ -41,15 +43,21 @@ class Model(object):
         raise NotImplementedError
 
     def predict(self, xx, batch_size=64):
-        num_batches = (len(xx) + batch_size - 1) // batch_size
-        batch_yyy = []
+        assert xx
+        x = xx[0]
+        num_batches = (len(x) + batch_size - 1) // batch_size
+        batch_yyy = None
         for batch in range(num_batches):
-            batch_xx = xx[batch * batch_size : (batch + 1) * batch_size]
+            batch_xx = [x[batch * batch_size : (batch + 1) * batch_size]
+                        for x in xx]
             batch_xx = [Z.constant(x) for x in batch_xx]
             batch_yy = self.forward(batch_xx, False)
             batch_yy = [Z.numpy(batch_y) for batch_y in batch_yy]
-            batch_yyy.append(batch_yy)
-        return np.concatenate(batch_yyy, 0)
+            if batch_yyy is None:
+                batch_yyy = [[] for batch_y in batch_yy]
+            for i, batch_y in enumerate(batch_yy):
+                batch_yyy[i].append(batch_y)
+        return [np.concatenate(batch_yy, 0) for batch_yy in batch_yyy]
 
     # --------------------------------------------------------------------------
     # Train on batch.
