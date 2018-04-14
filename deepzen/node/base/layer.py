@@ -16,8 +16,11 @@ class Layer(object):
                 xsnd = x_sig.spatial_ndim_or_none()
                 if xsnd is not None:
                     xsnds.append(xsnd)
-            assert len(set(xsnds)) == 1
-            xsnd = xsnds[0]
+            if xsnds:
+                assert len(set(xsnds)) == 1
+                xsnd = xsnds[0]
+            else:
+                xsnd = None
         if y_sigs is None:
             y_sigs = x_sigs
         self._x_sigs = x_sigs
