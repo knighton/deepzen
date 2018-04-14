@@ -282,8 +282,8 @@ def run(flags):
     discriminator.fit_before(d_trainer)
     generator_discriminator.fit_before(gd_trainer)
     batches_per_epoch = d_dataset.num_batches(flags.batch_size)
-    d_each_batch = d_dataset.each_batch(flags.batch_size)
-    gd_each_batch = gd_dataset.each_batch(flags.batch_size)
+    d_each_batch = d_dataset.each_batch_forever(flags.batch_size)
+    gd_each_batch = gd_dataset.each_batch_forever(flags.batch_size)
     for epoch in range(flags.num_epochs):
         for batch in range(batches_per_epoch):
             # Fit the discriminator.
