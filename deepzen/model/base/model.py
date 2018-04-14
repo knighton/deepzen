@@ -40,6 +40,17 @@ class Model(object):
         """
         raise NotImplementedError
 
+    def predict(self, xx, batch_size=64):
+        num_batches = (len(xx) + batch_size - 1) // batch_size
+        batch_yyy = []
+        for batch in range(num_batches):
+            batch_xx = xx[batch * batch_size : (batch + 1) * batch_size]
+            batch_xx = [Z.constant(x) for x in batch_xx]
+            batch_yy = self.forward(batch_xx, False)
+            batch_yy = [Z.numpy(batch_y) for batch_y in batch_yy]
+            batch_yyy.append(batch_yy)
+        return np.concatenate(batch_yyy, 0)
+
     # --------------------------------------------------------------------------
     # Train on batch.
 
