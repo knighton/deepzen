@@ -62,7 +62,7 @@ class BaseConvSpec(XYSpec):
 
 
 class ConvLayer(BaseConvLayer):
-    def forward(self, x, is_training):
+    def forward_x_y(self, x, is_training):
         x_sig, = self._x_sigs
         xsnd = x_sig.spatial_ndim()
         return Z.conv(x, self._kernel, self._bias, self._stride, self._padding,
@@ -83,7 +83,7 @@ Conv, Conv1D, Conv2D, Conv3D = keywordize(ConvSpec, [None, 1, 2, 3])
 
 
 class ConvTransposeLayer(BaseConvLayer):
-    def forward(self, x, is_training):
+    def forward_x_y(self, x, is_training):
         x_sig, = self._x_sigs
         xsnd = x_sig.spatial_ndim()
         return Z.conv_transepose(
