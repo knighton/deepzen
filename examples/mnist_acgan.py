@@ -238,10 +238,12 @@ class GeneratorSplit(Split):
             yield self.make_batch(batch_size)
 
 
-def make_generator_dataset(samples_per_epoch, latent_dim, num_classes,
-                           soft_one):
-    train = GeneratorSplit(samples_per_epoch, latent_dim, num_classes, soft_one)
-    test = GeneratorSplit(samples_per_epoch, latent_dim, num_classes, soft_one)
+def make_generator_dataset(train_samples_per_epoch, test_samples_per_epoch,
+                           latent_dim, num_classes, soft_one):
+    train = GeneratorSplit(
+        train_samples_per_epoch, latent_dim, num_classes, soft_one)
+    test = GeneratorSplit(
+        test_samples_per_epoch, latent_dim, num_classes, soft_one)
     return Dataset(train, test)
 
 
@@ -260,9 +262,9 @@ def run(flags):
     d_dataset = make_discriminator_dataset(
         mnist, generator, flags.latent_dim, num_classes, flags.soft_zero,
         flags.soft_one)
-    gd_samples_per_epoch = d_dataset.num_samples()
     gd_dataset = make_generator_dataset(
-        gd_samples_per_epoch, flags.latent_dim, num_classes, flags.soft_one)
+        d_dataset.train.num_samples(), d_dataset.test.num_samples(),
+        flags.latent_dim, num_classes, flags.soft_one)
 
     # Now create the model trainers.
     begin_epoch = 0
