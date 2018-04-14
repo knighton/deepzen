@@ -1,3 +1,5 @@
+from copy import deepcopy
+
 from .gt_cache import GTCache
 
 
@@ -38,7 +40,7 @@ class PseudoNode(object):
         """
         Get a deepcopy.
         """
-        assert False  # TODO
+        return deepcopy(self)  # TODO
 
     def desugar(self):
         """
