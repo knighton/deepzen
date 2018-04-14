@@ -46,7 +46,7 @@ class BaseConvSpec(XYSpec):
         else:
             y_channels = x_channels
         face = unpack_shape(self._face, x_sig.spatial_ndim())
-        kernel_shape = (y_channels, x_channels) + face
+        kernel_shape = self.make_kernel_shape(x_channels, y_channels, face)
         kernel = self._kernel_init(kernel_shape, x_sig.dtype(), 'kernel')
         if self._has_bias:
             bias_shape = y_channels,
@@ -75,6 +75,9 @@ class ConvSpec(BaseConvSpec):
         return Z.conv_y_sample_shape(
             x_sample_shape, out_channels, face, stride, padding, dilation)
 
+    def make_kernel_shape(self, x_channels, y_channels, face):
+        return (y_channels, x_channels) + face
+
     def make_layer(self, x_sig, y_sig, kernel, bias, stride, padding, dilation):
         return ConvLayer(x_sig, y_sig, kernel, bias, stride, padding, dilation)
 
@@ -86,7 +89,7 @@ class ConvTransposeLayer(BaseConvLayer):
     def forward_x_y(self, x, is_training):
         x_sig, = self._x_sigs
         xsnd = x_sig.spatial_ndim()
-        return Z.conv_transepose(
+        return Z.conv_transpose(
             x, self._kernel, self._bias, self._stride, self._padding,
             self._dilation, xsnd)
 
@@ -97,10 +100,13 @@ class ConvTransposeSpec(BaseConvSpec):
         return Z.conv_transpose_y_sample_shape(
             x_sample_shape, out_channels, face, stride, padding, dilation)
 
+    def make_kernel_shape(self, x_channels, y_channels, face):
+        return (x_channels, y_channels) + face
+
     def make_layer(self, x_sig, y_sig, kernel, bias, stride, padding, dilation):
         return ConvTransposeLayer(x_sig, y_sig, kernel, bias, stride, padding,
                                   dilation)
 
 
 ConvTranspose, ConvTranspose1D, ConvTranspose2D, ConvTranspose3D = \
-    keywordize(ConvSpec, [None, 1, 2, 3])
+    keywordize(ConvTransposeSpec, [None, 1, 2, 3])
