@@ -9,7 +9,20 @@ def register_spy(x):
     return REGISTRY.register(x)
 
 
+def unpack_spy_str(s):
+    from ..server import Server
+    return Server.parse(s)
+
+
 def unpack_spy(x):
+    if isinstance(x, Spy):
+        return x
+
+    if isinstance(x, str):
+        spy = unpack_spy_str(x)
+        if spy:
+            return spy
+
     return REGISTRY.get(x)
 
 

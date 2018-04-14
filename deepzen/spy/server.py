@@ -11,7 +11,20 @@ from .base.spy import Spy
 class Server(Spy):
     name = 'server'
 
-    def __init__(self, host='0.0.0.0', port=31337):
+    @classmethod
+    def parse(cls, s):
+        ss = s.split(':')
+        if len(ss) != 2 or ss[0] != 'server':
+            return None
+
+        try:
+            port = int(ss[1])
+        except:
+            return None
+
+        return cls(port)
+
+    def __init__(self, port=31337, host='0.0.0.0'):
         self.host = host
         self.port = port
 
