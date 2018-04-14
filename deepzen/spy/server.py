@@ -36,10 +36,7 @@ class Server(Spy):
               (self.host, self.port))
         app.run(host=self.host, port=self.port)
 
-    def on_fit_begin(self, meter_name_lists, begin_epoch, end_epoch):
-        self.meter_name_lists = meter_name_lists
-        self.begin_epoch = begin_epoch
-        self.end_epoch = end_epoch
+    def on_fit_begin(self):
         self.thread = Thread(target=self.run)
         self.thread.start()
 

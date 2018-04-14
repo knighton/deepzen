@@ -12,16 +12,17 @@ class Rows(Spy):
         self.metric_cols = metric_cols
         self.metric_decimal_places = metric_decimal_places
 
-    def on_fit_begin(self, meter_name_lists, begin_epoch, end_epoch):
+    def on_fit_begin(self):
         split_cols = 0
-        for meter_names in meter_name_lists:
+        for meter_names in self.trainer.batch_timer.meter_name_lists:
             count = len(meter_names)
             split_cols += count * self.metric_cols + (count - 1)
 
         self.horizontal_bar = '    +-%s-+-%s-+-%s-+' % \
             ('-' * self.epoch_cols, '-' * split_cols, '-' * split_cols)
 
-        from_to_str = '%d->%d' % (begin_epoch, end_epoch)
+        from_to_str = '%d->%d' % (self.trainer.cursor.begin_epoch,
+            self.trainer.cursor.end_epoch)
         print(self.horizontal_bar)
 
         fmt = '    | %%%ds | %%%ds | %%%ds |' % \
@@ -30,9 +31,6 @@ class Rows(Spy):
         fmt = '    | %%%ds | %%s | %%s |' % self.epoch_cols
         print(fmt % (from_to_str, ' ' * split_cols, ' ' * split_cols))
         print(self.horizontal_bar)
-
-    def on_epoch_begin(self, epoch, num_batches):
-        self.epoch = epoch
 
     def draw_output(self, metrics):
         ss = []
@@ -47,11 +45,12 @@ class Rows(Spy):
             ss.append(self.draw_output(metrics))
         return ' : '.join(ss)
 
-    def on_epoch_end(self, train_metric_lists, test_metric_lists):
+    def on_epoch_end(self, epoch_results):
+        _, (train_metric_lists, test_metric_lists) = epoch_results
         train_text = self.draw_split(train_metric_lists)
         test_text = self.draw_split(test_metric_lists)
         fmt = '    | %%%dd | %%s | %%s |' % self.epoch_cols
-        print(fmt % (self.epoch, train_text, test_text))
+        print(fmt % (self.trainer.cursor.epoch, train_text, test_text))
 
     def on_fit_end(self):
         print(self.horizontal_bar)

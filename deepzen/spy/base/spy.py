@@ -1,24 +1,33 @@
 class Spy(object):
-    def on_fit_begin(self, meter_name_lists, begin_epoch, end_epoch):
+    """
+    Monitors model training.
+    """
+
+    def set_params(self, model, trainer):
+        self.model = model
+        self.trainer = trainer
+
+    def on_fit_begin(self):
         pass
 
-    def on_fit_end(self):
-        pass
-
-    def on_epoch_begin(self, epoch, num_batches):
-        pass
-
-    def on_epoch_end(self, train_metric_lists, test_metric_lists):
+    def on_epoch_begin(self):
         pass
 
     def on_train_on_batch_begin(self):
         pass
 
-    def on_train_on_batch_end(self):
+    def on_train_on_batch_end(self, metric_lists):
         pass
 
     def on_test_on_batch_begin(self):
         pass
 
-    def on_test_on_batch_end(self):
+    def on_test_on_batch_end(self, metric_lists):
         pass
+
+    def on_epoch_end(self, epoch_results):
+        pass
+
+    def on_fit_end(self):
+        pass
+

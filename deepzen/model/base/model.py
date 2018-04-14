@@ -108,7 +108,7 @@ class Model(object):
         t.mark()
         for spy in trainer.spies:
             t.mark()
-            spy.on_train_on_batch_end()
+            spy.on_train_on_batch_end(metric_lists)
             t.mark()
         t.mark()
 
@@ -175,7 +175,7 @@ class Model(object):
         t.mark()
         for spy in trainer.spies:
             t.mark()
-            spy.on_test_on_batch_end()
+            spy.on_test_on_batch_end(metric_lists)
             t.mark()
         t.mark()
 
@@ -192,17 +192,14 @@ class Model(object):
         Internally, note that we've begun a training epoch.
         """
         for spy in trainer.spies:
-            spy.on_epoch_begin(trainer.cursor.epoch,
-                               trainer.cursor.batches_per_epoch)
+            spy.on_epoch_begin()
 
-    def _fit_epoch_after(self, trainer, results):
+    def _fit_epoch_after(self, trainer, epoch_results):
         """
         Internally, note that we've ended a training epoch.
         """
-        raws, means = results
-        train_metric_lists, test_metric_lists = means
         for spy in trainer.spies:
-            spy.on_epoch_end(train_metric_lists, test_metric_lists)
+            spy.on_epoch_end(epoch_results)
 
     def fit_batch_before(self, trainer):
         """
@@ -252,8 +249,8 @@ class Model(object):
         The pre-work we need to run before the body of resume_fit.
         """
         for spy in trainer.spies:
-            spy.on_fit_begin(trainer.batch_timer.meter_name_lists,
-                             trainer.cursor.epoch, trainer.cursor.end_epoch)
+            spy.set_params(self, trainer)
+            spy.on_fit_begin()
 
     def fit_body(self, trainer):
         """

@@ -8,7 +8,8 @@ from .base.spy import Spy
 class ProgressBar(Spy):
     name = 'progress_bar'
 
-    def on_epoch_begin(self, epoch, num_batches):
+    def on_epoch_begin(self):
+        num_batches = self.trainer.cursor.batches_per_epoch
         self.bar = tqdm(total=num_batches, leave=False)
 
     def on_train_on_batch_begin(self):
@@ -17,5 +18,5 @@ class ProgressBar(Spy):
     def on_test_on_batch_begin(self):
         self.bar.update(1)
 
-    def on_epoch_end(self, train_meter_lists, test_meter_lists):
+    def on_epoch_end(self, epoch_results):
         self.bar.close()
