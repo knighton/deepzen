@@ -11,20 +11,18 @@ class Input(Node):
     tensor passing through.
     """
 
-    def __init__(self, sample_shape, dtype, has_channels=None,
+    def __init__(self, sample_shape, dtype=None, has_channels=None,
                  preds_via_call=None):
         assert isinstance(sample_shape, tuple)
         for dim in sample_shape:
             assert isinstance(dim, int)
             assert 1 <= dim
-        assert dtype
-        assert isinstance(dtype, str)
+        dtype = Z.dtype(dtype)
         assert has_channels in {None, False, True}
 
         Node.__init__(self, preds_via_call)
 
         if has_channels is None:
-            dtype = Z.dtype(dtype)
             if dtype.startswith('float'):
                 has_channels = True
             else:
