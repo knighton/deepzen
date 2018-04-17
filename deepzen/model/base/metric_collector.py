@@ -6,10 +6,6 @@ class MetricCollector(object):
     Accumulates batch metric list results; flushed at the end of every epoch.
     """
 
-    def __init__(self, metric_lists_samples):
-        self.metric_lists_samples = metric_lists_samples
-
-
     def __init__(self, train, test):
         self.train = train
         self.test = test

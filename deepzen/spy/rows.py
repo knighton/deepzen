@@ -22,7 +22,7 @@ class Rows(Spy):
             ('-' * self.epoch_cols, '-' * split_cols, '-' * split_cols)
 
         from_to_str = '%d->%d' % (self.trainer.cursor.begin_epoch,
-            self.trainer.cursor.end_epoch)
+                                  self.trainer.cursor.end_epoch)
         print(self.horizontal_bar)
 
         fmt = '    | %%%ds | %%%ds | %%%ds |' % \

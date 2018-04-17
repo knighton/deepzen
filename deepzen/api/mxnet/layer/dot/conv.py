@@ -27,8 +27,8 @@ class MXNetConvAPI(BaseConvAPI):
     def conv3d(self, x, kernel, bias, stride, padding, dilation):
         return self.conv(x, kernel, bias, stride, padding, dilation, 3)
 
-    def conv_transpose(self, x, kernel, bias, stride, padding, dilation,
-                       xsnd=None):
+    def conv_transpose(self, x, kernel, bias, stride, padding, out_padding,
+                       dilation, xsnd=None):
         if xsnd is None:
             xsnd = x.ndim - 2
         else:

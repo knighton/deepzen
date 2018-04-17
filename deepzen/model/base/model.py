@@ -48,9 +48,9 @@ class Model(object):
         num_batches = (len(x) + batch_size - 1) // batch_size
         batch_yyy = None
         for batch in range(num_batches):
-            batch_xx = [x[batch * batch_size : (batch + 1) * batch_size]
-                        for x in xx]
-            batch_xx = [Z.constant(x) for x in batch_xx]
+            a = batch * batch_size
+            z = (batch + 1) * batch_size
+            batch_xx = [Z.constant(x[a:z]) for x in xx]
             batch_yy = self.forward(batch_xx, False)
             batch_yy = [Z.numpy(batch_y) for batch_y in batch_yy]
             if batch_yyy is None:

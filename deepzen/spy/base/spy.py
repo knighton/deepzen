@@ -30,4 +30,3 @@ class Spy(object):
 
     def on_fit_end(self):
         pass
-

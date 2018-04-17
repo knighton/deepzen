@@ -1,6 +1,3 @@
-from ...data.dataset import Dataset
-from ...data.ram_split import RamSplit
-from ...data.split import Split
 from ...data import unpack_dataset
 from ...spy import unpack_spies
 from ...optim import unpack_optimizer

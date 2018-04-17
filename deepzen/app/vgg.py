@@ -9,7 +9,7 @@ def _build_vgg(block_confs, include_top=True, pooling=None, classes=1000):
 
     steps = []
     for repeats, channels in block_confs:
-        block = (Conv(channels) * repeats) > MaxPool 
+        block = (Conv(channels) * repeats) > MaxPool
         steps.append(block)
 
     if include_top:
