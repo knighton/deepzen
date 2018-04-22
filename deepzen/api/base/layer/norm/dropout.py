@@ -22,7 +22,7 @@ class BaseDropoutAPI(object):
             assert self.spatial_ndim(x) == xsnd
         mask_shape = self._dropout_mask_shape(self.shape(x), keep_spatial_axis)
         mask = self.random_binomial(
-            mask_shape, rate, self.dtype(x), self.device(x))
+            mask_shape, 1 - rate, self.dtype(x), self.device(x))
         mask = self.constant(mask)
         return x * mask / (1 - rate)
 
