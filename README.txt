@@ -16,7 +16,7 @@ data/ -- dataset classes, used by models
 init/ -- weight initializers (like Keras)
 meter/ -- losses and accuracies
 model/ -- model classes
-node/  -- static computational graph nodes, that wrap core backend API
+node/  -- static computational graph nodes, that wrap backend API
     activ/ -- activation functions
     arch/ -- embedding, input, network, sequence
     base/ -- base types
