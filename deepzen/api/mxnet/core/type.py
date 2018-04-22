@@ -40,3 +40,6 @@ class MXNetTypeAPI(BaseTypeAPI):
         x = self.tensor(x, dtype, device)
         x.attach_grad()
         return x
+
+    def copy(self, x):
+        return x.copy()

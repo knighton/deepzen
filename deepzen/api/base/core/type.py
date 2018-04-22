@@ -19,3 +19,6 @@ class BaseTypeAPI(object):
 
     def variable(self, x, dtype=None, device=None):
         raise NotImplementedError
+
+    def copy(self, x):
+        raise NotImplementedError

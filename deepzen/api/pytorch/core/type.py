@@ -51,3 +51,6 @@ class PyTorchTypeAPI(BaseTypeAPI):
     def variable(self, x, dtype=None, device=None):
         x = self.tensor(x, dtype, device)
         return Variable(x, requires_grad=True)
+
+    def copy(self, x):
+        return x.clone()
