@@ -53,5 +53,5 @@ class XXYSpec(Spec):
             for x_sig in x_sigs:
                 if x_sig is None:
                     continue
-                assert self._req_spatial_ndim == x_sig.spatial_ndim()
+                assert self._req_xx_spatial_ndim == x_sig.spatial_ndim()
         return self.build_xx_y(x_sigs)
