@@ -43,6 +43,8 @@ class Model(object):
         raise NotImplementedError
 
     def predict(self, xx, batch_size=64):
+        if not isinstance(xx, (list, tuple)):
+            xx = [xx]
         assert xx
         x = xx[0]
         num_batches = (len(x) + batch_size - 1) // batch_size
