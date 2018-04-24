@@ -33,9 +33,12 @@ class TrainingCursor(object):
 
     @classmethod
     def start_from_dataset(cls, dataset, begin_epoch, end_epoch, batch_size):
-        batches_per_epoch = dataset.num_batches(batch_size)
-        train_batches_per_epoch = dataset.train.num_batches(batch_size)
-        test_batches_per_epoch = dataset.test.num_batches(batch_size)
+        batches_per_epoch = dataset.batches_per_epoch(batch_size)
+        train_batches_per_epoch = dataset.train.batches_per_epoch(batch_size)
+        if dataset.test:
+            test_batches_per_epoch = dataset.test.batches_per_epoch(batch_size)
+        else:
+            test_batches_per_epoch = 0
         return cls.start(begin_epoch, end_epoch, batch_size, batches_per_epoch,
                          train_batches_per_epoch, test_batches_per_epoch)
 

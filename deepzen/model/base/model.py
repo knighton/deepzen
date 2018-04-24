@@ -315,9 +315,8 @@ class Model(object):
             spy.set_params(self, trainer)
             spy.on_fit_begin()
 
-        each_batch_forever = trainer.dataset.each_batch_forever
-        batch_size = trainer.cursor.batch_size
-        for (xx, yy), is_training in each_batch_forever(batch_size):
+        for (xx, yy), is_training in trainer.dataset.each_batch_forever(
+                trainer.cursor.batch_size):
             if self.resume_fit_batch(trainer, is_training, xx, yy):
                 break
 
@@ -328,36 +327,39 @@ class Model(object):
     # Fit with smart arguments.
 
     @require_kwargs_after(3)
-    def fit(self, data, loss, test_frac=None, optim='adam', batch=64, start=0,
-            stop=20, spy=None, timer_cache=10000):
+    def fit(self, data, loss, test_frac=None, optimizer='adam', batch_size=64,
+            begin_epoch=0, end_epoch=20, spy=None, timer_cache_size=10000):
         """
         Fit the model, according to the smart arguments (creates a trainer).
         """
         trainer = Trainer.init_from_args(
-            data, loss, test_frac, optim, batch, start, stop, spy, timer_cache)
+            data, loss, test_frac, optimizer, batch_size, begin_epoch,
+            end_epoch, spy, timer_cache_size)
         self.ensure_built()
         trainer.optimizer.set_params(self.params())  # TODO: fix this.
         self.resume_fit(trainer)
         return trainer
 
     @require_kwargs_after(2)
-    def fit_reg(self, data, test_frac=None, optim='adam', batch=64, start=0,
-                stop=20, spy=None, timer_cache=10000):
+    def fit_reg(self, data, test_frac=None, optimizer='adam', batch_size=64,
+                begin_epoch=0, end_epoch=20, spy=None, timer_cache_size=10000):
         """
         Fit the model as a regressor with one output.
         """
         loss = [['mean_squared_error']]
-        return self.fit(data, loss, test_frac=test_frac, optim=optim,
-                        batch=batch, start=start, stop=stop, spy=spy,
-                        timer_cache=timer_cache)
+        return self.fit(data, loss, test_frac=test_frac, optimizer=optimizer,
+                        batch_size=batch_size, begin_epoch=begin_epoch,
+                        end_epoch=end_epoch, spy=spy,
+                        timer_cache_size=timer_cache_size)
 
     @require_kwargs_after(2)
-    def fit_clf(self, data, test_frac=None, optim='adam', batch=64, start=0,
-                stop=20, spy=None, timer_cache=10000):
+    def fit_clf(self, data, test_frac=None, optimizer='adam', batch_size=64,
+                begin_epoch=0, end_epoch=20, spy=None, timer_cache_size=10000):
         """
         Fit the model as a classifier with one output.
         """
         loss = [['cross_entropy', 'accuracy']]
-        return self.fit(data, loss, test_frac=test_frac, optim=optim,
-                        batch=batch, start=start, stop=stop, spy=spy,
-                        timer_cache=timer_cache)
+        return self.fit(data, loss, test_frac=test_frac, optimizer=optimizer,
+                        batch_size=batch_size, begin_epoch=begin_epoch,
+                        end_epoch=end_epoch, spy=spy,
+                        timer_cache_size=timer_cache_size)

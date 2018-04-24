@@ -8,41 +8,57 @@ class Dataset(object):
         assert isinstance(train, Split)
         if test is not None:
             assert isinstance(test, Split)
-            assert train.shapes() == test.shapes()
-            assert train.dtypes() == test.dtypes()
+            assert train.sample_shapes == test.sample_shapes
+            assert train.dtypes == test.dtypes
         self.train = train
         self.test = test
 
-    def num_samples(self):
-        num_samples = self.train.num_samples()
+        if test:
+            self.samples_per_epoch = \
+                train.samples_per_epoch + test.samples_per_epoch
+        else:
+            self.samples_per_epoch = train.samples_per_epoch
+
+        self.sample_shapes = train.sample_shapes
+        self.x_sample_shapes = train.x_sample_shapes
+        self.y_sample_shapes = train.y_sample_shapes
+
+        self.dtypes = train.dtypes
+        self.x_dtypes = train.x_dtypes
+        self.y_dtypes = train.y_dtypes
+
+    def batches_per_epoch(self, batch_size):
+        batches_per_epoch = self.train.batches_per_epoch(batch_size)
         if self.test:
-            num_samples += self.test.num_samples()
-        return num_samples
+            batches_per_epoch += self.test.batches_per_epoch(batch_size)
+        return batches_per_epoch
 
-    def num_batches(self, batch_size):
-        num_batches = self.train.num_batches(batch_size)
+    def get_batch(self, batch_size, is_training, index):
+        if is_training:
+            split = self.train
+        else:
+            split = self.test
+        return split.get_batch(batch_size, index)
+
+    def shuffle(self, batch_size):
+        num_train_batches = self.train.batches_per_epoch(batch_size)
         if self.test:
-            num_batches += self.test.num_batches(batch_size)
-        return num_batches
-
-    def shapes(self, batch_size=None):
-        return self.train.shapes(batch_size)
-
-    def dtypes(self):
-        return self.train.dtypes()
+            num_test_batches = self.test.batches_per_epoch(batch_size)
+        else:
+            num_test_batches = 0
+        train_batches = np.arange(num_train_batches)
+        test_batches = np.arange(num_test_batches)
+        x = np.zeros((num_train_batches + num_test_batches, 2), 'int64')
+        x[train_batches, 0] = 1
+        x[train_batches, 1] = train_batches
+        x[num_train_batches + test_batches, 1] = test_batches
+        np.random.shuffle(x)
+        return x
 
     def each_batch(self, batch_size):
-        num_train = self.train.num_batches(batch_size)
-        num_test = self.test.num_batches(batch_size)
-        splits = np.concatenate([np.ones(num_train), np.zeros(num_test)])
-        np.random.shuffle(splits)
-        each_train = self.train.each_batch(batch_size)
-        each_test = self.test.each_batch(batch_size)
-        for split in splits:
-            if split:
-                yield next(each_train), True
-            else:
-                yield next(each_test), False
+        for is_training, index in self.shuffle(batch_size):
+            xx, yy = self.get_batch(batch_size, is_training, index)
+            yield (xx, yy), is_training
 
     def each_batch_forever(self, batch_size):
         while True:

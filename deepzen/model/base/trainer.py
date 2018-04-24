@@ -22,8 +22,7 @@ class Trainer(object):
     def init_from_args(cls, data, loss, test_frac=None, optim='adam', batch=64,
                        start=0, stop=20, spy=None, timer_cache=10000):
         dataset = unpack_dataset(data, test_frac)
-        y_sample_shapes = dataset.shapes()[1]
-        meter_lists = unpack_meter_lists(loss, y_sample_shapes)
+        meter_lists = unpack_meter_lists(loss, dataset.y_sample_shapes)
         optimizer = unpack_optimizer(optim)
         spies = unpack_spies(spy)
         assert isinstance(batch, int)
