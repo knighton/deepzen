@@ -6,9 +6,10 @@ from .split import Split
 class Dataset(object):
     def __init__(self, train, test):
         assert isinstance(train, Split)
-        assert isinstance(test, Split)
-        assert train.shapes() == test.shapes()
-        assert train.dtypes() == test.dtypes()
+        if test is not None:
+            assert isinstance(test, Split)
+            assert train.shapes() == test.shapes()
+            assert train.dtypes() == test.dtypes()
         self.train = train
         self.test = test
 
