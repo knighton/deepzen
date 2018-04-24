@@ -14,15 +14,15 @@ class Rows(Spy):
 
     def on_fit_begin(self):
         split_cols = 0
-        for meter_names in self.trainer.batch_timer.meter_name_lists:
+        for meter_names in self.session.batch_timer.meter_name_lists:
             count = len(meter_names)
             split_cols += count * self.metric_cols + (count - 1)
 
         self.horizontal_bar = '    +-%s-+-%s-+-%s-+' % \
             ('-' * self.epoch_cols, '-' * split_cols, '-' * split_cols)
 
-        from_to_str = '%d->%d' % (self.trainer.cursor.begin_epoch,
-                                  self.trainer.cursor.end_epoch)
+        from_to_str = '%d->%d' % (self.session.cursor.begin_epoch,
+                                  self.session.cursor.end_epoch)
         print(self.horizontal_bar)
 
         fmt = '    | %%%ds | %%%ds | %%%ds |' % \
@@ -50,7 +50,7 @@ class Rows(Spy):
         train_text = self.draw_split(train_metric_lists)
         test_text = self.draw_split(test_metric_lists)
         fmt = '    | %%%dd | %%s | %%s |' % self.epoch_cols
-        print(fmt % (self.trainer.cursor.epoch, train_text, test_text))
+        print(fmt % (self.session.cursor.epoch, train_text, test_text))
 
     def on_fit_end(self):
         print(self.horizontal_bar)

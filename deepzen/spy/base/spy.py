@@ -3,9 +3,9 @@ class Spy(object):
     Monitors model training.
     """
 
-    def set_params(self, model, trainer):
+    def set_params(self, model, session):
         self.model = model
-        self.trainer = trainer
+        self.session = session
 
     def on_fit_begin(self):
         pass

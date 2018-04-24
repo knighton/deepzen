@@ -9,7 +9,7 @@ class ProgressBar(Spy):
     name = 'progress_bar'
 
     def on_epoch_begin(self):
-        num_batches = self.trainer.cursor.batches_per_epoch
+        num_batches = self.session.cursor.batches_per_epoch
         self.bar = tqdm(total=num_batches, leave=False)
 
     def on_train_on_batch_begin(self):
