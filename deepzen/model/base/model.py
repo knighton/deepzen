@@ -332,11 +332,14 @@ class Model(object):
         """
         Fit the model, according to the smart arguments (creates a session).
         """
+        need_params = not self.is_built() or \
+            not isinstance(optimizer, Optimizer)
         session = TrainingSession.init_from_args(
             data, loss, test_frac, optimizer, batch_size, begin_epoch,
             end_epoch, spy, timer_cache_size)
         self.ensure_built()
-        session.optimizer.set_params(self.params())  # TODO: fix this.
+        if need_params:
+            session.optimizer.set_params(self.params())
         self.resume_fit(session)
         return session
 
