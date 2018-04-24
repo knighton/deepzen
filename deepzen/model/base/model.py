@@ -62,9 +62,69 @@ class Model(object):
         return [np.concatenate(batch_yy, 0) for batch_yy in batch_yyy]
 
     # --------------------------------------------------------------------------
+    # Calling fit on a single batch.
+
+    def train_on_batch(self, xx, yy_true, optimizer, losses, aux_meter_lists):
+        costs = []
+        with Z.autograd_record():
+            yy_pred = self.forward(xx, True)
+
+            for loss, y_true, y_pred in zip(losses, yy_true, yy_pred):
+                cost = Z.mean(loss(y_true, y_pred))
+                costs.append(cost)
+
+        grads = [Z.ones((1,), Z.dtype(x), Z.device(x)) for x in costs]
+        Z.backward(costs, grads)
+
+        costs = [Z.scalar(x) for x in costs]
+
+        optimizer.step()
+
+        aux_metric_lists = []
+        for meters, y_true, y_pred in zip(aux_meter_lists, yy_true, yy_pred):
+            metrics = []
+            for meter in meters:
+                metric = Z.scalar(Z.mean(meter(y_true, y_pred)))
+                metrics.append(metric)
+            aux_metric_lists.append(metrics)
+
+        return costs, aux_metric_lists
+
+    def test_on_batch(self, xx, yy_true, losses, aux_meter_lists):
+        yy_pred = self.forward(xx, False)
+
+        costs = []
+        for loss, y_true, y_pred in zip(losses, yy_true, yy_pred):
+            cost = Z.mean(loss(y_true, y_pred))
+            costs.append(cost)
+
+        costs = [Z.scalar(x) for x in costs]
+
+        aux_metric_lists = []
+        for meters, y_true, y_pred in zip(aux_meter_lists, yy_true, yy_pred):
+            metrics = []
+            for meter in meters:
+                metric = Z.scalar(Z.mean(meter(y_true, y_pred)))
+                metrics.append(metric)
+            aux_metric_lists.append(metrics)
+
+        return costs, aux_metric_lists
+
+    def fit_on_batch(self, is_training, xx, yy_true, optimizer, losses,
+                     aux_meter_lists):
+        xx = [Z.constant(x) for x in xx]
+        yy_true = [Z.constant(y) for y in yy_true]
+        if is_training:
+            ret = self.train_on_batch(xx, yy_true, optimizer, losses,
+                                      aux_meter_lists)
+        else:
+            ret = self.test_on_batch(xx, yy_true, losses, aux_meter_lists)
+        return ret
+
+    # --------------------------------------------------------------------------
     # Train on batch.
 
-    def train_on_batch(self, trainer, xx, yy_true):
+    def fit_train_on_batch(self, trainer, xx, yy_true):
         """
         Train on one batch.
         """
@@ -141,7 +201,7 @@ class Model(object):
     # --------------------------------------------------------------------------
     # Test on batch.
 
-    def test_on_batch(self, trainer, xx, yy_true):
+    def fit_test_on_batch(self, trainer, xx, yy_true):
         """
         Test on one batch.
         """
@@ -224,26 +284,26 @@ class Model(object):
 
     def fit_on_batch_before(self, trainer):
         """
-        The pre-work we need to run before the body of fit_on_batch.
+        The pre-work we need to run before the body of fit_fit_on_batch.
         """
         if not trainer.cursor.batch:
             self._fit_on_epoch_before(trainer)
 
     def fit_on_batch_body(self, trainer, is_training, xx, yy):
         """
-        The work of fit_on_batch, bookended by pre/post callbacks.
+        The work of fit_fit_on_batch, bookended by pre/post callbacks.
         """
         xx = [Z.constant(x) for x in xx]
         yy = [Z.constant(y) for y in yy]
         if is_training:
-            results = self.train_on_batch(trainer, xx, yy)
+            results = self.fit_train_on_batch(trainer, xx, yy)
         else:
-            results = self.test_on_batch(trainer, xx, yy)
+            results = self.fit_test_on_batch(trainer, xx, yy)
         return results
 
     def fit_on_batch_after(self, trainer, is_training, xx, yy, results):
         """
-        The post-work we need to run after the body of fit_on_batch.
+        The post-work we need to run after the body of fit_fit_on_batch.
         """
         trainer.epoch_results.add(is_training, results)
         is_epoch_done, is_fit_done = \
@@ -253,7 +313,7 @@ class Model(object):
             self._fit_on_epoch_after(trainer, epoch_results)
         return is_fit_done
 
-    def fit_on_batch(self, trainer, is_training, xx, yy):
+    def fit_fit_on_batch(self, trainer, is_training, xx, yy):
         """
         Fit (train or test) on one batch.
         """
@@ -279,7 +339,7 @@ class Model(object):
         each_batch_forever = trainer.dataset.each_batch_forever
         batch_size = trainer.cursor.batch_size
         for (xx, yy), is_training in each_batch_forever(batch_size):
-            if self.fit_on_batch(trainer, is_training, xx, yy):
+            if self.fit_fit_on_batch(trainer, is_training, xx, yy):
                 break
 
     def fit_after(self, trainer):
