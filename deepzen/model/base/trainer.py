@@ -19,23 +19,20 @@ class Trainer(object):
         self.batch_timer = batch_timer
 
     @classmethod
-    def init_from_args(cls, data, loss, test_frac=None, optim='adam', batch=64,
-                       start=0, stop=20, spy=None, timer_cache=10000):
+    def init_from_args(cls, data, loss, test_frac=None, optimizer='adam',
+                       batch_size=64, begin_epoch=0, end_epoch=20, spy=None,
+                       timer_cache_size=10000):
         dataset = unpack_dataset(data, test_frac)
         meter_lists = unpack_meter_lists(loss, dataset.y_sample_shapes)
-        optimizer = unpack_optimizer(optim)
+        optimizer = unpack_optimizer(optimizer)
         spies = unpack_spies(spy)
-        assert isinstance(batch, int)
-        assert 0 < batch
-        batch_size = batch
-        assert isinstance(start, int)
-        assert isinstance(stop, int)
-        assert 0 <= start <= stop
-        begin_epoch = start
-        end_epoch = stop
-        assert isinstance(timer_cache, int)
-        assert 0 < timer_cache
-        timer_cache_size = timer_cache
+        assert isinstance(batch_size, int)
+        assert 0 < batch_size
+        assert isinstance(begin_epoch, int)
+        assert isinstance(end_epoch, int)
+        assert 0 <= begin_epoch <= end_epoch
+        assert isinstance(timer_cache_size, int)
+        assert 0 < timer_cache_size
 
         cursor = TrainingCursor.start_from_dataset(
             dataset, begin_epoch, end_epoch, batch_size)
