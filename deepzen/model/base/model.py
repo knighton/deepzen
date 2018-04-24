@@ -315,8 +315,7 @@ class Model(object):
             spy.set_params(self, session)
             spy.on_fit_begin()
 
-        for is_training, xx, yy in session.dataset.each_batch_forever(
-                session.cursor.batch_size):
+        for is_training, xx, yy in session.each_batch_forever():
             if self.resume_fit_batch(session, is_training, xx, yy):
                 break
 

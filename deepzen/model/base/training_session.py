@@ -42,3 +42,11 @@ class TrainingSession(object):
 
         return cls(dataset, cursor, epoch_results, meter_lists, optimizer,
                    spies, batch_timer)
+
+    def each_batch(self):
+        for batch in self.dataset.each_batch(self.cursor.batch_size):
+            yield batch
+
+    def each_batch_forever(self):
+        for batch in self.dataset.each_batch_forever(self.cursor.batch_size):
+            yield batch
