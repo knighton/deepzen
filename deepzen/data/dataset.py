@@ -58,7 +58,7 @@ class Dataset(object):
     def each_batch(self, batch_size):
         for is_training, index in self.shuffle(batch_size):
             xx, yy = self.get_batch(batch_size, is_training, index)
-            yield (xx, yy), is_training
+            yield is_training, xx, yy
 
     def each_batch_forever(self, batch_size):
         while True:
