@@ -282,29 +282,20 @@ class Model(object):
         for spy in trainer.spies:
             spy.on_epoch_end(epoch_results)
 
-    def fit_on_batch_before(self, trainer):
+    def resume_fit_batch(self, trainer, is_training, xx, yy):
         """
-        The pre-work we need to run before the body of fit_fit_on_batch.
+        Fit (train or test) on one batch.
         """
         if not trainer.cursor.batch:
             self._fit_on_epoch_before(trainer)
 
-    def fit_on_batch_body(self, trainer, is_training, xx, yy):
-        """
-        The work of fit_fit_on_batch, bookended by pre/post callbacks.
-        """
         xx = [Z.constant(x) for x in xx]
         yy = [Z.constant(y) for y in yy]
         if is_training:
             results = self.fit_train_on_batch(trainer, xx, yy)
         else:
             results = self.fit_test_on_batch(trainer, xx, yy)
-        return results
 
-    def fit_on_batch_after(self, trainer, is_training, xx, yy, results):
-        """
-        The post-work we need to run after the body of fit_fit_on_batch.
-        """
         trainer.epoch_results.add(is_training, results)
         is_epoch_done, is_fit_done = \
             trainer.cursor.note_completed_batch(is_training)
@@ -313,49 +304,25 @@ class Model(object):
             self._fit_on_epoch_after(trainer, epoch_results)
         return is_fit_done
 
-    def fit_fit_on_batch(self, trainer, is_training, xx, yy):
-        """
-        Fit (train or test) on one batch.
-        """
-        self.fit_on_batch_before(trainer)
-        results = self.fit_on_batch_body(trainer, is_training, xx, yy)
-        return self.fit_on_batch_after(trainer, is_training, xx, yy, results)
-
     # --------------------------------------------------------------------------
     # Fit given a training state.
-
-    def fit_before(self, trainer):
-        """
-        The pre-work we need to run before the body of resume_fit.
-        """
-        for spy in trainer.spies:
-            spy.set_params(self, trainer)
-            spy.on_fit_begin()
-
-    def fit_body(self, trainer):
-        """
-        The work of resume_fit, bookended by pre/post callbacks.
-        """
-        each_batch_forever = trainer.dataset.each_batch_forever
-        batch_size = trainer.cursor.batch_size
-        for (xx, yy), is_training in each_batch_forever(batch_size):
-            if self.fit_fit_on_batch(trainer, is_training, xx, yy):
-                break
-
-    def fit_after(self, trainer):
-        """
-        The post-work we need to run after the body of resume_fit.
-        """
-        for spy in trainer.spies:
-            spy.on_fit_end()
 
     def resume_fit(self, trainer):
         """
         Fit the model, according to the training state.
         """
-        self.fit_before(trainer)
-        self.fit_body(trainer)
-        self.fit_after(trainer)
+        for spy in trainer.spies:
+            spy.set_params(self, trainer)
+            spy.on_fit_begin()
+
+        each_batch_forever = trainer.dataset.each_batch_forever
+        batch_size = trainer.cursor.batch_size
+        for (xx, yy), is_training in each_batch_forever(batch_size):
+            if self.resume_fit_batch(trainer, is_training, xx, yy):
+                break
+
+        for spy in trainer.spies:
+            spy.on_fit_end()
 
     # --------------------------------------------------------------------------
     # Fit with smart arguments.
