@@ -1,4 +1,4 @@
-from torch import _TensorBase
+from torch import Tensor
 from torch.autograd import Variable
 
 from ...base.core.device import BaseDeviceAPI
@@ -9,7 +9,7 @@ class PyTorchDeviceAPI(BaseDeviceAPI):
         BaseDeviceAPI.__init__(self, num_gpus, home_device)
 
     def device(self, x=None):
-        if isinstance(x, (_TensorBase, Variable)):
+        if isinstance(x, (Tensor, Variable)):
             if x.is_cuda:
                 device_id = 1 + x.get_device()
             else:
@@ -20,7 +20,7 @@ class PyTorchDeviceAPI(BaseDeviceAPI):
         return device
 
     def gpu(self, x=None):
-        if isinstance(x, (_TensorBase, Variable)):
+        if isinstance(x, (Tensor, Variable)):
             if x.is_cuda:
                 gpu_id = x.get_device()
             else:

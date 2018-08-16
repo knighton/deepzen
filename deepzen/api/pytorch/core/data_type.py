@@ -1,4 +1,4 @@
-from torch import _TensorBase
+from torch import Tensor
 from torch.autograd import Variable
 
 from ...base.core.data_type import BaseDataTypeAPI
@@ -13,7 +13,7 @@ class PyTorchDataTypeAPI(BaseDataTypeAPI):
         self._tensor2dtype = tensor2dtype
 
     def dtype(self, x=None):
-        if isinstance(x, _TensorBase):
+        if isinstance(x, Tensor):
             x = self._tensor2dtype[x.type()]
         elif isinstance(x, Variable):
             x = self._tensor2dtype[x.data.type()]
@@ -22,7 +22,7 @@ class PyTorchDataTypeAPI(BaseDataTypeAPI):
         return x
 
     def floatx(self, x=None):
-        if isinstance(x, _TensorBase):
+        if isinstance(x, Tensor):
             x = self._tensor2dtype[x.type()]
             assert x in self._floatxs
         elif isinstance(x, Variable):

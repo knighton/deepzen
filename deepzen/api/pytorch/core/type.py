@@ -1,5 +1,5 @@
 import numpy as np
-from torch import _TensorBase
+from torch import Tensor
 from torch.autograd import Variable
 
 from ...base.core.type import BaseTypeAPI
@@ -13,16 +13,16 @@ class PyTorchTypeAPI(BaseTypeAPI):
             x = np.array(x)
         elif isinstance(x, np.ndarray):
             pass
-        elif isinstance(x, _TensorBase):
+        elif isinstance(x, Tensor):
             if x.is_cuda:
-                x = x.cpu().numpy()
+                x = x.detach().cpu().numpy()
             else:
                 x = x.numpy()
         elif isinstance(x, Variable):
             if x.data.is_cuda:
-                x = x.data.cpu().numpy()
+                x = x.detach().data.cpu().numpy()
             else:
-                x = x.data.numpy()
+                x = x.detach().data.numpy()
         else:
             assert False
         return x
@@ -36,7 +36,7 @@ class PyTorchTypeAPI(BaseTypeAPI):
             x = self.cast_numpy_to_tensor(x, dtype, device)
         elif isinstance(x, np.ndarray):
             x = self.cast_numpy_to_tensor(x, dtype, device)
-        elif isinstance(x, _TensorBase):
+        elif isinstance(x, Tensor):
             x = self.cast(x, dtype, device, True)
         elif isinstance(x, Variable):
             x = self.cast(x.data, dtype, device, True)
